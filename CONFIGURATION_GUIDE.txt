@@ -1,0 +1,22 @@
+# We are using virtual environments not to alter the host machine state
+# I have tried pipenv before, but it wasn't able to find python.h
+python -m venv venv
+
+# Enter the virtual environment
+venv\Scripts\activate  # On Windows (or `source venv/bin/activate` on Linux/macOS)
+#venv\Scripts\deactivate
+
+# Install build dependencies
+pip install -r requirements.txt
+
+# Building the module
+python -m build
+
+
+
+#######################
+### pipenv approach ###
+#######################
+
+pipenv install --dev
+pipenv run pip install .

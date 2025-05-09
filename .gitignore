@@ -1,0 +1,5 @@
+# Python package artifacts
+dist/
+build/
+*.egg-info/
+venv/
