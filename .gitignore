@@ -1,5 +1,23 @@
-# Python package artifacts
-dist/
-build/
-*.egg-info/
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# CMake build directories
+/build/
+/cmake-build-*/
+
+# Python virtual environments
 venv/
+.env
+*.egg-info/
+
+# CMake-generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Other common ignores
+.idea/
+.vscode/
+.DS_Store

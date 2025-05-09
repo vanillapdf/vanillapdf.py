@@ -9,5 +9,16 @@ description = "Python bindings for VanillaPDF"
 requires-python = ">=3.8"
 
 [tool.scikit-build]
-minimum-version = "0.4"
 build-dir = "build"
+
+[tool.scikit-build.cmake]
+args = [
+  "-DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake",
+  "-DVCPKG_OVERLAY_PORTS=./vcpkg-ports",
+  "-DCMAKE_BUILD_TYPE=Release"
+]
+
+# This is supported in the latest pre-release
+# Once supported we can drop the above configuration
+#[tool.scikit-build.cmake]
+#preset = "default"
