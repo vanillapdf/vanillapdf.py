@@ -74,14 +74,14 @@ jobs:
           name: vanillapdf-wheels
           path: dist
 
-      - name: Publish to ${{ github.event.inputs.publish_target }}
+      - name: Publish to ${{ github.event.inputs.publish_target }} (Trusted Publisher)
         uses: pypa/gh-action-pypi-publish@v1.8.12
         with:
           repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          print-hash: true  # Optional: shows artifact hash for audit
 
       - name: Show published package link
         env:
           PYPI_PROJECT_URL: ${{ vars.PYPI_PROJECT_URL }}
 
-        run: echo Package published: "$PYPI_PROJECT_URL"
+        run: echo "📦 Package published: ${{ vars.PYPI_PROJECT_URL }}"
