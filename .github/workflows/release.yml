@@ -79,9 +79,3 @@ jobs:
         with:
           repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
           print-hash: true  # Optional: shows artifact hash for audit
-
-      - name: Show published package link
-        env:
-          PYPI_PROJECT_URL: ${{ vars.PYPI_PROJECT_URL }}
-
-        run: echo "📦 Package published: ${{ vars.PYPI_PROJECT_URL }}"
