@@ -1,0 +1,84 @@
+name: Build and Publish Wheels
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_target:
+        description: "Select target pypi environment"
+        required: true
+        default: "testpypi"
+        type: choice
+        options:
+          - testpypi
+          - pypi
+
+jobs:
+  build-wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install cibuildwheel
+
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir dist
+        env:
+          CIBW_SKIP: "pp* cp36* cp37*"
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_ARCHS_WINDOWS: "AMD64"
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_ENVIRONMENT_WINDOWS: 'VCPKG_ROOT=C:/vcpkg'
+          CIBW_ENVIRONMENT_MACOS: 'VCPKG_ROOT=$HOME/vcpkg'
+          CIBW_ENVIRONMENT_LINUX: 'VCPKG_ROOT=/opt/vcpkg'
+          CIBW_BEFORE_BUILD_WINDOWS: |
+            git clone https://github.com/microsoft/vcpkg C:/vcpkg
+            C:/vcpkg/bootstrap-vcpkg.bat
+          CIBW_BEFORE_BUILD_MACOS: |
+            git clone https://github.com/microsoft/vcpkg $HOME/vcpkg
+            $HOME/vcpkg/bootstrap-vcpkg.sh
+          CIBW_BEFORE_BUILD_LINUX: |
+            git clone https://github.com/microsoft/vcpkg /opt/vcpkg
+            /opt/vcpkg/bootstrap-vcpkg.sh
+
+      - name: Upload built wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: vanillapdf-wheels
+          path: dist
+
+  publish:
+    name: Publish to Python Package Index
+    needs: build-wheels
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.publish_target }}
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: vanillapdf-wheels
+          path: dist
+
+      - name: Publish to ${{ github.event.inputs.publish_target }}
+        uses: pypa/gh-action-pypi-publish@v1.8.12
+        with:
+          repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Show published package link
+        run: echo "📦 Package published: ${{ vars.PYPI_PROJECT_URL }}"
