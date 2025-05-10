@@ -81,4 +81,6 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Show published package link
-        run: echo "📦 Package published: ${{ vars.PYPI_PROJECT_URL }}"
+        run: echo "📦 Package published: $PYPI_PROJECT_URL"
+        env:
+          PYPI_PROJECT_URL: ${{ vars.PYPI_PROJECT_URL }}
