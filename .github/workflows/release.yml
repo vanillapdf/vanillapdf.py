@@ -48,7 +48,7 @@ jobs:
           CIBW_ENVIRONMENT_MACOS: 'VCPKG_ROOT=external/vcpkg'
           CIBW_ENVIRONMENT_LINUX: 'VCPKG_ROOT=external/vcpkg'
           CIBW_BEFORE_BUILD_WINDOWS: |
-            external/vcpkg/bootstrap-vcpkg.bat
+            call external\vcpkg\bootstrap-vcpkg.bat
           CIBW_BEFORE_BUILD_MACOS: |
             external/vcpkg/bootstrap-vcpkg.sh
           CIBW_BEFORE_BUILD_LINUX: |
