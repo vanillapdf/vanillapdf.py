@@ -14,8 +14,11 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
 # Build the Python extension module
 add_library(_vanillapdf MODULE
-    src/vanillapdf_c/vanillapdfmodule.c
-    src/vanillapdf_c/documentmodule.c
+    src/vanillapdf_native/vanillapdfmodule.c
+    src/vanillapdf_native/vanillapdfmodule.h
+
+    src/vanillapdf_native/documentmodule.c
+    src/vanillapdf_native/documentmodule.h
 )
 
 target_link_libraries(_vanillapdf PRIVATE
@@ -32,31 +35,27 @@ endif()
 
 message(STATUS "Python extension will be built as: ${CMAKE_CURRENT_BINARY_DIR}/_vanillapdf${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
-# Install target to copy built extension to the Python module dir
-install(TARGETS _vanillapdf
-        LIBRARY DESTINATION ${SKBUILD_PLATLIB_DIR}/vanillapdf
-        RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/vanillapdf
-        ARCHIVE DESTINATION ${SKBUILD_PLATLIB_DIR}/vanillapdf)
+# Packaging
 
-# This implies we're building a Python extension, not a shared lib
-if(BUILD_SHARED_LIBS)
-    message(STATUS "VanillaPDF is linked dynamically; copying DLL dependencies")
+option(VANILLAPDF_PACKAGE_BUILD "Enable packaging install mode" OFF)
+
+if(VANILLAPDF_PACKAGE_BUILD)
 
     # Path to vcpkg-installed DLLs
     set(DEPENDENCY_DLL_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
 
-    # List DLLs that must accompany _vanillapdf.pyd
-    install(FILES
-        "${DEPENDENCY_DLL_DIR}/libvanillapdf.dll"
-        "${DEPENDENCY_DLL_DIR}/spdlog.dll"
-        "${DEPENDENCY_DLL_DIR}/openjp2.dll"
-        "${DEPENDENCY_DLL_DIR}/zlib1.dll"
-        "${DEPENDENCY_DLL_DIR}/jpeg62.dll"
-        "${DEPENDENCY_DLL_DIR}/libcrypto-3-x64.dll"
-        "${DEPENDENCY_DLL_DIR}/legacy.dll"
-        "${DEPENDENCY_DLL_DIR}/fmt.dll"
-        # Add more DLLs here if needed
-        DESTINATION ${SKBUILD_PLATLIB_DIR}/vanillapdf
+    set(PY_PACKAGE_DIR "${PROJECT_SOURCE_DIR}/src/vanillapdf")
+
+    install(TARGETS _vanillapdf
+        LIBRARY DESTINATION ${PY_PACKAGE_DIR}  # .so (Unix)
+        RUNTIME DESTINATION ${PY_PACKAGE_DIR}  # .dll (Windows)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # .lib/.a — not needed in wheel, but consistent
+    )
+
+    file(GLOB RUNTIME_LIBS "${DEPENDENCY_DLL_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    
+    install(FILES ${RUNTIME_LIBS}
+        DESTINATION ${PY_PACKAGE_DIR}
     )
 endif()
 

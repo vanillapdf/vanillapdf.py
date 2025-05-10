@@ -1,0 +1,11 @@
+# Treat shared library files as binary to prevent Git from trying to diff them
+*.pyd binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# Mark build-generated version file as non-source (ignored by linguist/stats)
+src/vanillapdf/_version.py linguist-generated
+
+# Optional: Mark wheel artifacts as binary
+*.whl binary

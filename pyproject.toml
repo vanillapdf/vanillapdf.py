@@ -1,21 +1,54 @@
-[build-system]
-requires = ["scikit-build-core"]
-build-backend = "scikit_build_core.build"
-
 [project]
 name = "vanillapdf"
-version = "0.1.0"
-description = "Python bindings for VanillaPDF"
+dynamic = ["version"]
+description = "Python bindings for VanillaPDF — a C++ PDF processing library"
 requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+
+authors = [
+  { name = "Juraj Zikmund", email = "jzikmund@vanillapdf.com" }
+]
+
+readme = "README.md"
+keywords = ["pdf", "bindings", "c++", "python", "wrapper", "vanillapdf"]
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: C++",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Text Processing :: Markup :: PDF"
+]
+
+[project.urls]
+Homepage = "https://vanillapdf.com"
+Repository = "https://github.com/vanillapdf/vanillapdf"
+Documentation = "https://vanillapdf.github.io/vanillapdf"
+Issues = "https://github.com/vanillapdf/vanillapdf/issues"
+
+[build-system]
+requires = ["scikit-build-core>=0.5.0", "cibuildwheel"]
+build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
 build-dir = "build"
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
+write_to = "src/vanillapdf/_version.py"
 
 [tool.scikit-build.cmake]
 args = [
   "-DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake",
   "-DVCPKG_OVERLAY_PORTS=vcpkg-ports",
-  "-DCMAKE_BUILD_TYPE=Release"
+  "-DCMAKE_BUILD_TYPE=Release",
+  "-DVANILLAPDF_PACKAGE_BUILD=ON"
 ]
 
 # This is supported in the latest pre-release
