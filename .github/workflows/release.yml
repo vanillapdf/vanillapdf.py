@@ -1,4 +1,4 @@
-name: Build and Publish Wheels
+name: Build and Publish
 
 on:
   workflow_dispatch:
@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -42,18 +44,15 @@ jobs:
           CIBW_ARCHS_WINDOWS: "AMD64"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_ARCHS_LINUX: "x86_64"
-          CIBW_ENVIRONMENT_WINDOWS: 'VCPKG_ROOT=C:/vcpkg'
-          CIBW_ENVIRONMENT_MACOS: 'VCPKG_ROOT=$HOME/vcpkg'
-          CIBW_ENVIRONMENT_LINUX: 'VCPKG_ROOT=/opt/vcpkg'
+          CIBW_ENVIRONMENT_WINDOWS: 'VCPKG_ROOT=external/vcpkg'
+          CIBW_ENVIRONMENT_MACOS: 'VCPKG_ROOT=external/vcpkg'
+          CIBW_ENVIRONMENT_LINUX: 'VCPKG_ROOT=external/vcpkg'
           CIBW_BEFORE_BUILD_WINDOWS: |
-            git clone https://github.com/microsoft/vcpkg C:/vcpkg
-            C:/vcpkg/bootstrap-vcpkg.bat
+            external/vcpkg/bootstrap-vcpkg.bat
           CIBW_BEFORE_BUILD_MACOS: |
-            git clone https://github.com/microsoft/vcpkg $HOME/vcpkg
-            $HOME/vcpkg/bootstrap-vcpkg.sh
+            external/vcpkg/bootstrap-vcpkg.sh
           CIBW_BEFORE_BUILD_LINUX: |
-            git clone https://github.com/microsoft/vcpkg /opt/vcpkg
-            /opt/vcpkg/bootstrap-vcpkg.sh
+            external/vcpkg/bootstrap-vcpkg.sh
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
