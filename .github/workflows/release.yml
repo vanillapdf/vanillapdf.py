@@ -16,7 +16,10 @@ jobs:
   build-wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+
     strategy:
+      fail-fast: false
+
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
@@ -55,6 +58,7 @@ jobs:
             external/vcpkg/bootstrap-vcpkg.sh
           CIBW_BEFORE_ALL_LINUX: |
             yum install -y zip unzip gcc gcc-c++ make tar curl perl perl-IPC-Cmd
+            python38-devel python39-devel python310-devel python311-devel python312-devel python313-devel
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
