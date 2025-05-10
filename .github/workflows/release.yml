@@ -53,6 +53,9 @@ jobs:
             external/vcpkg/bootstrap-vcpkg.sh
           CIBW_BEFORE_BUILD_LINUX: |
             external/vcpkg/bootstrap-vcpkg.sh
+          CIBW_BEFORE_ALL_LINUX: |
+            apt-get update
+            apt-get install -y zip unzip build-essential
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
