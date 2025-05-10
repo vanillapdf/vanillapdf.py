@@ -41,7 +41,6 @@ build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
 build-dir = "build"
-license = "Copyright (c) 2025 Vanilla.PDF Labs"
 
 [tool.setuptools]
 license-files = ["LICENSE"]
