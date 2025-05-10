@@ -9,9 +9,6 @@ include(cmake/vcpkg_init.cmake)
 # Find VanillaPDF via vcpkg
 find_package(vanillapdf CONFIG REQUIRED)
 
-# Force CMake to prefer the Python interpreter that was passed in (e.g., via cibuildwheel)
-set(Python3_FIND_STRATEGY LOCATION)
-
 # Find python, which is required for Python.h
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 

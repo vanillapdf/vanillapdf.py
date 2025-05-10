@@ -13,8 +13,7 @@ on:
           - pypi
 
 env:
-  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-binary-cache
-  VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg-binary-cache,readwrite"
+  VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/external/vcpkg/bincache,readwrite"
 
 jobs:
   build-wheels:
@@ -36,7 +35,10 @@ jobs:
       - name: Cache vcpkg binary packages
         uses: actions/cache@v4
         with:
-          path: vcpkg-binary-cache
+          path: |
+            build/vcpkg_installed
+            external/vcpkg/downloads
+            external/vcpkg/bincache
           key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
@@ -67,6 +69,7 @@ jobs:
           CIBW_BEFORE_BUILD_MACOS: |
             external/vcpkg/bootstrap-vcpkg.sh
           CIBW_BEFORE_BUILD_LINUX: |
+            export CMAKE_ARGS="$CMAKE_ARGS -DPython3_EXECUTABLE=$CIBW_PYTHON -DPython3_FIND_STRATEGY=LOCATION -DPython3_FIND_REGISTRY=NEVER"
             external/vcpkg/bootstrap-vcpkg.sh
           CIBW_BEFORE_ALL_LINUX: |
             yum install -y zip unzip gcc gcc-c++ make tar curl perl perl-IPC-Cmd
