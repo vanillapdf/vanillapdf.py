@@ -12,6 +12,10 @@ on:
           - testpypi
           - pypi
 
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-binary-cache
+  VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg-binary-cache,readwrite"
+
 jobs:
   build-wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -28,6 +32,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Cache vcpkg binary packages
+        uses: actions/cache@v4
+        with:
+          path: vcpkg-binary-cache
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -48,7 +60,7 @@ jobs:
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_ARCHS_LINUX: "x86_64"
           CIBW_ENVIRONMENT_WINDOWS: 'VCPKG_ROOT=external/vcpkg'
-          CIBW_ENVIRONMENT_MACOS: 'VCPKG_ROOT=external/vcpkg'
+          CIBW_ENVIRONMENT_MACOS: 'VCPKG_ROOT=external/vcpkg MACOSX_DEPLOYMENT_TARGET=10.15'
           CIBW_ENVIRONMENT_LINUX: 'VCPKG_ROOT=external/vcpkg'
           CIBW_BEFORE_BUILD_WINDOWS: |
             call external\vcpkg\bootstrap-vcpkg.bat
@@ -58,7 +70,6 @@ jobs:
             external/vcpkg/bootstrap-vcpkg.sh
           CIBW_BEFORE_ALL_LINUX: |
             yum install -y zip unzip gcc gcc-c++ make tar curl perl perl-IPC-Cmd
-            python38-devel python39-devel python310-devel python311-devel python312-devel python313-devel
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
