@@ -2,6 +2,8 @@ from . import _vanillapdf
 
 class Document:
     def __init__(self, filename: str = None):
+        self._handle = None  # Always define it, even if init fails
+        
         if filename:
             self._handle = _vanillapdf.document_open(filename)
             if self._handle is None:

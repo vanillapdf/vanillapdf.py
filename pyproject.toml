@@ -14,7 +14,7 @@ build-dir = "build"
 [tool.scikit-build.cmake]
 args = [
   "-DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake",
-  "-DVCPKG_OVERLAY_PORTS=./vcpkg-ports",
+  "-DVCPKG_OVERLAY_PORTS=vcpkg-ports",
   "-DCMAKE_BUILD_TYPE=Release"
 ]
 

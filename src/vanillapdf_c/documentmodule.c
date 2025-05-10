@@ -18,7 +18,7 @@ PyObject* vp_document_open(PyObject* self, PyObject* args) {
     error_type err = Document_Open(filename, &handle);
 
     if (err != VANILLAPDF_ERROR_SUCCESS || handle == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to create document");
+        PyErr_SetString(PyExc_RuntimeError, "Failed to open document");
         return NULL;
     }
 

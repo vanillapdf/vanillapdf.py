@@ -38,6 +38,28 @@ install(TARGETS _vanillapdf
         RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}/vanillapdf
         ARCHIVE DESTINATION ${SKBUILD_PLATLIB_DIR}/vanillapdf)
 
+# This implies we're building a Python extension, not a shared lib
+if(BUILD_SHARED_LIBS)
+    message(STATUS "VanillaPDF is linked dynamically; copying DLL dependencies")
+
+    # Path to vcpkg-installed DLLs
+    set(DEPENDENCY_DLL_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
+
+    # List DLLs that must accompany _vanillapdf.pyd
+    install(FILES
+        "${DEPENDENCY_DLL_DIR}/libvanillapdf.dll"
+        "${DEPENDENCY_DLL_DIR}/spdlog.dll"
+        "${DEPENDENCY_DLL_DIR}/openjp2.dll"
+        "${DEPENDENCY_DLL_DIR}/zlib1.dll"
+        "${DEPENDENCY_DLL_DIR}/jpeg62.dll"
+        "${DEPENDENCY_DLL_DIR}/libcrypto-3-x64.dll"
+        "${DEPENDENCY_DLL_DIR}/legacy.dll"
+        "${DEPENDENCY_DLL_DIR}/fmt.dll"
+        # Add more DLLs here if needed
+        DESTINATION ${SKBUILD_PLATLIB_DIR}/vanillapdf
+    )
+endif()
+
 # Tests
 enable_testing()
 
