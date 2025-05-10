@@ -54,7 +54,7 @@ jobs:
           CIBW_BEFORE_BUILD_LINUX: |
             external/vcpkg/bootstrap-vcpkg.sh
           CIBW_BEFORE_ALL_LINUX: |
-            yum install -y zip unzip gcc gcc-c++ make
+            yum install -y zip unzip gcc gcc-c++ make tar curl perl perl-IPC-Cmd
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
