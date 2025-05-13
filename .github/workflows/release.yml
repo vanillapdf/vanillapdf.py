@@ -36,7 +36,7 @@ jobs:
           #  arch: x86_64
 
           - os: macos-latest  # Apple Silicon
-            arch: universal2
+            arch: arm64
 
     steps:
       - name: Checkout source
