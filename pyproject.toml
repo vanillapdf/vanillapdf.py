@@ -55,13 +55,13 @@ args = [
   "-DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake",
   "-DVCPKG_OVERLAY_PORTS=vcpkg-ports",
   "-DCMAKE_BUILD_TYPE=Release",
-  "-DVANILLAPDF_PACKAGE_BUILD=ON",
-  "-DPython3_FIND_STRATEGY=LOCATION",
-  "-DPython3_FIND_REGISTRY=NEVER",
-  "-DPython3_USE_STATIC_LIBS=OFF"
+  "-DVANILLAPDF_PACKAGE_BUILD=ON"
 ]
 
 # This is supported in the latest pre-release
 # Once supported we can drop the above configuration
 #[tool.scikit-build.cmake]
 #preset = "default"
+
+[tool.cibuildwheel]
+build-frontend = "build"

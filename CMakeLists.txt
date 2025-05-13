@@ -12,11 +12,6 @@ find_package(vanillapdf CONFIG REQUIRED)
 # Find python, which is required for Python.h
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
-# Display information about python that was found
-message(STATUS "Python3_EXECUTABLE: ${Python3_EXECUTABLE}")
-message(STATUS "Python3_INCLUDE_DIRS: ${Python3_INCLUDE_DIRS}")
-message(STATUS "Python3_LIBRARIES: ${Python3_LIBRARIES}")
-
 # Build the Python extension module
 add_library(_vanillapdf MODULE
     src/vanillapdf_native/vanillapdfmodule.c
