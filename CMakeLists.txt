@@ -10,7 +10,7 @@ include(cmake/vcpkg_init.cmake)
 find_package(vanillapdf CONFIG REQUIRED)
 
 # Find python, which is required for Python.h
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
 
 # Build the Python extension module
 add_library(_vanillapdf MODULE
@@ -23,7 +23,7 @@ add_library(_vanillapdf MODULE
 
 target_link_libraries(_vanillapdf PRIVATE
     vanillapdf::vanillapdf
-    Python3::Python
+    Python3::Module
 )
 
 # Correct cross-platform suffix
