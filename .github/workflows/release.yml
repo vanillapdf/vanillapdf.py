@@ -12,6 +12,9 @@ on:
           - testpypi
           - pypi
 
+permissions:
+  contents: read  # Download the repository source code
+
 env:
   VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/external/vcpkg/bincache,readwrite"
 
