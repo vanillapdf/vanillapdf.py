@@ -100,6 +100,15 @@ jobs:
           name: vanillapdf-wheels
           path: dist
 
+      - name: Upload vcpkg build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+            name: vcpkg-logs-${{ matrix.os }}-${{ matrix.arch }}
+            path: |
+              external/vcpkg/buildtrees/vanillapdf/config-*/**/*
+              external/vcpkg/buildtrees/vanillapdf/*ninja.log
+
   publish:
     name: Publish to Python Package Index
     needs: build-wheels
