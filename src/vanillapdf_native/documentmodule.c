@@ -2,8 +2,6 @@
 
 #include <Python.h>
 
-#define VANILLAPDF_CONFIGURATION_DLL
-
 #include <vanillapdf/c_values.h>
 #include <vanillapdf/syntax/c_file.h>
 #include <vanillapdf/semantics/c_document.h>

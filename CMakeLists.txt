@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.15)
 
 project(vanillapdf.py C CXX)
 
+# Add option to build a pypi package
+option(VANILLAPDF_PACKAGE_BUILD "Enable packaging install mode" OFF)
+
 # Note: This needs to be included before defining the main project
 # Check for VCPKG - C++ package management system
 include(cmake/vcpkg_init.cmake)
@@ -10,7 +13,7 @@ include(cmake/vcpkg_init.cmake)
 find_package(vanillapdf CONFIG REQUIRED)
 
 # Find python, which is required for Python.h
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
 
 # Build the Python extension module
 add_library(_vanillapdf MODULE
@@ -23,21 +26,27 @@ add_library(_vanillapdf MODULE
 
 target_link_libraries(_vanillapdf PRIVATE
     vanillapdf::vanillapdf
-    Python3::Python
+    Python3::Module
 )
 
 # Correct cross-platform suffix
+set(VANILLAPDF_PY_TARGET_SUFFIX ".so")
+
+# Specific case on windows it is different
 if(WIN32)
-    set_target_properties(_vanillapdf PROPERTIES SUFFIX ".pyd")
-else()
-    set_target_properties(_vanillapdf PROPERTIES SUFFIX ".so")
+    set(VANILLAPDF_PY_TARGET_SUFFIX ".pyd")
 endif()
+
+# Disable the lib prefix, which is not common for python modules
+set_target_properties(_vanillapdf PROPERTIES
+    OUTPUT_NAME "_vanillapdf"
+    PREFIX ""
+    SUFFIX ${VANILLAPDF_PY_TARGET_SUFFIX}
+)
 
 message(STATUS "Python extension will be built as: ${CMAKE_CURRENT_BINARY_DIR}/_vanillapdf${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 # Packaging
-
-option(VANILLAPDF_PACKAGE_BUILD "Enable packaging install mode" OFF)
 
 if(VANILLAPDF_PACKAGE_BUILD)
 
