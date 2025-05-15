@@ -58,20 +58,26 @@ if(VANILLAPDF_PY_PACKAGE_BUILD)
         RUNTIME DESTINATION vanillapdf  # .dll (Windows)
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # .lib/.a — not needed in wheel, but consistent
     )
-
-    # Set RPATH to look in the same folder
-    set_target_properties(_vanillapdf PROPERTIES
-        INSTALL_RPATH "$ORIGIN"
-    )
     
     # Copy dependent shared libraries (Linux)
     if(UNIX AND NOT APPLE)
+
+        # Set RPATH to look in the same folder
+        set_target_properties(_vanillapdf PROPERTIES
+            INSTALL_RPATH "$ORIGIN"
+        )
+
         file(GLOB VCPKG_SOS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/*.so*")
         install(FILES ${VCPKG_SOS} DESTINATION vanillapdf)
     endif()
     
     # Copy dylibs (macOS)
     if(APPLE)
+        set_target_properties(_vanillapdf PROPERTIES
+            INSTALL_RPATH "@loader_path"
+            BUILD_RPATH "@loader_path"
+        )
+
         file(GLOB VCPKG_DYLIBS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/*.dylib")
         install(FILES ${VCPKG_DYLIBS} DESTINATION vanillapdf)
     endif()
