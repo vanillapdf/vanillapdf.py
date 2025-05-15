@@ -17,6 +17,7 @@ permissions:
 
 env:
   VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/external/vcpkg/bincache,readwrite"
+  VCPKG_BINARY_CACHE: ${{ github.workspace }}/.vcpkg-cache
 
 jobs:
   build-wheels:
@@ -70,7 +71,7 @@ jobs:
           python -m pip install cibuildwheel
 
       - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: python -m cibuildwheel --output-dir dist
         env:
           CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
           CIBW_BUILD_VERBOSITY: 1
@@ -80,6 +81,7 @@ jobs:
           CIBW_ARCHS_LINUX: "${{ matrix.arch }}"
           CIBW_ENVIRONMENT: 'VCPKG_ROOT=external/vcpkg'
           CIBW_ENVIRONMENT_MACOS: 'MACOSX_DEPLOYMENT_TARGET=11.0'
+          CIBW_ENVIRONMENT_LINUX: 'VCPKG_DEFAULT_BINARY_CACHE=/project/.vcpkg-cache'
           CIBW_BEFORE_BUILD_WINDOWS: |
             call external\vcpkg\bootstrap-vcpkg.bat
           CIBW_BEFORE_BUILD_MACOS: |
@@ -95,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vanillapdf-wheels-${{ matrix.os }}-${{ matrix.arch }}
-          path: wheelhouse
+          path: dist
 
   publish:
     name: Publish to Python Package Index
@@ -103,21 +105,19 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.publish_target }}
+      url: ${{ vars.PYPI_REPOSITORY_URL }}
+
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
 
     steps:
       - uses: actions/download-artifact@v4
         with:
-          path: wheelhouse
+          path: dist
           pattern: vanillapdf-wheels-*
           merge-multiple: true
 
-      - name: Validate wheels with twine
-        run: |
-          pip install twine
-          twine check wheelhouse/*
-
       - name: Publish to ${{ github.event.inputs.publish_target }} (Trusted Publisher)
-        uses: pypa/gh-action-pypi-publish@v1.12.4
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
-          print-hash: true  # Optional: shows artifact hash for audit
+          print-hash: true
