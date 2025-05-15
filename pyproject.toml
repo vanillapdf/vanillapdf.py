@@ -51,6 +51,7 @@ local_scheme = "node-and-date"
 write_to = "src/vanillapdf/_version.py"
 
 [tool.scikit-build.cmake]
+build-type = "Release"
 args = [
   "-DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake",
   "-DVCPKG_OVERLAY_PORTS=vcpkg-ports",
