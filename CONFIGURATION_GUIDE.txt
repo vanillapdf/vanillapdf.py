@@ -14,7 +14,11 @@ python.exe -m pip install --upgrade pip
 # Building the module with editable mode
 pip install -e .
 
+pytest tests
 
+# Alternative
+#pip install build
+#python -m build --wheel
 
 #######################
 ### pipenv approach ###
@@ -37,6 +41,8 @@ source venv/bin/activate
 pip install cibuildwheel scikit-build-core
 
 pip install -e .
+
+pytest tests
 
 export CIBW_BEFORE_ALL_LINUX="yum install -y zip unzip gcc gcc-c++ make tar curl perl perl-IPC-Cmd ninja-build"
 #python -m cibuildwheel --output-dir dist --platform auto

@@ -65,3 +65,6 @@ args = [
 
 [tool.cibuildwheel]
 build-frontend = "build"
+
+[project.optional-dependencies]
+test = ["pytest"]
