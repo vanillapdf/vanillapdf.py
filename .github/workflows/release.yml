@@ -106,8 +106,10 @@ jobs:
         with:
             name: vcpkg-logs-${{ matrix.os }}-${{ matrix.arch }}
             path: |
-              external/vcpkg/buildtrees/vanillapdf/config-*/**/*
+              external/vcpkg/buildtrees/vanillapdf/config-*.log
               external/vcpkg/buildtrees/vanillapdf/*ninja.log
+              external/vcpkg/buildtrees/vanillapdf/*CMake*.log
+              external/vcpkg/buildtrees/vanillapdf/*.out.log
 
   publish:
     name: Publish to Python Package Index
