@@ -9,8 +9,10 @@ venv\Scripts\activate  # On Windows (or `source venv/bin/activate` on Linux/macO
 # Install build dependencies
 pip install -r requirements.txt
 
-# Building the module
-python -m build
+python.exe -m pip install --upgrade pip
+
+# Building the module with editable mode
+pip install -e .
 
 
 
@@ -20,3 +22,21 @@ python -m build
 
 pipenv install --dev
 pipenv run pip install .
+
+######################
+### Linux approach ###
+######################
+
+sudo apt update && sudo apt install -y build-essential cmake ninja-build python3-dev git curl unzip pkg-config
+sudo apt install -y python3-pip python3.10-venv
+
+python3 -m venv venv
+source venv/bin/activate
+# deactivate
+
+pip install cibuildwheel scikit-build-core
+
+pip install -e .
+
+export CIBW_BEFORE_ALL_LINUX="yum install -y zip unzip gcc gcc-c++ make tar curl perl perl-IPC-Cmd ninja-build"
+#python -m cibuildwheel --output-dir dist --platform auto
