@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 project(vanillapdf.py C CXX)
 
 # Add option to build a pypi package
-option(VANILLAPDF_PACKAGE_BUILD "Enable packaging install mode" OFF)
+option(VANILLAPDF_PY_PACKAGE_BUILD "Enable packaging install mode" OFF)
 
 # Note: This needs to be included before defining the main project
 # Check for VCPKG - C++ package management system
@@ -48,7 +48,7 @@ message(STATUS "Python extension will be built as: ${CMAKE_CURRENT_BINARY_DIR}/_
 
 # Packaging
 
-if(VANILLAPDF_PACKAGE_BUILD)
+if(VANILLAPDF_PY_PACKAGE_BUILD)
 
     # Path to vcpkg-installed DLLs
     set(DEPENDENCY_DLL_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
