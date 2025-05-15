@@ -17,7 +17,6 @@ permissions:
 
 env:
   VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/external/vcpkg/bincache,readwrite"
-  VCPKG_BINARY_CACHE: ${{ github.workspace }}/.vcpkg-cache
 
 jobs:
   build-wheels:
@@ -50,12 +49,23 @@ jobs:
           submodules: recursive
 
       - name: Cache vcpkg binary packages
+        if: runner.os == 'Windows' || runner.os == 'macOS'
         uses: actions/cache@v4
         with:
           path: |
             build/vcpkg_installed
             external/vcpkg/downloads
             external/vcpkg/bincache
+          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Cache vcpkg binary packages (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/vcpkg
           key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
@@ -81,7 +91,6 @@ jobs:
           CIBW_ARCHS_LINUX: "${{ matrix.arch }}"
           CIBW_ENVIRONMENT: 'VCPKG_ROOT=external/vcpkg'
           CIBW_ENVIRONMENT_MACOS: 'MACOSX_DEPLOYMENT_TARGET=11.0'
-          CIBW_ENVIRONMENT_LINUX: 'VCPKG_DEFAULT_BINARY_CACHE=/project/.vcpkg-cache'
           CIBW_BEFORE_BUILD_WINDOWS: |
             call external\vcpkg\bootstrap-vcpkg.bat
           CIBW_BEFORE_BUILD_MACOS: |
