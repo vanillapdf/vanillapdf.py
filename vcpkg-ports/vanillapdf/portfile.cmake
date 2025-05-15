@@ -3,8 +3,8 @@ vcpkg_check_linkage(ONLY_DYNAMIC_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO vanillapdf/vanillapdf
-    REF "vcpkg-portfile"
-    SHA512 3e2e1208873f6a91b43b0e434f04ec1adce4d815c6c9673c120c1e58cb7c2df82162a0519bd2f7c8d67992b55608b1d682c0586a7ade0ba71300b9025f4277b9
+    REF "main"
+    SHA512 059ad195b236862532c72896421cf6bf8c6e4e0c781595d3fde76630c084cf602ecd06db387a10ea54c966aef9c49fc01483ffad2dc34e3d5bfda4114f4491d3
 )
 
 vcpkg_cmake_configure(
