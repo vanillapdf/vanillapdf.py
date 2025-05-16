@@ -124,7 +124,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.publish_target }}
-      url: ${{ vars.PYPI_REPOSITORY_URL }}
+      url: ${{ vars.PYPI_PROJECT_URL }}
 
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
