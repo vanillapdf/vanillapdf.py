@@ -39,7 +39,7 @@ Documentation = "https://vanillapdf.github.io/vanillapdf"
 Issues = "https://github.com/vanillapdf/vanillapdf/issues"
 
 [build-system]
-requires = ["scikit-build-core>=0.5.0", "cibuildwheel"]
+requires = ["scikit-build-core>=0.5.0", "cibuildwheel", "setuptools-scm"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
