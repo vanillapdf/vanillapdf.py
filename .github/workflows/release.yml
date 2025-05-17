@@ -139,4 +139,5 @@ jobs:
       - name: Publish to ${{ github.event.inputs.publish_target }} (Trusted Publisher)
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
           print-hash: true
