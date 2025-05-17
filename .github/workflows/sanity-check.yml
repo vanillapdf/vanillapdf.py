@@ -9,6 +9,10 @@ on:
 
   workflow_dispatch:
 
+env:
+  VCPKG_ROOT: external/vcpkg
+  VCPKG_DISABLE_METRICS: 1
+
 jobs:
   sanity:
     name: Sanity check (${{ matrix.os }})
@@ -41,9 +45,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            external/vcpkg/installed
-            external/vcpkg/packages
-            external/vcpkg/downloads
+            external/vcpkg/bincache
           key: vcpkg-sanity-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-sanity-${{ runner.os }}-${{ matrix.arch }}-
