@@ -41,11 +41,11 @@ jobs:
             external/vcpkg/installed
             external/vcpkg/packages
             external/vcpkg/downloads
-          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-sanity-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
-            vcpkg-${{ runner.os }}-
+            vcpkg-sanity-${{ runner.os }}-${{ matrix.arch }}-
+            vcpkg-sanity-${{ runner.os }}-${{ matrix.arch }}-
+            vcpkg-sanity-${{ runner.os }}-
 
       - name: Set up Python
         uses: actions/setup-python@v5
