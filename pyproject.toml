@@ -40,7 +40,7 @@ Issues = "https://github.com/vanillapdf/vanillapdf/issues"
 
 [build-system]
 requires = ["scikit-build-core>=0.5.0", "cibuildwheel", "setuptools-scm"]
-build-backend = "scikit_build_core.build"
+build-backend = "setuptools.build_meta"
 
 [tool.scikit-build]
 build-dir = "build"
@@ -51,7 +51,7 @@ license-files = ["LICENSE"]
 [tool.setuptools_scm]
 version_scheme = "guess-next-dev"
 local_scheme = "node-and-date"
-write_to = "src/vanillapdf/_version.py"
+version_file = "src/vanillapdf/_version.py"
 
 [tool.scikit-build.cmake]
 build-type = "Release"
