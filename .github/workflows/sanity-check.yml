@@ -1,0 +1,66 @@
+name: Sanity Check
+
+on:
+  push:
+    branches: [ "main" ]
+
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+jobs:
+  sanity:
+    name: Sanity check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cache vcpkg artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            external/vcpkg/installed
+            external/vcpkg/packages
+            external/vcpkg/downloads
+          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
+            vcpkg-${{ runner.os }}-
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip setuptools build ruff pytest
+
+      - name: Build wheel
+        run: |
+          python -m build --wheel --outdir dist/
+
+      - name: Install built wheel
+        run: |
+          pip install dist/*.whl
+
+      - name: Lint using Ruff
+        run: |
+          ruff check src/ tests/
+
+      - name: Basic import test
+        run: |
+          python -c "import vanillapdf"
+
+      - name: Minimal test suite
+        run: |
+          pytest tests/ --maxfail=1 --disable-warnings --tb=short
