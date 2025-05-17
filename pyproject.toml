@@ -17,16 +17,19 @@ readme = "README.md"
 keywords = ["pdf", "bindings", "c++", "python", "wrapper", "vanillapdf"]
 
 classifiers = [
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: C++",
-  "License :: OSI Approved :: Apache Software License",
-  "Operating System :: OS Independent",
-  "Topic :: Software Development :: Libraries :: Python Modules",
-  "Topic :: Text Processing :: Markup :: PDF"
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Text Processing :: General",
+    "Topic :: Software Development :: Libraries",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent"
 ]
 
 [project.urls]
@@ -51,11 +54,12 @@ local_scheme = "node-and-date"
 write_to = "src/vanillapdf/_version.py"
 
 [tool.scikit-build.cmake]
+build-type = "Release"
 args = [
   "-DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake",
   "-DVCPKG_OVERLAY_PORTS=vcpkg-ports",
   "-DCMAKE_BUILD_TYPE=Release",
-  "-DVANILLAPDF_PACKAGE_BUILD=ON"
+  "-DVANILLAPDF_PY_PACKAGE_BUILD=ON"
 ]
 
 # This is supported in the latest pre-release
@@ -65,3 +69,6 @@ args = [
 
 [tool.cibuildwheel]
 build-frontend = "build"
+
+[project.optional-dependencies]
+test = ["pytest"]

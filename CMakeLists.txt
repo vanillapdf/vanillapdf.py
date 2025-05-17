@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 project(vanillapdf.py C CXX)
 
 # Add option to build a pypi package
-option(VANILLAPDF_PACKAGE_BUILD "Enable packaging install mode" OFF)
+option(VANILLAPDF_PY_PACKAGE_BUILD "Enable packaging install mode" OFF)
 
 # Note: This needs to be included before defining the main project
 # Check for VCPKG - C++ package management system
@@ -48,24 +48,46 @@ message(STATUS "Python extension will be built as: ${CMAKE_CURRENT_BINARY_DIR}/_
 
 # Packaging
 
-if(VANILLAPDF_PACKAGE_BUILD)
+if(VANILLAPDF_PY_PACKAGE_BUILD)
 
-    # Path to vcpkg-installed DLLs
-    set(DEPENDENCY_DLL_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
-
-    set(PY_PACKAGE_DIR "${PROJECT_SOURCE_DIR}/src/vanillapdf")
+    # Required to get CMAKE_INSTALL_LIBDIR
+    include(GNUInstallDirs)
 
     install(TARGETS _vanillapdf
-        LIBRARY DESTINATION ${PY_PACKAGE_DIR}  # .so (Unix)
-        RUNTIME DESTINATION ${PY_PACKAGE_DIR}  # .dll (Windows)
+        LIBRARY DESTINATION vanillapdf  # .so (Unix)
+        RUNTIME DESTINATION vanillapdf  # .dll (Windows)
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # .lib/.a — not needed in wheel, but consistent
     )
-
-    file(GLOB RUNTIME_LIBS "${DEPENDENCY_DLL_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}")
     
-    install(FILES ${RUNTIME_LIBS}
-        DESTINATION ${PY_PACKAGE_DIR}
-    )
+    # Copy dependent shared libraries (Linux)
+    if(UNIX AND NOT APPLE)
+
+        # Set RPATH to look in the same folder
+        set_target_properties(_vanillapdf PROPERTIES
+            INSTALL_RPATH "$ORIGIN"
+        )
+
+        file(GLOB VCPKG_SOS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/*.so*")
+        install(FILES ${VCPKG_SOS} DESTINATION vanillapdf)
+    endif()
+    
+    # Copy dylibs (macOS)
+    if(APPLE)
+        set_target_properties(_vanillapdf PROPERTIES
+            INSTALL_RPATH "@loader_path"
+            BUILD_RPATH "@loader_path"
+        )
+
+        file(GLOB VCPKG_DYLIBS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/*.dylib")
+        install(FILES ${VCPKG_DYLIBS} DESTINATION vanillapdf)
+    endif()
+    
+    # Copy dlls (Windows)
+    if(WIN32)
+        file(GLOB VCPKG_DLLS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/*.dll")
+        install(FILES ${VCPKG_DLLS} DESTINATION vanillapdf)
+    endif()
+
 endif()
 
 # Tests

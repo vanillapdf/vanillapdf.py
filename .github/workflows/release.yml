@@ -15,9 +15,6 @@ on:
 permissions:
   contents: read  # Download the repository source code
 
-env:
-  VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/external/vcpkg/bincache,readwrite"
-
 jobs:
   build-wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -48,16 +45,49 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Cache vcpkg binary packages
+      # Since cibuildwheel is running in Docker container we need to have correct paths setup before
+      - name: Determine cache path (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        run: echo "LINUX_VCPKG_CACHE=$HOME/.cache/vcpkg" >> $GITHUB_ENV
+
+      # Windows: Caching vcpkg_installed and downloads (optional: bincache only if custom override is used)
+      - name: Cache vcpkg artifacts (Windows)
+        if: ${{ runner.os == 'Windows' }}
         uses: actions/cache@v4
         with:
           path: |
-            build/vcpkg_installed
+            external/vcpkg/installed
+            external/vcpkg/packages
             external/vcpkg/downloads
-            external/vcpkg/bincache
-          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-windows-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            vcpkg-${{ runner.os }}-
+            vcpkg-windows-${{ matrix.arch }}-
+            vcpkg-windows-
+
+      # macOS: Default vcpkg binary cache
+      - name: Cache vcpkg binary cache (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        uses: actions/cache@v4
+        with:
+          path: |
+            external/vcpkg/installed
+            external/vcpkg/packages
+            external/vcpkg/downloads
+          key: vcpkg-macos-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-macos-${{ matrix.arch }}-
+            vcpkg-macos-
+
+      # Linux: Default vcpkg binary cache
+      - name: Cache vcpkg binary cache (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.LINUX_VCPKG_CACHE }}
+          key: vcpkg-linux-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-linux-${{ matrix.arch }}-
+            vcpkg-linux-
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -72,20 +102,14 @@ jobs:
       - name: Build wheels
         run: python -m cibuildwheel --output-dir dist
         env:
-          CIBW_SKIP: "pp* cp36* cp37*"
+          CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
           CIBW_BUILD_VERBOSITY: 1
+          CIBW_SKIP: "cp*-musllinux_*"
           CIBW_ARCHS_WINDOWS: "${{ matrix.arch }}"
           CIBW_ARCHS_MACOS: "${{ matrix.arch }}"
           CIBW_ARCHS_LINUX: "${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_WINDOWS: 'VCPKG_ROOT=external/vcpkg'
-          CIBW_ENVIRONMENT_MACOS: |
-            VCPKG_ROOT=external/vcpkg MACOSX_DEPLOYMENT_TARGET=11.0
-            CMAKE_ARGS="-DPython3_EXECUTABLE=$CIBW_PYTHON -DPython3_FIND_STRATEGY=LOCATION -DPython3_FIND_REGISTRY=NEVER"
-          CIBW_ENVIRONMENT_LINUX: |
-            VCPKG_ROOT=external/vcpkg
-            CMAKE_ARGS="-DPython3_EXECUTABLE=$CIBW_PYTHON -DPython3_FIND_STRATEGY=LOCATION -DPython3_FIND_REGISTRY=NEVER"
-          CIBW_ENVIRONMENT_PASS_MACOS: "CMAKE_ARGS"
-          CIBW_ENVIRONMENT_PASS_LINUX: "CMAKE_ARGS"
+          CIBW_ENVIRONMENT: 'VCPKG_ROOT=external/vcpkg'
+          CIBW_ENVIRONMENT_MACOS: 'MACOSX_DEPLOYMENT_TARGET=11.0'
           CIBW_BEFORE_BUILD_WINDOWS: |
             call external\vcpkg\bootstrap-vcpkg.bat
           CIBW_BEFORE_BUILD_MACOS: |
@@ -100,19 +124,8 @@ jobs:
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
         with:
-          name: vanillapdf-wheels
+          name: vanillapdf-wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: dist
-
-      - name: Upload vcpkg build logs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-            name: vcpkg-logs-${{ matrix.os }}-${{ matrix.arch }}
-            path: |
-              external/vcpkg/buildtrees/vanillapdf/config-*.log
-              external/vcpkg/buildtrees/vanillapdf/*ninja.log
-              external/vcpkg/buildtrees/vanillapdf/*CMake*.log
-              external/vcpkg/buildtrees/vanillapdf/*.out.log
 
   publish:
     name: Publish to Python Package Index
@@ -120,15 +133,21 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.publish_target }}
+      url: ${{ vars.PYPI_PROJECT_URL }}
+
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
 
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: vanillapdf-wheels
           path: dist
+          pattern: vanillapdf-wheels-*
+          merge-multiple: true
 
       - name: Publish to ${{ github.event.inputs.publish_target }} (Trusted Publisher)
-        uses: pypa/gh-action-pypi-publish@v1.12.4
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
-          print-hash: true  # Optional: shows artifact hash for audit
+          print-hash: true
+          verbose: true
