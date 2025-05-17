@@ -45,6 +45,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
+            build/vcpkg_installed
+            external/vcpkg/downloads
             external/vcpkg/bincache
           key: vcpkg-sanity-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
