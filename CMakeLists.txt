@@ -85,18 +85,7 @@ if(VANILLAPDF_PY_PACKAGE_BUILD)
     # Copy dlls (Windows)
     if(WIN32)
         file(GLOB VCPKG_DLLS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/*.dll")
-        
-        # Install general DLLs to vanillapdf/
-        foreach(dll ${VCPKG_DLLS})
-            get_filename_component(dll_name "${dll}" NAME)
-            if(dll_name STREQUAL "legacy.dll")
-                # Send legacy.dll to ossl-modules/
-                install(FILES "${dll}" DESTINATION vanillapdf/ossl-modules)
-            else()
-                # All other DLLs go to main package dir
-                install(FILES "${dll}" DESTINATION vanillapdf)
-            endif()
-        endforeach()
+        install(FILES ${VCPKG_DLLS} DESTINATION vanillapdf)
     endif()
     
 
