@@ -38,9 +38,6 @@ jobs:
           submodules: recursive
           fetch-depth: 0  # Required for setuptools-scm to see Git tags
 
-      - name: Fetch all tags
-        run: git fetch --tags
-
       - name: Cache vcpkg artifacts
         uses: actions/cache@v4
         with:
