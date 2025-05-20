@@ -87,6 +87,8 @@ if(VANILLAPDF_PY_PACKAGE_BUILD)
         file(GLOB VCPKG_DLLS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/*.dll")
         install(FILES ${VCPKG_DLLS} DESTINATION vanillapdf)
     endif()
+    
+
 
 endif()
 

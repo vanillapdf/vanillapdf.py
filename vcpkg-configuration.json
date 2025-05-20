@@ -1,6 +1,7 @@
 {
     "binarySources": [
-        "default",
-        "clear"
+        "clear",
+        "files:external/vcpkg/bincache,readwrite",
+        "default"
     ]
 }
