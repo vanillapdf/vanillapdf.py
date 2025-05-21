@@ -1,13 +1,21 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(vanillapdf.py C CXX)
-
 # Add option to build a pypi package
 option(VANILLAPDF_PY_PACKAGE_BUILD "Enable packaging install mode" OFF)
+option(BUILD_SHARED_LIBS "Build shared libraries instead of static ones" OFF)
+
+if (BUILD_SHARED_LIBS)
+    set(VCPKG_LIBRARY_LINKAGE "dynamic")
+else()
+    set(VCPKG_LIBRARY_LINKAGE "static")
+    set(VCPKG_TARGET_TRIPLET "x64-windows-static")
+endif()
 
 # Note: This needs to be included before defining the main project
 # Check for VCPKG - C++ package management system
 include(cmake/vcpkg_init.cmake)
+
+project(vanillapdf.py C CXX)
 
 # Find VanillaPDF via vcpkg
 find_package(vanillapdf CONFIG REQUIRED)

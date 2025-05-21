@@ -1,10 +1,17 @@
-vcpkg_check_linkage(ONLY_DYNAMIC_LIBRARY)
+# Vanilla.PDF vcpkg portfile
+# https://github.com/vanillapdf/vanillapdf
+#
+# Maintainer: Juraj Zikmund <jzikmund@vanillapdf.com>
+# License: Apache-2.0
+#
+# This portfile builds Vanilla.PDF, a cross-platform SDK for creating and modifying PDF documents.
+# It supports both static and shared builds via the standard CMake `BUILD_SHARED_LIBS` option.
 
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO vanillapdf/vanillapdf
-    REF "main"
-    SHA512 fd49a8020381f8a9a1adb7fb90a03309637680669c81ecc09e5a38b264521029c19da8c4d1e298bb8efd485eb9c28b15fd398dc135efe7920d04c126cd0f0f38
+    REF "static-library"
+    SHA512 75be0c6c79b3147ea0ae63d15e85486a23fe1f3b5d3efeb25667aec75c3267c74e33671f1dc9bc73270e38c0233ae25806d74c71076a471335c59230d4e108bf
 )
 
 vcpkg_cmake_configure(
