@@ -4,11 +4,21 @@ cmake_minimum_required(VERSION 3.15)
 option(VANILLAPDF_PY_PACKAGE_BUILD "Enable packaging install mode" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static ones" OFF)
 
-if (BUILD_SHARED_LIBS)
+if(BUILD_SHARED_LIBS)
     set(VCPKG_LIBRARY_LINKAGE "dynamic")
 else()
     set(VCPKG_LIBRARY_LINKAGE "static")
-    set(VCPKG_TARGET_TRIPLET "x64-windows-static")
+endif()
+
+# Detect platform and set triplet dynamically only if not predefined
+if(NOT DEFINED VCPKG_TARGET_TRIPLET)
+    if(WIN32)
+        set(VCPKG_TARGET_TRIPLET "x64-windows-${VCPKG_LIBRARY_LINKAGE}")
+    elseif(APPLE)
+        set(VCPKG_TARGET_TRIPLET "x64-osx-${VCPKG_LIBRARY_LINKAGE}")
+    elseif(UNIX)
+        set(VCPKG_TARGET_TRIPLET "x64-linux-${VCPKG_LIBRARY_LINKAGE}")
+    endif()
 endif()
 
 # Note: This needs to be included before defining the main project
