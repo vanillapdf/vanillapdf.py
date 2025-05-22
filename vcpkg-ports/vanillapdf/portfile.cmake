@@ -10,8 +10,8 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO vanillapdf/vanillapdf
-    REF "static-library"
-    SHA512 78519781d98a4da751d6c4618e0e7d61eff05a3134f2dd229fa3064952fdd320316eb89ee3c7c5d4513320fb43abc39078886d3109077bd6a0740db9a2cb2c8e
+    REF "main"
+    SHA512 74d97603ed160a84430f911fc0bca679754feea63b1ff3b8e89f8f7d96a65eab11794990e692dd23889d7298366ab8200ddb7198cae498ce04d6e55b9b897239
 )
 
 vcpkg_cmake_configure(
