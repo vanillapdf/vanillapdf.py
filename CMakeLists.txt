@@ -11,7 +11,7 @@ else()
 
     # Windows with static linking requires a different vcpkg triplet
     if(WIN32 AND NOT DEFINED VCPKG_TARGET_TRIPLET)
-        set(VCPKG_TARGET_TRIPLET "x64-windows-static")
+        set(VCPKG_TARGET_TRIPLET "x64-windows-static-md")
     endif()
 endif()
 
