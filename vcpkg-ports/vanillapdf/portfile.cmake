@@ -10,8 +10,8 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO vanillapdf/vanillapdf
-    REF "main"
-    SHA512 00e111dd9d69bbc03786baf826cd4ebc87d50025731af12671408108ef0988b9ecbebae54d169169f9dcfae1efcd1466d0a0dc5e563af0fc6d389f1d5365a78f
+    REF "v2.1.0-alpha.2"
+    SHA512 e66fe7641bf20c2492630137ca7815992eeb532687edaac48a89fc64e4a6daeb8e17f229edac6b513e4e524634ebf189ce900f6e97671c08eae87adca505b883
 )
 
 vcpkg_cmake_configure(
