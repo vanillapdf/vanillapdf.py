@@ -34,6 +34,8 @@ add_library(_vanillapdf MODULE
 
     src/vanillapdf_native/documentmodule.c
     src/vanillapdf_native/documentmodule.h
+    src/vanillapdf_native/buffermodule.c
+    src/vanillapdf_native/buffermodule.h
 )
 
 target_link_libraries(_vanillapdf PRIVATE
