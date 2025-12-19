@@ -1,7 +1,6 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.20)
 
-# Add option to build a pypi package
-option(VANILLAPDF_PY_PACKAGE_BUILD "Enable packaging install mode" OFF)
+# Static/dynamic linking configuration
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static ones" OFF)
 
 if(BUILD_SHARED_LIBS)
@@ -15,14 +14,39 @@ else()
     endif()
 endif()
 
-# Note: This needs to be included before defining the main project
-# Check for VCPKG - C++ package management system
-include(cmake/vcpkg_init.cmake)
+# Set up vcpkg toolchain before project() call
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    include(FetchContent)
+    FetchContent_Declare(
+        vcpkg
+        GIT_REPOSITORY https://github.com/Microsoft/vcpkg.git
+        GIT_TAG        2025.12.12
+        SOURCE_DIR     ${CMAKE_BINARY_DIR}/vcpkg
+    )
+    FetchContent_MakeAvailable(vcpkg)
+
+    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_BINARY_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+    message(STATUS "Set up vcpkg toolchain: ${CMAKE_TOOLCHAIN_FILE}")
+endif()
+
+# Add option to build a pypi package
+option(VANILLAPDF_PY_PACKAGE_BUILD "Enable packaging install mode" OFF)
 
 project(vanillapdf.py C CXX)
 
-# Find VanillaPDF via vcpkg
-find_package(vanillapdf CONFIG REQUIRED)
+# Fetch VanillaPDF library
+include(FetchContent)
+FetchContent_Declare(vanillapdf
+    GIT_REPOSITORY https://github.com/vanillapdf/vanillapdf.git
+    GIT_TAG        v2.2.0
+    GIT_SUBMODULES ""  # Don't fetch submodules (we have our own vcpkg)
+)
+
+# Configure vanillapdf to use parent's vcpkg
+set(VANILLAPDF_INTERNAL_VCPKG OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON CACHE BOOL "Build with -fPIC" FORCE)
+
+FetchContent_MakeAvailable(vanillapdf)
 
 # Find python, which is required for Python.h
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
@@ -64,54 +88,26 @@ set_target_properties(_vanillapdf PROPERTIES
 message(STATUS "Python extension will be built as: ${CMAKE_CURRENT_BINARY_DIR}/_vanillapdf${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 # Packaging
-
 if(VANILLAPDF_PY_PACKAGE_BUILD)
-
-    message(STATUS "Packaging mode: ${VCPKG_LIBRARY_LINKAGE}")
-
-    # Required to get CMAKE_INSTALL_LIBDIR
     include(GNUInstallDirs)
 
     install(TARGETS _vanillapdf
         LIBRARY DESTINATION vanillapdf  # .so (Unix)
         RUNTIME DESTINATION vanillapdf  # .dll (Windows)
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # .lib/.a — not needed in wheel, but consistent
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
 
-    # Only copy shared dependencies if we're linking dynamically
-    if(BUILD_SHARED_LIBS)
-
-        # Copy dependent shared libraries (Linux)
-        if(UNIX AND NOT APPLE)
-
-            # Set RPATH to look in the same folder
-            set_target_properties(_vanillapdf PROPERTIES
-                INSTALL_RPATH "$ORIGIN"
-            )
-
-            file(GLOB VCPKG_SOS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/*.so*")
-            install(FILES ${VCPKG_SOS} DESTINATION vanillapdf)
-        endif()
-
-        # Copy dylibs (macOS)
-        if(APPLE)
-            set_target_properties(_vanillapdf PROPERTIES
-                INSTALL_RPATH "@loader_path"
-                BUILD_RPATH "@loader_path"
-            )
-
-            file(GLOB VCPKG_DYLIBS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/*.dylib")
-            install(FILES ${VCPKG_DYLIBS} DESTINATION vanillapdf)
-        endif()
-
-        # Copy dlls (Windows)
-        if(WIN32)
-            file(GLOB VCPKG_DLLS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/*.dll")
-            install(FILES ${VCPKG_DLLS} DESTINATION vanillapdf)
-        endif()
-
+    # Set RPATH for Unix platforms
+    if(UNIX AND NOT APPLE)
+        set_target_properties(_vanillapdf PROPERTIES
+            INSTALL_RPATH "$ORIGIN"
+        )
+    elseif(APPLE)
+        set_target_properties(_vanillapdf PROPERTIES
+            INSTALL_RPATH "@loader_path"
+            BUILD_RPATH "@loader_path"
+        )
     endif()
-
 endif()
 
 # Tests

@@ -56,16 +56,9 @@ version_file = "src/vanillapdf/_version.py"
 [tool.scikit-build.cmake]
 build-type = "Release"
 args = [
-  "-DCMAKE_TOOLCHAIN_FILE=external/vcpkg/scripts/buildsystems/vcpkg.cmake",
-  "-DVCPKG_OVERLAY_PORTS=vcpkg-ports",
   "-DCMAKE_BUILD_TYPE=Release",
   "-DVANILLAPDF_PY_PACKAGE_BUILD=ON"
 ]
-
-# This is supported in the latest pre-release
-# Once supported we can drop the above configuration
-#[tool.scikit-build.cmake]
-#preset = "default"
 
 [project.optional-dependencies]
 test = ["pytest"]

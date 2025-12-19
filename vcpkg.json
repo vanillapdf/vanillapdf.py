@@ -1,8 +1,12 @@
 {
     "name": "vanillapdf-py",
-    "version-string": "0.1.0",
+    "version": "1.0.0",
     "dependencies": [
-        "vanillapdf"
-    ],
-    "builtin-baseline": "ce613c41372b23b1f51333815feb3edd87ef8a8b"
+        "spdlog",
+        "nlohmann-json",
+        "openssl",
+        "libjpeg-turbo",
+        "openjpeg",
+        "zlib"
+    ]
 }
