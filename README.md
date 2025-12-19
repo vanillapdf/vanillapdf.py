@@ -1,85 +1,67 @@
 # VanillaPDF Python Bindings
 
-&#x20;&#x20;
+[![PyPI](https://img.shields.io/pypi/v/vanillapdf)](https://pypi.org/project/vanillapdf/)
+[![Python](https://img.shields.io/pypi/pyversions/vanillapdf)](https://pypi.org/project/vanillapdf/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-**VanillaPDF** is a Python wrapper around [Vanilla.PDF](https://github.com/vanillapdf/vanillapdf), a modern C++17 library for creating, editing, and signing PDF documents.
+Python bindings for [Vanilla.PDF](https://github.com/vanillapdf/vanillapdf), a high-performance C++17 library for PDF document processing.
 
----
-
-## 🚀 Installation
+## Installation
 
 ```bash
 pip install vanillapdf
 ```
 
-Or install from source (requires CMake, Python ≥3.8):
+Requires Python 3.8 or later. Pre-built wheels are available for Windows, Linux, and macOS.
 
-```bash
-pip install git+https://github.com/vanillapdf/vanillapdf.git
-```
-
----
-
-## 📚 Usage Example
+## Quick Start
 
 ```python
 import vanillapdf
 
-doc = vanillapdf.Document()
-doc.load("sample.pdf")
-doc.save("output.pdf")
+# Open and save a document
+with vanillapdf.Document("input.pdf") as doc:
+    doc.save("output.pdf")
+
+# Work with in-memory buffers
+with vanillapdf.Buffer.create() as buf:
+    buf.set_data(b"binary data")
+    data = buf.get_data()
 ```
 
----
+## Features
 
-## 📦 Features
+| Available Now | Coming Soon |
+|---------------|-------------|
+| Open and save PDF documents | Create new PDF documents |
+| In-memory buffer operations | Digital signatures |
+| Context manager support | Encryption and decryption |
+| Cross-platform (Windows, Linux, macOS) | JPEG2000 and ICC profile support |
 
-* Create and modify PDF documents in pure C++
-* Digital signatures and encryption
-* JPEG2000, LZW, ICC profile support
-* Native performance with Python bindings
-* Cross-platform: Windows, Linux, macOS
+The Python bindings expose functionality from the [Vanilla.PDF C++ library](https://github.com/vanillapdf/vanillapdf), with more features being added progressively.
 
----
-
-## 🧪 Testing
-
-To run tests locally:
+## Development
 
 ```bash
+# Install with test dependencies
 pip install -e .[test]
+
+# Run tests
 pytest
-```
 
----
-
-## 🔧 Build from Source
-
-VanillaPDF is built using CMake and vcpkg.
-
-```bash
+# Build from source (requires CMake and a C++ compiler)
 pip install build
 python -m build
 ```
 
-You can also use `cibuildwheel` to generate wheels for distribution.
+## Contributing
 
----
+Contributions are welcome. Please read the [contributing guidelines](https://github.com/vanillapdf/vanillapdf/blob/main/CONTRIBUTING.md) before submitting a pull request.
 
-## 🤝 Contributing
-
-Contributions are welcome! Please read the [contributing guidelines](https://github.com/vanillapdf/vanillapdf/blob/main/CONTRIBUTING.md) first.
-
----
-
-## 🧓️ License
+## License
 
 Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 ---
 
-## 🏢 About Vanilla.PDF Labs
-
-VanillaPDF is developed and maintained by [Vanilla.PDF Labs](https://vanillapdf.com/about), a company focused on secure, high-performance PDF technology.
-
-For more information, visit [vanillapdf.com](https://vanillapdf.com).
+Developed by [Vanilla.PDF Labs](https://vanillapdf.com) — secure, high-performance PDF technology.
