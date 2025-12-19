@@ -53,7 +53,7 @@ jobs:
         shell: bash
 
       - name: Cache vcpkg binaries
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.vcpkg-cache.outputs.path }}
           key: vcpkg-release-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
