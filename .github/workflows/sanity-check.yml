@@ -10,11 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read  # Download the repository source code
-
-env:
-  VCPKG_ROOT: external/vcpkg
-  VCPKG_DISABLE_METRICS: 1
+  contents: read
 
 jobs:
   sanity:
@@ -38,21 +34,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 0  # Required for setuptools-scm to see Git tags
 
-      - name: Cache vcpkg artifacts
+      - name: Set vcpkg cache path
+        id: vcpkg-cache
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            echo "path=C:/vcpkg-cache" >> $GITHUB_OUTPUT
+          else
+            echo "path=$HOME/.cache/vcpkg/archives" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create vcpkg cache directory
+        run: mkdir -p "${{ steps.vcpkg-cache.outputs.path }}"
+        shell: bash
+
+      - name: Cache vcpkg binaries
         uses: actions/cache@v4
         with:
-          path: |
-            build/vcpkg_installed
-            external/vcpkg/downloads
-            external/vcpkg/bincache
-          key: vcpkg-sanity-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
+          path: ${{ steps.vcpkg-cache.outputs.path }}
+          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            vcpkg-sanity-${{ runner.os }}-${{ matrix.arch }}-
-            vcpkg-sanity-${{ runner.os }}-${{ matrix.arch }}-
-            vcpkg-sanity-${{ runner.os }}-
+            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -65,8 +69,9 @@ jobs:
           pip install build pytest setuptools-scm
 
       - name: Build wheel
-        run: |
-          python -m build --wheel --outdir dist/
+        run: python -m build --wheel --outdir dist/
+        env:
+          VCPKG_DEFAULT_BINARY_CACHE: ${{ steps.vcpkg-cache.outputs.path }}
 
       - name: Install the wheel
         shell: bash
