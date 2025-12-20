@@ -7,6 +7,7 @@
 #include <vanillapdf/utils/c_pdf_version.h>
 
 #include "filemodule.h"
+#include "buffermodule.h"
 
 /* Heap-allocated box that the capsule points to */
 typedef struct {
@@ -144,14 +145,14 @@ PyObject* file_get_filename(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    string_type filename = NULL;
-    error_type err = File_GetFilename(box->handle, &filename);
-    if (err != VANILLAPDF_ERROR_SUCCESS || filename == NULL) {
+    BufferHandle* buffer = NULL;
+    error_type err = File_GetFilename(box->handle, &buffer);
+    if (err != VANILLAPDF_ERROR_SUCCESS || buffer == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "Failed to get filename");
         return NULL;
     }
 
-    return PyUnicode_FromString(filename);
+    return buffer_capsule_from_handle(buffer);
 }
 
 PyObject* file_is_encrypted(PyObject* self, PyObject* args) {

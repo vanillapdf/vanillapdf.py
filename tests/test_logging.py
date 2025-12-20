@@ -34,9 +34,3 @@ def test_logging_severity_enum():
 def test_logging_set_pattern():
     # Just verify it doesn't throw
     vanillapdf.Logging.set_pattern("[%Y-%m-%d %H:%M:%S] [%l] %v")
-
-
-test_logging_get_severity()
-test_logging_set_severity()
-test_logging_severity_enum()
-test_logging_set_pattern()

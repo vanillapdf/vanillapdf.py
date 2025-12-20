@@ -1,4 +1,5 @@
 from . import _vanillapdf
+from .buffer import Buffer
 
 
 class File:
@@ -26,12 +27,24 @@ class File:
             raise ValueError("File has been closed")
         return _vanillapdf.file_get_version(self._handle)
 
-    @property
-    def filename(self) -> str:
-        """Get the filename."""
+    def get_filename(self) -> Buffer:
+        """Get the filename as a Buffer."""
         if self._handle is None:
             raise ValueError("File has been closed")
-        return _vanillapdf.file_get_filename(self._handle)
+        buffer_handle = _vanillapdf.file_get_filename(self._handle)
+        return Buffer._from_handle(buffer_handle)
+
+    def get_filename_string(self, encoding: str = 'utf-8') -> str:
+        """Get the filename as a string.
+
+        Args:
+            encoding: The encoding to use for decoding (default: utf-8).
+
+        Returns:
+            The filename as a decoded string.
+        """
+        buffer = self.get_filename()
+        return buffer.data.decode(encoding)
 
     @property
     def is_encrypted(self) -> bool:

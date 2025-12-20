@@ -46,10 +46,3 @@ def test_library_info_build_components():
     assert 1 <= day <= 31
     assert 1 <= month <= 12
     assert year >= 2020
-
-
-test_library_info_version_components()
-test_library_info_version_string()
-test_library_info_author()
-test_library_info_build_date()
-test_library_info_build_components()

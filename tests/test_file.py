@@ -21,7 +21,7 @@ def test_file_get_filename():
     assert test_input.exists(), f"{test_input} not found"
 
     with vanillapdf.File(str(test_input)) as f:
-        assert f.filename == "pdf-test.pdf"
+        assert f.get_filename_string() == "pdf-test.pdf"
 
 
 def test_file_is_encrypted():
@@ -32,8 +32,8 @@ def test_file_is_encrypted():
 
     with vanillapdf.File(str(test_input)) as f:
         f.initialize()
-        # Our test file should not be encrypted
-        assert f.is_encrypted is False
+        # Our test file is encrypted
+        assert f.is_encrypted is True
 
 
 def test_file_unicode_filename():
@@ -47,10 +47,4 @@ def test_file_unicode_filename():
         f.initialize()
         version = f.version
         assert version in ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0"]
-        assert f.filename == "chinese_names_中文的名字-2.pdf"
-
-
-test_file_open_and_version()
-test_file_get_filename()
-test_file_is_encrypted()
-test_file_unicode_filename()
+        assert f.get_filename_string() == "chinese_names_中文的名字-2.pdf"

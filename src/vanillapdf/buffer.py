@@ -18,11 +18,21 @@ class Buffer:
         handle = _vanillapdf.buffer_create_from_data(data)
         return Buffer(handle)
 
+    @classmethod
+    def _from_handle(cls, handle) -> "Buffer":
+        """Create a Buffer from an existing handle (internal use)."""
+        return cls(handle)
+
     def set_data(self, data: bytes) -> None:
         _vanillapdf.buffer_set_data(self._handle, data)
 
     def get_data(self) -> bytes:
         return _vanillapdf.buffer_get_data(self._handle)
+
+    @property
+    def data(self) -> bytes:
+        """Get the buffer data."""
+        return self.get_data()
 
     def close(self):
         if self._handle is not None:
