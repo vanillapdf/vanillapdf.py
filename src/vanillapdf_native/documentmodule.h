@@ -3,8 +3,8 @@
 
 #include <Python.h>
 
-PyObject* vp_document_open(PyObject* self, PyObject* args);
-PyObject* vp_document_save(PyObject* self, PyObject* args);
-PyObject* vp_document_release(PyObject* self, PyObject* args);
+PyObject* document_open(PyObject* self, PyObject* args);
+PyObject* document_save(PyObject* self, PyObject* args);
+PyObject* document_release(PyObject* self, PyObject* args);
 
 #endif // DOCUMENTMODULE_H
