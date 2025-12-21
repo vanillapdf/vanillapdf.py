@@ -109,22 +109,7 @@ PyObject* file_get_version(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    /* Convert version enum to string */
-    const char* version_str;
-    switch (version) {
-        case PDFVersion_10: version_str = "1.0"; break;
-        case PDFVersion_11: version_str = "1.1"; break;
-        case PDFVersion_12: version_str = "1.2"; break;
-        case PDFVersion_13: version_str = "1.3"; break;
-        case PDFVersion_14: version_str = "1.4"; break;
-        case PDFVersion_15: version_str = "1.5"; break;
-        case PDFVersion_16: version_str = "1.6"; break;
-        case PDFVersion_17: version_str = "1.7"; break;
-        case PDFVersion_20: version_str = "2.0"; break;
-        default: version_str = "unknown"; break;
-    }
-
-    return PyUnicode_FromString(version_str);
+    return PyLong_FromLong((long)version);
 }
 
 PyObject* file_get_filename(PyObject* self, PyObject* args) {

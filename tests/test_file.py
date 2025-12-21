@@ -10,8 +10,10 @@ def test_file_open_and_version():
 
     with vanillapdf.File(str(test_input)) as f:
         f.initialize()
-        version = f.version
-        assert version in ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0"]
+        version = f.get_version()
+        assert isinstance(version, vanillapdf.PDFVersion)
+        version_str = f.get_version_string()
+        assert version_str in ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0"]
 
 
 def test_file_get_filename():
@@ -45,6 +47,6 @@ def test_file_unicode_filename():
 
     with vanillapdf.File(str(test_input)) as f:
         f.initialize()
-        version = f.version
-        assert version in ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0"]
+        version = f.get_version()
+        assert isinstance(version, vanillapdf.PDFVersion)
         assert f.get_filename_string() == "chinese_names_中文的名字-2.pdf"

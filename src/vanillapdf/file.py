@@ -1,5 +1,20 @@
+from enum import IntEnum
 from . import _vanillapdf
 from .buffer import Buffer
+
+
+class PDFVersion(IntEnum):
+    """PDF version identifiers."""
+    UNDEFINED = 0
+    PDF_1_0 = 1
+    PDF_1_1 = 2
+    PDF_1_2 = 3
+    PDF_1_3 = 4
+    PDF_1_4 = 5
+    PDF_1_5 = 6
+    PDF_1_6 = 7
+    PDF_1_7 = 8
+    PDF_2_0 = 9
 
 
 class File:
@@ -20,12 +35,27 @@ class File:
             raise ValueError("File has been closed")
         _vanillapdf.file_initialize(self._handle)
 
-    @property
-    def version(self) -> str:
-        """Get the PDF version (e.g., '1.7', '2.0')."""
+    def get_version(self) -> PDFVersion:
+        """Get the PDF version as an enum."""
         if self._handle is None:
             raise ValueError("File has been closed")
-        return _vanillapdf.file_get_version(self._handle)
+        return PDFVersion(_vanillapdf.file_get_version(self._handle))
+
+    def get_version_string(self) -> str:
+        """Get the PDF version as a string (e.g., '1.7', '2.0')."""
+        version = self.get_version()
+        version_map = {
+            PDFVersion.PDF_1_0: "1.0",
+            PDFVersion.PDF_1_1: "1.1",
+            PDFVersion.PDF_1_2: "1.2",
+            PDFVersion.PDF_1_3: "1.3",
+            PDFVersion.PDF_1_4: "1.4",
+            PDFVersion.PDF_1_5: "1.5",
+            PDFVersion.PDF_1_6: "1.6",
+            PDFVersion.PDF_1_7: "1.7",
+            PDFVersion.PDF_2_0: "2.0",
+        }
+        return version_map.get(version, "unknown")
 
     def get_filename(self) -> Buffer:
         """Get the filename as a Buffer."""
