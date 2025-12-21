@@ -60,6 +60,12 @@ add_library(_vanillapdf MODULE
     src/vanillapdf_native/documentmodule.h
     src/vanillapdf_native/buffermodule.c
     src/vanillapdf_native/buffermodule.h
+    src/vanillapdf_native/filemodule.c
+    src/vanillapdf_native/filemodule.h
+    src/vanillapdf_native/libraryinfomodule.c
+    src/vanillapdf_native/libraryinfomodule.h
+    src/vanillapdf_native/loggingmodule.c
+    src/vanillapdf_native/loggingmodule.h
 )
 
 target_link_libraries(_vanillapdf PRIVATE
