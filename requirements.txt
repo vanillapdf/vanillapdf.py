@@ -1,2 +1,4 @@
-scikit-build-core>=0.4
-build
+scikit-build-core>=0.10
+setuptools>=80
+setuptools-scm>=9
+build>=1.2

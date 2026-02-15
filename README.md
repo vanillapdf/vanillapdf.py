@@ -12,7 +12,7 @@ Python bindings for [Vanilla.PDF](https://github.com/vanillapdf/vanillapdf), a h
 pip install vanillapdf
 ```
 
-Requires Python 3.8 or later. Pre-built wheels are available for Windows, Linux, and macOS.
+Requires Python 3.10 or later. Pre-built wheels are available for Windows, Linux, and macOS.
 
 ## Quick Start
 
