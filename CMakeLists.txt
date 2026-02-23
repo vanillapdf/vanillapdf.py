@@ -38,7 +38,7 @@ project(vanillapdf.py C CXX)
 include(FetchContent)
 FetchContent_Declare(vanillapdf
     GIT_REPOSITORY https://github.com/vanillapdf/vanillapdf.git
-    GIT_TAG        v2.2.0
+    GIT_TAG        feature/text-string-encoding
     GIT_SUBMODULES ""  # Don't fetch submodules (we have our own vcpkg)
 )
 
@@ -60,6 +60,13 @@ add_library(_vanillapdf MODULE
     src/vanillapdf_native/documentmodule.h
     src/vanillapdf_native/buffermodule.c
     src/vanillapdf_native/buffermodule.h
+
+    src/vanillapdf_native/stringobjectmodule.c
+    src/vanillapdf_native/stringobjectmodule.h
+
+    src/vanillapdf_native/text_string_encodingmodule.c
+    src/vanillapdf_native/text_string_encodingmodule.h
+    src/vanillapdf_native/text_string_encoding_utils.h
 )
 
 target_link_libraries(_vanillapdf PRIVATE
