@@ -38,7 +38,7 @@ project(vanillapdf.py C CXX)
 include(FetchContent)
 FetchContent_Declare(vanillapdf
     GIT_REPOSITORY https://github.com/vanillapdf/vanillapdf.git
-    GIT_TAG        v2.2.0
+    GIT_TAG        v2.3.0-beta.1
     GIT_SUBMODULES ""  # Don't fetch submodules (we have our own vcpkg)
 )
 

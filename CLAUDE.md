@@ -29,7 +29,6 @@ python -m build --wheel
 ```bash
 python -m venv venv
 venv\Scripts\activate
-pip install -r requirements.txt
 pip install -e .
 ```
 
@@ -71,18 +70,17 @@ C++ handles are wrapped as PyCapsule objects for safe passing between Python and
 ### Build System
 
 - **CMake** with **scikit-build-core** for Python packaging
-- **vcpkg** (in `external/vcpkg/`) manages C++ dependencies
-- Custom vcpkg port in `vcpkg-ports/vanillapdf/`
+- **vcpkg** manages C++ dependencies, fetched via CMake `FetchContent` (no submodule)
+- The vanillapdf C++ library itself is also fetched via `FetchContent` (pinned tag in `CMakeLists.txt`)
 - Static linking by default; dynamic linking available via `BUILD_SHARED_LIBS`
 
 ### Key Files
 
 | File | Purpose |
 |------|---------|
-| `CMakeLists.txt` | Build configuration, defines `_vanillapdf` module |
+| `CMakeLists.txt` | Build configuration, defines `_vanillapdf` module, pins vcpkg + vanillapdf versions |
 | `pyproject.toml` | Python packaging, scikit-build-core config |
-| `cmake/vcpkg_init.cmake` | Auto-bootstraps vcpkg if missing |
-| `vcpkg.json` | Declares vanillapdf C++ dependency |
+| `vcpkg.json` | Declares the C++ dependencies this project needs from vcpkg |
 
 ## Testing
 
@@ -97,4 +95,4 @@ pytest tests/ -v                 # Verbose output
 ## CI/CD
 
 - **sanity-check.yml** - Runs on push/PR to main; builds and tests on Ubuntu, Windows, macOS
-- **release.yml** - Manual dispatch; builds wheels for Python 3.8-3.13 and publishes to PyPI
+- **release.yml** - Manual dispatch; builds wheels for Python 3.10-3.14 and publishes to PyPI
