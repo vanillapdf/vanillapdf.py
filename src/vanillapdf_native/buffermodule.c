@@ -7,11 +7,6 @@
 
 #include "buffermodule.h"
 
-/* Heap-allocated box that the capsule points to */
-typedef struct {
-    BufferHandle* handle;  /* NULL => released */
-} BufferHandleBox;
-
 static void buffer_capsule_destructor(PyObject* capsule) {
     BufferHandleBox* box = (BufferHandleBox*)PyCapsule_GetPointer(
         capsule, "VanillaPDF.Buffer");
@@ -21,6 +16,30 @@ static void buffer_capsule_destructor(PyObject* capsule) {
         }
         PyMem_Free(box);
     }
+}
+
+PyObject* buffer_capsule_from_handle(BufferHandle* handle) {
+    if (handle == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot create capsule from NULL handle");
+        return NULL;
+    }
+
+    BufferHandleBox* box = (BufferHandleBox*)PyMem_Malloc(sizeof(BufferHandleBox));
+    if (box == NULL) {
+        Buffer_Release(handle);
+        return PyErr_NoMemory();
+    }
+    box->handle = handle;
+
+    PyObject* capsule = PyCapsule_New((void*)box, "VanillaPDF.Buffer",
+                                       buffer_capsule_destructor);
+    if (capsule == NULL) {
+        Buffer_Release(handle);
+        PyMem_Free(box);
+        return NULL;
+    }
+
+    return capsule;
 }
 
 PyObject* buffer_create(PyObject* self, PyObject* args) {
