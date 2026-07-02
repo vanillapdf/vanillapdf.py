@@ -17,21 +17,21 @@ PyObject* boolean_object_create(PyObject* self, PyObject* args) {
     }
 
     BooleanObjectHandle* boolean = nullptr;
-    error_type err = BooleanObject_Create(&boolean);
-    if (err != VANILLAPDF_ERROR_SUCCESS) {
-        return raise_last_error(err, "BooleanObject_Create");
+    error_type create_err = BooleanObject_Create(&boolean);
+    if (create_err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(create_err, "BooleanObject_Create");
     }
     auto guard = make_scope_guard([&] { BooleanObject_Release(boolean); });
 
-    err = BooleanObject_SetValue(boolean, value ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE);
-    if (err != VANILLAPDF_ERROR_SUCCESS) {
-        return raise_last_error(err, "BooleanObject_SetValue");
+    error_type set_err = BooleanObject_SetValue(boolean, value ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE);
+    if (set_err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(set_err, "BooleanObject_SetValue");
     }
 
     ObjectHandle* object = nullptr;
-    err = BooleanObject_ToObject(boolean, &object);
-    if (err != VANILLAPDF_ERROR_SUCCESS) {
-        return raise_last_error(err, "BooleanObject_ToObject");
+    error_type to_object_err = BooleanObject_ToObject(boolean, &object);
+    if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(to_object_err, "BooleanObject_ToObject");
     }
 
     return object_capsule_from_handle(object);

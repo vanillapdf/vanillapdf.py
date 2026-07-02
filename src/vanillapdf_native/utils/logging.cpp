@@ -14,7 +14,7 @@ PyObject* logging_get_severity(PyObject* self, PyObject* args) {
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Logging_GetSeverity");
     }
-    return PyLong_FromLong((long)severity);
+    return PyLong_FromLong(static_cast<long>(severity));
 }
 
 PyObject* logging_set_severity(PyObject* self, PyObject* args) {
@@ -23,7 +23,7 @@ PyObject* logging_set_severity(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = Logging_SetSeverity((LoggingSeverity)severity);
+    error_type err = Logging_SetSeverity(static_cast<LoggingSeverity>(severity));
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Logging_SetSeverity");
     }

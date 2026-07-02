@@ -19,16 +19,16 @@ PyObject* name_object_create_from_decoded_string(PyObject* self, PyObject* args)
     }
 
     NameObjectHandle* name = nullptr;
-    error_type err = NameObject_CreateFromDecodedString(value, &name);
-    if (err != VANILLAPDF_ERROR_SUCCESS) {
-        return raise_last_error(err, "NameObject_CreateFromDecodedString");
+    error_type create_err = NameObject_CreateFromDecodedString(value, &name);
+    if (create_err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(create_err, "NameObject_CreateFromDecodedString");
     }
     auto guard = make_scope_guard([&] { NameObject_Release(name); });
 
     ObjectHandle* object = nullptr;
-    err = NameObject_ToObject(name, &object);
-    if (err != VANILLAPDF_ERROR_SUCCESS) {
-        return raise_last_error(err, "NameObject_ToObject");
+    error_type to_object_err = NameObject_ToObject(name, &object);
+    if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(to_object_err, "NameObject_ToObject");
     }
 
     return object_capsule_from_handle(object);

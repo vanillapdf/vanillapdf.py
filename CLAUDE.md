@@ -79,6 +79,9 @@ Native library handles are wrapped as PyCapsule objects; every syntax object is
 exposed as a single `"VanillaPDF.Object"` capsule, with typed accessors
 converting to concrete handles internally via `X_FromObject`.
 
+See [`docs/STYLE.md`](docs/STYLE.md) for the coding conventions (casts, error
+handling, handles/memory, Python wrappers).
+
 ### Build System
 
 - **CMake** with **scikit-build-core** for Python packaging

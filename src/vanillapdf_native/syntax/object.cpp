@@ -32,7 +32,7 @@ PyObject* object_get_object_type(PyObject* self, PyObject* args) {
         return raise_last_error(err, "Object_GetObjectType");
     }
 
-    return PyLong_FromLong((long)type);
+    return PyLong_FromLong(static_cast<long>(type));
 }
 
 PyObject* object_type_name(PyObject* self, PyObject* args) {
@@ -42,7 +42,7 @@ PyObject* object_type_name(PyObject* self, PyObject* args) {
     }
 
     string_type name = nullptr;
-    error_type err = Object_TypeName((ObjectType)type_value, &name);
+    error_type err = Object_TypeName(static_cast<ObjectType>(type_value), &name);
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Object_TypeName");
     }
@@ -67,7 +67,7 @@ PyObject* object_get_offset(PyObject* self, PyObject* args) {
         return raise_last_error(err, "Object_GetOffset");
     }
 
-    return PyLong_FromLongLong((long long)offset);
+    return PyLong_FromLongLong(static_cast<long long>(offset));
 }
 
 PyObject* object_to_string(PyObject* self, PyObject* args) {

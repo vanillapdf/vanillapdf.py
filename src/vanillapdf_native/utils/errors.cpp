@@ -15,7 +15,7 @@ PyObject* errors_get_last_error(PyObject* self, PyObject* args) {
         return raise_last_error(err, "Errors_GetLastError");
     }
 
-    return PyLong_FromUnsignedLong((unsigned long)code);
+    return PyLong_FromUnsignedLong(static_cast<unsigned long>(code));
 }
 
 PyObject* errors_get_printable_error_text(PyObject* self, PyObject* args) {
@@ -42,7 +42,7 @@ PyObject* errors_get_printable_error_text(PyObject* self, PyObject* args) {
         return PyUnicode_FromString("");
     }
 
-    char* data = py_malloc<char>((size_t)size);
+    char* data = py_malloc<char>(static_cast<size_t>(size));
     if (data == nullptr) {
         return PyErr_NoMemory();
     }
@@ -69,7 +69,7 @@ PyObject* errors_get_last_error_message(PyObject* self, PyObject* args) {
         return PyUnicode_FromString("");
     }
 
-    char* data = py_malloc<char>((size_t)size);
+    char* data = py_malloc<char>(static_cast<size_t>(size));
     if (data == nullptr) {
         return PyErr_NoMemory();
     }
