@@ -1,5 +1,5 @@
-from . import _vanillapdf
-from .handle import Handle
+from .. import _vanillapdf
+from ..handle import Handle
 
 
 class Document(Handle):

@@ -1,12 +1,11 @@
-from .document import Document
-from .buffer import Buffer
-from .file import File, PDFVersion
-from .library_info import LibraryInfo
-from .logging import Logging, LoggingSeverity
-from .errors import PdfError, Errors
-from .license_info import LicenseInfo
-from .misc_utils import MiscUtils
-from .objects import (
+from .utils.buffer import Buffer
+from .utils.library_info import LibraryInfo
+from .utils.logging import Logging, LoggingSeverity
+from .utils.errors import PdfError, Errors
+from .utils.license_info import LicenseInfo
+from .utils.misc_utils import MiscUtils
+from .syntax.file import File, PDFVersion
+from .syntax.objects import (
     ObjectType,
     StringType,
     Object,
@@ -19,6 +18,7 @@ from .objects import (
     LiteralStringObject,
     HexadecimalStringObject,
 )
+from .semantics.document import Document
 
 try:
     from ._version import version as __version__

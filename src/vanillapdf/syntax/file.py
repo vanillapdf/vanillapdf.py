@@ -1,7 +1,7 @@
 from enum import IntEnum
-from . import _vanillapdf
-from .buffer import Buffer
-from .handle import Handle
+from .. import _vanillapdf
+from ..utils.buffer import Buffer
+from ..handle import Handle
 
 
 class PDFVersion(IntEnum):

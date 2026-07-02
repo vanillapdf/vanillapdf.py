@@ -1,4 +1,4 @@
-from . import _vanillapdf
+from .. import _vanillapdf
 
 #: Exception raised when a VanillaPDF library call fails. Instances carry the
 #: numeric library error code in the ``error_code`` attribute.

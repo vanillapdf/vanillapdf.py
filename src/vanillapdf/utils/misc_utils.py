@@ -1,4 +1,4 @@
-from . import _vanillapdf
+from .. import _vanillapdf
 
 
 class MiscUtils:

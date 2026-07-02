@@ -1,5 +1,5 @@
 from datetime import date
-from . import _vanillapdf
+from .. import _vanillapdf
 
 
 class LibraryInfo:

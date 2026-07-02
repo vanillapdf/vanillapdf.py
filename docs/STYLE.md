@@ -55,7 +55,13 @@ VanillaPDF **C API** only.
 
 ## Python (`src/vanillapdf/`)
 - snake_case modules exporting PascalCase classes; re-export public names from
-  `__init__.py` (`__all__`).
+  the top-level `__init__.py` (`__all__`) so the public API is flat
+  (`vanillapdf.IntegerObject`) regardless of internal location.
+- Modules are grouped into `syntax/`, `utils/`, `semantics/` subpackages
+  mirroring the C++ layers; `handle.py` (shared base) stays at the package root.
+  Unlike the C++ side, related classes stay **grouped** per module (e.g. all
+  object types in `syntax/objects.py`) — Python idiom favors grouping, and it
+  keeps `Object._wrap` dispatch free of circular imports.
 - Handle-owning classes extend `Handle` (`handle.py`): set
   `_release = staticmethod(_vanillapdf.x_release)`, assign `self._handle` in
   `__init__`, and use `self._require_handle()` before native calls. `Handle`

@@ -1,5 +1,5 @@
 from enum import IntEnum
-from . import _vanillapdf
+from .. import _vanillapdf
 
 
 class LoggingSeverity(IntEnum):
