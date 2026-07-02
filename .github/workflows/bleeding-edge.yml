@@ -1,11 +1,16 @@
-name: Sanity Check
+name: Bleeding Edge
+
+# Builds against the rolling development state of our two upstream
+# dependencies instead of the pinned versions: vanillapdf's `main` branch
+# and vcpkg's `master` registry (which brings whatever port versions of
+# spdlog/fmt/openssl/libjpeg-turbo/openjpeg/zlib are newest at the time).
+# Meant to catch breaking changes before they land in a tagged release we
+# depend on. Failures here are informational - upstream main can be
+# mid-flux - and are not expected to block anything.
 
 on:
-  push:
-    branches: [ "main" ]
-
-  pull_request:
-    branches: [ "main" ]
+  schedule:
+    - cron: "0 4 * * *"
 
   workflow_dispatch:
 
@@ -17,8 +22,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sanity:
-    name: Sanity check (${{ matrix.os }})
+  bleeding-edge:
+    name: Bleeding edge (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     env:
       VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
@@ -49,9 +54,9 @@ jobs:
         uses: actions/cache@v5
         with:
           path: .vcpkg-cache
-          key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-edge-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            vcpkg-${{ runner.os }}-${{ matrix.arch }}-
+            vcpkg-edge-${{ runner.os }}-${{ matrix.arch }}-
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -63,8 +68,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install build pytest setuptools-scm
 
-      - name: Build wheel
-        run: python -m build --wheel --outdir dist/
+      - name: Build wheel against vanillapdf main + vcpkg master
+        run: python -m build --wheel --outdir dist/ -C cmake.define.VANILLAPDF_GIT_TAG=main -C cmake.define.VCPKG_GIT_TAG=master
 
       - name: Install the wheel
         shell: bash

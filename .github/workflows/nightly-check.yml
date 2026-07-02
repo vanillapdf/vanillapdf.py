@@ -1,11 +1,13 @@
-name: Sanity Check
+name: Nightly Check
+
+# Reruns the sanity-check build/test on a schedule, independent of code
+# changes, to catch breakage from GitHub-hosted runner image updates
+# (e.g. new Xcode/MSVC toolchains, package versions) before it surfaces
+# as a mysterious failure on someone's next PR.
 
 on:
-  push:
-    branches: [ "main" ]
-
-  pull_request:
-    branches: [ "main" ]
+  schedule:
+    - cron: "0 3 * * *"
 
   workflow_dispatch:
 
@@ -17,8 +19,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sanity:
-    name: Sanity check (${{ matrix.os }})
+  nightly:
+    name: Nightly check (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     env:
       VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
