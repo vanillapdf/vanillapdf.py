@@ -6,6 +6,19 @@ from .logging import Logging, LoggingSeverity
 from .errors import PdfError, Errors
 from .license_info import LicenseInfo
 from .misc_utils import MiscUtils
+from .objects import (
+    ObjectType,
+    StringType,
+    Object,
+    NullObject,
+    BooleanObject,
+    IntegerObject,
+    RealObject,
+    NameObject,
+    StringObject,
+    LiteralStringObject,
+    HexadecimalStringObject,
+)
 
 try:
     from ._version import version as __version__
@@ -24,5 +37,16 @@ __all__ = [
     "Errors",
     "LicenseInfo",
     "MiscUtils",
+    "ObjectType",
+    "StringType",
+    "Object",
+    "NullObject",
+    "BooleanObject",
+    "IntegerObject",
+    "RealObject",
+    "NameObject",
+    "StringObject",
+    "LiteralStringObject",
+    "HexadecimalStringObject",
     "__version__",
 ]

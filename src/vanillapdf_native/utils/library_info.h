@@ -1,5 +1,5 @@
-#ifndef LIBRARYINFOMODULE_H
-#define LIBRARYINFOMODULE_H
+#ifndef VANILLAPDF_PY_UTILS_LIBRARY_INFO_H
+#define VANILLAPDF_PY_UTILS_LIBRARY_INFO_H
 
 #include <Python.h>
 
@@ -12,4 +12,4 @@ PyObject* library_info_get_build_day(PyObject* self, PyObject* args);
 PyObject* library_info_get_build_month(PyObject* self, PyObject* args);
 PyObject* library_info_get_build_year(PyObject* self, PyObject* args);
 
-#endif // LIBRARYINFOMODULE_H
+#endif // VANILLAPDF_PY_UTILS_LIBRARY_INFO_H

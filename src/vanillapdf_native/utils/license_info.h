@@ -1,5 +1,5 @@
-#ifndef VANILLAPDF_PY_LICENSEINFOMODULE_H
-#define VANILLAPDF_PY_LICENSEINFOMODULE_H
+#ifndef VANILLAPDF_PY_UTILS_LICENSE_INFO_H
+#define VANILLAPDF_PY_UTILS_LICENSE_INFO_H
 
 #define PY_SSIZE_T_CLEAN
 
@@ -17,4 +17,4 @@ PyObject* license_info_is_valid(PyObject* self, PyObject* args);
 /* LicenseInfo_IsTemporary() -> bool */
 PyObject* license_info_is_temporary(PyObject* self, PyObject* args);
 
-#endif /* VANILLAPDF_PY_LICENSEINFOMODULE_H */
+#endif /* VANILLAPDF_PY_UTILS_LICENSE_INFO_H */

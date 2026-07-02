@@ -5,7 +5,7 @@
 #include <vanillapdf/c_values.h>
 #include <vanillapdf/utils/c_misc_utils.h>
 
-#include "miscutilsmodule.h"
+#include "utils/misc_utils.h"
 #include "common.h"
 
 PyObject* misc_utils_initialize_openssl(PyObject* self, PyObject* args) {

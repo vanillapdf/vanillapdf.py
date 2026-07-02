@@ -1,5 +1,5 @@
-#ifndef BUFFERMODULE_H
-#define BUFFERMODULE_H
+#ifndef VANILLAPDF_PY_UTILS_BUFFER_H
+#define VANILLAPDF_PY_UTILS_BUFFER_H
 
 #include <Python.h>
 #include <vanillapdf/utils/c_buffer.h>
@@ -14,4 +14,4 @@ PyObject* buffer_set_data(PyObject* self, PyObject* args);
 PyObject* buffer_get_data(PyObject* self, PyObject* args);
 PyObject* buffer_release(PyObject* self, PyObject* args);
 
-#endif // BUFFERMODULE_H
+#endif // VANILLAPDF_PY_UTILS_BUFFER_H

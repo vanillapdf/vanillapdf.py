@@ -5,7 +5,7 @@
 #include <vanillapdf/c_values.h>
 #include <vanillapdf/utils/c_buffer.h>
 
-#include "buffermodule.h"
+#include "utils/buffer.h"
 #include "common.h"
 
 static const char* const BUFFER_CAPSULE = "VanillaPDF.Buffer";

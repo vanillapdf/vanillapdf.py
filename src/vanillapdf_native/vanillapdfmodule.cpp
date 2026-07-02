@@ -3,14 +3,21 @@
 #include <Python.h>
 
 #include "common.h"
-#include "documentmodule.h"
-#include "buffermodule.h"
-#include "filemodule.h"
-#include "libraryinfomodule.h"
-#include "loggingmodule.h"
-#include "errorsmodule.h"
-#include "licenseinfomodule.h"
-#include "miscutilsmodule.h"
+#include "semantics/document.h"
+#include "utils/buffer.h"
+#include "syntax/file.h"
+#include "utils/library_info.h"
+#include "utils/logging.h"
+#include "utils/errors.h"
+#include "utils/license_info.h"
+#include "utils/misc_utils.h"
+#include "syntax/object.h"
+#include "syntax/null_object.h"
+#include "syntax/boolean_object.h"
+#include "syntax/integer_object.h"
+#include "syntax/real_object.h"
+#include "syntax/name_object.h"
+#include "syntax/string_object.h"
 
 static PyMethodDef VanillapdfMethods[] = {
     /* Document methods */
@@ -57,6 +64,36 @@ static PyMethodDef VanillapdfMethods[] = {
     /* MiscUtils methods */
     {"misc_utils_initialize_openssl", misc_utils_initialize_openssl, METH_NOARGS, "Initialize OpenSSL"},
     {"misc_utils_cleanup_openssl", misc_utils_cleanup_openssl, METH_NOARGS, "Cleanup OpenSSL"},
+    /* Object (base) methods */
+    {"object_get_object_type", object_get_object_type, METH_VARARGS, "Get object type"},
+    {"object_type_name", object_type_name, METH_VARARGS, "Get printable object type name"},
+    {"object_get_offset", object_get_offset, METH_VARARGS, "Get object file offset"},
+    {"object_to_string", object_to_string, METH_VARARGS, "Get object string representation"},
+    {"object_to_pdf", object_to_pdf, METH_VARARGS, "Get object PDF representation"},
+    {"object_release", object_release, METH_VARARGS, "Release an Object"},
+    /* Null object */
+    {"null_object_create", null_object_create, METH_NOARGS, "Create a Null object"},
+    /* Boolean object */
+    {"boolean_object_create", boolean_object_create, METH_VARARGS, "Create a Boolean object"},
+    {"boolean_object_get_value", boolean_object_get_value, METH_VARARGS, "Get Boolean value"},
+    {"boolean_object_set_value", boolean_object_set_value, METH_VARARGS, "Set Boolean value"},
+    /* Integer object */
+    {"integer_object_create", integer_object_create, METH_VARARGS, "Create an Integer object"},
+    {"integer_object_get_value", integer_object_get_value, METH_VARARGS, "Get Integer value"},
+    {"integer_object_set_value", integer_object_set_value, METH_VARARGS, "Set Integer value"},
+    /* Real object */
+    {"real_object_create", real_object_create, METH_VARARGS, "Create a Real object"},
+    {"real_object_get_value", real_object_get_value, METH_VARARGS, "Get Real value"},
+    {"real_object_set_value", real_object_set_value, METH_VARARGS, "Set Real value"},
+    /* Name object */
+    {"name_object_create_from_decoded_string", name_object_create_from_decoded_string, METH_VARARGS, "Create a Name object from a decoded string"},
+    {"name_object_get_value", name_object_get_value, METH_VARARGS, "Get Name value"},
+    /* String object */
+    {"string_object_get_string_type", string_object_get_string_type, METH_VARARGS, "Get String subtype"},
+    {"string_object_get_value", string_object_get_value, METH_VARARGS, "Get String value"},
+    {"string_object_set_value", string_object_set_value, METH_VARARGS, "Set String value"},
+    {"literal_string_object_create_from_decoded_string", literal_string_object_create_from_decoded_string, METH_VARARGS, "Create a Literal String object from a decoded string"},
+    {"hexadecimal_string_object_create_from_decoded_string", hexadecimal_string_object_create_from_decoded_string, METH_VARARGS, "Create a Hexadecimal String object from a decoded string"},
     {nullptr, nullptr, 0, nullptr}
 };
 

@@ -6,8 +6,8 @@
 #include <vanillapdf/syntax/c_file.h>
 #include <vanillapdf/utils/c_pdf_version.h>
 
-#include "filemodule.h"
-#include "buffermodule.h"
+#include "syntax/file.h"
+#include "utils/buffer.h"
 #include "common.h"
 
 static const char* const FILE_CAPSULE = "VanillaPDF.File";

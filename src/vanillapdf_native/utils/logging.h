@@ -1,5 +1,5 @@
-#ifndef LOGGINGMODULE_H
-#define LOGGINGMODULE_H
+#ifndef VANILLAPDF_PY_UTILS_LOGGING_H
+#define VANILLAPDF_PY_UTILS_LOGGING_H
 
 #include <Python.h>
 
@@ -8,4 +8,4 @@ PyObject* logging_set_severity(PyObject* self, PyObject* args);
 PyObject* logging_set_pattern(PyObject* self, PyObject* args);
 PyObject* logging_shutdown(PyObject* self, PyObject* args);
 
-#endif // LOGGINGMODULE_H
+#endif // VANILLAPDF_PY_UTILS_LOGGING_H

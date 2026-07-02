@@ -5,7 +5,7 @@
 #include <vanillapdf/c_values.h>
 #include <vanillapdf/utils/c_library_info.h>
 
-#include "libraryinfomodule.h"
+#include "utils/library_info.h"
 #include "common.h"
 
 PyObject* library_info_get_version_major(PyObject* self, PyObject* args) {

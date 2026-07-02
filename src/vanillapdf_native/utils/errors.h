@@ -1,5 +1,5 @@
-#ifndef VANILLAPDF_PY_ERRORSMODULE_H
-#define VANILLAPDF_PY_ERRORSMODULE_H
+#ifndef VANILLAPDF_PY_UTILS_ERRORS_H
+#define VANILLAPDF_PY_UTILS_ERRORS_H
 
 #define PY_SSIZE_T_CLEAN
 
@@ -14,4 +14,4 @@ PyObject* errors_get_printable_error_text(PyObject* self, PyObject* args);
 /* Errors_GetLastErrorMessage() -> str (thread-local detail message) */
 PyObject* errors_get_last_error_message(PyObject* self, PyObject* args);
 
-#endif /* VANILLAPDF_PY_ERRORSMODULE_H */
+#endif /* VANILLAPDF_PY_UTILS_ERRORS_H */

@@ -60,12 +60,24 @@ Both classes support context managers and require explicit `close()` or `with` s
 
 ### C Extension (`src/vanillapdf_native/`)
 
-The `_vanillapdf` module bridges Python to the C++ library:
-- `vanillapdfmodule.c` - Main module definition
-- `documentmodule.c` - Document operations (open, save, release)
-- `buffermodule.c` - Buffer operations (create, get/set data, release)
+The `_vanillapdf` module bridges Python to the C++ library. Sources are **C++**
+(`.cpp`) and organized to mirror the upstream C API layout — one file per object
+type in subdirectories:
 
-C++ handles are wrapped as PyCapsule objects for safe passing between Python and C.
+- `vanillapdfmodule.cpp` - Module definition + method table
+- `common.cpp/.h` - Shared infrastructure: capsule helpers (`capsule_new/get/
+  release`, `capsule_cast<T>`), `raise_last_error` + the `PdfError` exception,
+  `ScopeGuard`, `py_malloc<T>`, `narrow_unsigned<T>`
+- `utils/` - buffer, errors, logging, library_info, license_info, misc_utils
+- `syntax/` - object (+ `object_cast<T>` helper), file, and one file per object
+  type (integer_object, boolean_object, string_object, ...)
+- `semantics/` - document (and higher-level PDF constructs)
+
+Includes are resolved from the native source root (e.g. `#include
+"syntax/object.h"`), configured via `target_include_directories` in CMake.
+Native library handles are wrapped as PyCapsule objects; every syntax object is
+exposed as a single `"VanillaPDF.Object"` capsule, with typed accessors
+converting to concrete handles internally via `X_FromObject`.
 
 ### Build System
 

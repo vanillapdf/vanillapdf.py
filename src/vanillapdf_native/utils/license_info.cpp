@@ -6,7 +6,7 @@
 #include <vanillapdf/utils/c_buffer.h>
 #include <vanillapdf/utils/c_license_info.h>
 
-#include "licenseinfomodule.h"
+#include "utils/license_info.h"
 #include "common.h"
 
 PyObject* license_info_set_license_file(PyObject* self, PyObject* args) {

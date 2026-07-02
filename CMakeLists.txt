@@ -63,27 +63,49 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
 add_library(_vanillapdf MODULE
     src/vanillapdf_native/vanillapdfmodule.cpp
     src/vanillapdf_native/vanillapdfmodule.h
-
     src/vanillapdf_native/common.cpp
     src/vanillapdf_native/common.h
 
-    src/vanillapdf_native/documentmodule.cpp
-    src/vanillapdf_native/documentmodule.h
-    src/vanillapdf_native/buffermodule.cpp
-    src/vanillapdf_native/buffermodule.h
-    src/vanillapdf_native/filemodule.cpp
-    src/vanillapdf_native/filemodule.h
-    src/vanillapdf_native/libraryinfomodule.cpp
-    src/vanillapdf_native/libraryinfomodule.h
-    src/vanillapdf_native/loggingmodule.cpp
-    src/vanillapdf_native/loggingmodule.h
+    # utils
+    src/vanillapdf_native/utils/buffer.cpp
+    src/vanillapdf_native/utils/buffer.h
+    src/vanillapdf_native/utils/errors.cpp
+    src/vanillapdf_native/utils/errors.h
+    src/vanillapdf_native/utils/library_info.cpp
+    src/vanillapdf_native/utils/library_info.h
+    src/vanillapdf_native/utils/logging.cpp
+    src/vanillapdf_native/utils/logging.h
+    src/vanillapdf_native/utils/license_info.cpp
+    src/vanillapdf_native/utils/license_info.h
+    src/vanillapdf_native/utils/misc_utils.cpp
+    src/vanillapdf_native/utils/misc_utils.h
 
-    src/vanillapdf_native/errorsmodule.cpp
-    src/vanillapdf_native/errorsmodule.h
-    src/vanillapdf_native/licenseinfomodule.cpp
-    src/vanillapdf_native/licenseinfomodule.h
-    src/vanillapdf_native/miscutilsmodule.cpp
-    src/vanillapdf_native/miscutilsmodule.h
+    # syntax
+    src/vanillapdf_native/syntax/file.cpp
+    src/vanillapdf_native/syntax/file.h
+    src/vanillapdf_native/syntax/object.cpp
+    src/vanillapdf_native/syntax/object.h
+    src/vanillapdf_native/syntax/null_object.cpp
+    src/vanillapdf_native/syntax/null_object.h
+    src/vanillapdf_native/syntax/boolean_object.cpp
+    src/vanillapdf_native/syntax/boolean_object.h
+    src/vanillapdf_native/syntax/integer_object.cpp
+    src/vanillapdf_native/syntax/integer_object.h
+    src/vanillapdf_native/syntax/real_object.cpp
+    src/vanillapdf_native/syntax/real_object.h
+    src/vanillapdf_native/syntax/name_object.cpp
+    src/vanillapdf_native/syntax/name_object.h
+    src/vanillapdf_native/syntax/string_object.cpp
+    src/vanillapdf_native/syntax/string_object.h
+
+    # semantics
+    src/vanillapdf_native/semantics/document.cpp
+    src/vanillapdf_native/semantics/document.h
+)
+
+# Allow includes relative to the native source root (e.g. "syntax/object.h")
+target_include_directories(_vanillapdf PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/vanillapdf_native
 )
 
 target_link_libraries(_vanillapdf PRIVATE

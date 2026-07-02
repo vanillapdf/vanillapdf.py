@@ -5,7 +5,7 @@
 #include <vanillapdf/c_values.h>
 #include <vanillapdf/utils/c_logging.h>
 
-#include "loggingmodule.h"
+#include "utils/logging.h"
 #include "common.h"
 
 PyObject* logging_get_severity(PyObject* self, PyObject* args) {

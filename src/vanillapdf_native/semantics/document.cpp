@@ -5,7 +5,7 @@
 #include <vanillapdf/c_values.h>
 #include <vanillapdf/semantics/c_document.h>
 
-#include "documentmodule.h"
+#include "semantics/document.h"
 #include "common.h"
 
 static const char* const DOCUMENT_CAPSULE = "VanillaPDF.Document";

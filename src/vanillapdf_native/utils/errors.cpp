@@ -5,7 +5,7 @@
 #include <vanillapdf/c_values.h>
 #include <vanillapdf/utils/c_errors.h>
 
-#include "errorsmodule.h"
+#include "utils/errors.h"
 #include "common.h"
 
 PyObject* errors_get_last_error(PyObject* self, PyObject* args) {
