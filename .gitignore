@@ -18,6 +18,9 @@ CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 
+# vcpkg binary cache (CI)
+/.vcpkg-cache/
+
 # Other common ignores
 .idea/
 .vscode/

@@ -20,6 +20,8 @@ jobs:
   sanity:
     name: Sanity check (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    env:
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
     strategy:
       fail-fast: false
 
@@ -43,24 +45,10 @@ jobs:
         with:
           fetch-depth: 0  # Required for setuptools-scm to see Git tags
 
-      - name: Set vcpkg cache path
-        id: vcpkg-cache
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            echo "path=C:/vcpkg-cache" >> $GITHUB_OUTPUT
-          else
-            echo "path=$HOME/.cache/vcpkg/archives" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create vcpkg cache directory
-        run: mkdir -p "${{ steps.vcpkg-cache.outputs.path }}"
-        shell: bash
-
       - name: Cache vcpkg binaries
         uses: actions/cache@v5
         with:
-          path: ${{ steps.vcpkg-cache.outputs.path }}
+          path: .vcpkg-cache
           key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
@@ -77,8 +65,6 @@ jobs:
 
       - name: Build wheel
         run: python -m build --wheel --outdir dist/
-        env:
-          VCPKG_DEFAULT_BINARY_CACHE: ${{ steps.vcpkg-cache.outputs.path }}
 
       - name: Install the wheel
         shell: bash

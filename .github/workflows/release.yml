@@ -41,24 +41,10 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v6
 
-      - name: Set vcpkg cache path
-        id: vcpkg-cache
-        shell: bash
-        run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            echo "path=C:/vcpkg-cache" >> $GITHUB_OUTPUT
-          else
-            echo "path=$HOME/.cache/vcpkg/archives" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create vcpkg cache directory
-        run: mkdir -p "${{ steps.vcpkg-cache.outputs.path }}"
-        shell: bash
-
       - name: Cache vcpkg binaries
         uses: actions/cache@v5
         with:
-          path: ${{ steps.vcpkg-cache.outputs.path }}
+          path: .vcpkg-cache
           key: vcpkg-release-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-release-${{ runner.os }}-${{ matrix.arch }}-
@@ -82,9 +68,9 @@ jobs:
           CIBW_ARCHS_WINDOWS: "${{ matrix.arch }}"
           CIBW_ARCHS_MACOS: "${{ matrix.arch }}"
           CIBW_ARCHS_LINUX: "${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_LINUX: "VCPKG_DEFAULT_BINARY_CACHE=/host${{ steps.vcpkg-cache.outputs.path }}"
-          CIBW_ENVIRONMENT_MACOS: "MACOSX_DEPLOYMENT_TARGET=11.0 VCPKG_DEFAULT_BINARY_CACHE=${{ steps.vcpkg-cache.outputs.path }}"
-          CIBW_ENVIRONMENT_WINDOWS: "VCPKG_DEFAULT_BINARY_CACHE=${{ steps.vcpkg-cache.outputs.path }}"
+          CIBW_ENVIRONMENT_LINUX: "VCPKG_BINARY_SOURCES=clear;files,/project/.vcpkg-cache,readwrite"
+          CIBW_ENVIRONMENT_MACOS: "MACOSX_DEPLOYMENT_TARGET=11.0 VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
+          CIBW_ENVIRONMENT_WINDOWS: "VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
           CIBW_BEFORE_ALL_MACOS: |
             brew install ninja
           CIBW_BEFORE_ALL_LINUX: |
