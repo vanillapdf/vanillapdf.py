@@ -14,16 +14,21 @@ VanillaPDF **C API** only.
 - Register every new source file in `CMakeLists.txt` and its methods in
   `vanillapdfmodule.cpp`.
 
-### Pointers and casts
+### Pointers, casts, conversions
 - Use `nullptr`, never `NULL`.
-- **Never use C-style casts** (`(bigint_type)value`). Use `static_cast<T>(value)`.
-  For `void*` returns (`PyMem_Malloc`, `PyCapsule_GetPointer`, `capsule_get`) a
-  `static_cast` is required.
+- **No C-style casts, and no casts nested inline in an expression.** Prefer a
+  conversion helper; if an explicit cast is genuinely needed, put it on its own
+  line assigned to a named variable (e.g. `ObjectType type = static_cast<...>(v);`).
+- Native → Python: use the overloaded `to_python(value)` (in `conversion.h`) —
+  no `PyLong_From*` cast at the call site.
+- Range-checked narrowing: use `safe_convert<To>(from, &out)` (in
+  `conversion.h`, signedness-aware, sets `OverflowError`) instead of a narrowing
+  cast. `size_type` → `size_t` is guarded by the `static_assert` in `common.h`.
+- Same-width conversions (e.g. `long long` → `bigint_type`) need no cast — pass
+  the value directly and let the implicit conversion happen.
 - Don't write redundant casts. `string_type` is `const char*`, so don't cast a
-  `const char*` to it.
-- Narrowing conversions must be **range-checked**, never silent. Use
-  `narrow_unsigned<T>()` (e.g. `unsigned long` → 32-bit `error_type`). Guard
-  `size_type` → `size_t` with the `static_assert` in `common.h`.
+  `const char*` to it. For `void*` returns, prefer `capsule_cast<T>` /
+  `py_malloc<T>`; a bare `static_cast` on its own line is fine where those don't apply.
 
 ### Error handling
 - Every function returns `error_type`. Give **each call its own `error_type`

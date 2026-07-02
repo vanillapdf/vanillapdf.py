@@ -63,7 +63,7 @@ PyObject* file_get_version(PyObject* self, PyObject* args) {
         return raise_last_error(err, "File_GetVersion");
     }
 
-    return PyLong_FromLong(static_cast<long>(version));
+    return to_python(version);
 }
 
 PyObject* file_get_filename(PyObject* self, PyObject* args) {

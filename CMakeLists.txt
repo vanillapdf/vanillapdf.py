@@ -65,6 +65,7 @@ add_library(_vanillapdf MODULE
     src/vanillapdf_native/vanillapdfmodule.h
     src/vanillapdf_native/common.cpp
     src/vanillapdf_native/common.h
+    src/vanillapdf_native/conversion.h
 
     # utils
     src/vanillapdf_native/utils/buffer.cpp
@@ -107,6 +108,9 @@ add_library(_vanillapdf MODULE
 target_include_directories(_vanillapdf PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/vanillapdf_native
 )
+
+# C++17 for if constexpr / std::make_unsigned used in the conversion helpers
+target_compile_features(_vanillapdf PRIVATE cxx_std_17)
 
 target_link_libraries(_vanillapdf PRIVATE
     vanillapdf::vanillapdf

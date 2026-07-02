@@ -17,7 +17,7 @@ PyObject* integer_object_create(PyObject* self, PyObject* args) {
     }
 
     IntegerObjectHandle* integer = nullptr;
-    error_type create_err = IntegerObject_CreateFromIntegerValue(static_cast<bigint_type>(value), &integer);
+    error_type create_err = IntegerObject_CreateFromIntegerValue(value, &integer);
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "IntegerObject_CreateFromIntegerValue");
     }
@@ -51,7 +51,7 @@ PyObject* integer_object_get_value(PyObject* self, PyObject* args) {
         return raise_last_error(err, "IntegerObject_GetIntegerValue");
     }
 
-    return PyLong_FromLongLong(static_cast<long long>(value));
+    return to_python(value);
 }
 
 PyObject* integer_object_set_value(PyObject* self, PyObject* args) {
@@ -68,7 +68,7 @@ PyObject* integer_object_set_value(PyObject* self, PyObject* args) {
     }
     auto guard = make_scope_guard([&] { IntegerObject_Release(integer); });
 
-    error_type err = IntegerObject_SetIntegerValue(integer, static_cast<bigint_type>(value));
+    error_type err = IntegerObject_SetIntegerValue(integer, value);
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "IntegerObject_SetIntegerValue");
     }

@@ -127,7 +127,7 @@ static char* fetch_printable_error_text(error_type value) {
         return nullptr;
     }
 
-    char* data = py_malloc<char>(static_cast<size_t>(size));
+    char* data = py_malloc<char>(size);
     if (data == nullptr) {
         return nullptr;
     }
@@ -153,7 +153,7 @@ static char* fetch_last_error_message(void) {
         return nullptr;
     }
 
-    char* data = py_malloc<char>(static_cast<size_t>(size));
+    char* data = py_malloc<char>(size);
     if (data == nullptr) {
         return nullptr;
     }
@@ -210,7 +210,7 @@ PyObject* raise_last_error(error_type err, const char* operation) {
     }
 
     if (exc != nullptr) {
-        PyObject* code = PyLong_FromUnsignedLong(static_cast<unsigned long>(err));
+        PyObject* code = to_python(err);
         if (code != nullptr) {
             PyObject_SetAttrString(exc, "error_code", code);
             Py_DECREF(code);

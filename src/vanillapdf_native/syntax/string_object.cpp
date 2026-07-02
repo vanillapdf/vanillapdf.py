@@ -33,7 +33,7 @@ PyObject* string_object_get_string_type(PyObject* self, PyObject* args) {
         return raise_last_error(err, "StringObject_GetStringType");
     }
 
-    return PyLong_FromLong(static_cast<long>(type));
+    return to_python(type);
 }
 
 PyObject* string_object_get_value(PyObject* self, PyObject* args) {

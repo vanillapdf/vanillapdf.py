@@ -14,7 +14,7 @@ PyObject* library_info_get_version_major(PyObject* self, PyObject* args) {
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetVersionMajor");
     }
-    return PyLong_FromLong(static_cast<long>(value));
+    return to_python(value);
 }
 
 PyObject* library_info_get_version_minor(PyObject* self, PyObject* args) {
@@ -23,7 +23,7 @@ PyObject* library_info_get_version_minor(PyObject* self, PyObject* args) {
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetVersionMinor");
     }
-    return PyLong_FromLong(static_cast<long>(value));
+    return to_python(value);
 }
 
 PyObject* library_info_get_version_patch(PyObject* self, PyObject* args) {
@@ -32,7 +32,7 @@ PyObject* library_info_get_version_patch(PyObject* self, PyObject* args) {
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetVersionPatch");
     }
-    return PyLong_FromLong(static_cast<long>(value));
+    return to_python(value);
 }
 
 PyObject* library_info_get_version_build(PyObject* self, PyObject* args) {
@@ -41,7 +41,7 @@ PyObject* library_info_get_version_build(PyObject* self, PyObject* args) {
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetVersionBuild");
     }
-    return PyLong_FromLong(static_cast<long>(value));
+    return to_python(value);
 }
 
 PyObject* library_info_get_author(PyObject* self, PyObject* args) {
@@ -59,7 +59,7 @@ PyObject* library_info_get_build_day(PyObject* self, PyObject* args) {
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetBuildDay");
     }
-    return PyLong_FromLong(static_cast<long>(value));
+    return to_python(value);
 }
 
 PyObject* library_info_get_build_month(PyObject* self, PyObject* args) {
@@ -68,7 +68,7 @@ PyObject* library_info_get_build_month(PyObject* self, PyObject* args) {
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetBuildMonth");
     }
-    return PyLong_FromLong(static_cast<long>(value));
+    return to_python(value);
 }
 
 PyObject* library_info_get_build_year(PyObject* self, PyObject* args) {
@@ -77,5 +77,5 @@ PyObject* library_info_get_build_year(PyObject* self, PyObject* args) {
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetBuildYear");
     }
-    return PyLong_FromLong(static_cast<long>(value));
+    return to_python(value);
 }

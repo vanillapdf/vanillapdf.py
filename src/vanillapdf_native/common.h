@@ -56,8 +56,9 @@ int is_missing_error(error_type err);
 
 #ifdef __cplusplus
 
-#include <limits>
 #include <utility>
+
+#include "conversion.h"
 
 /* The size_type -> size_t conversions used for allocation are lossless as long
  * as size_t is at least as wide as the library's size_type. All supported
@@ -118,22 +119,6 @@ T* py_malloc(size_t count = 1) {
 template <typename T>
 T* capsule_cast(PyObject* capsule, const char* name) {
     return static_cast<T*>(capsule_get(capsule, name));
-}
-
-/* Narrow an unsigned long (e.g. produced by the PyArg "k" format) to a smaller
- * unsigned integer type. On overflow, sets OverflowError and returns -1;
- * otherwise stores the value in *out and returns 0. Centralizes the range
- * check so callers never truncate silently, e.g. unsigned long -> uint32_t
- * error_type on LP64 platforms. */
-template <typename T>
-int narrow_unsigned(unsigned long value, T* out) {
-    if (value > static_cast<unsigned long>(std::numeric_limits<T>::max())) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "integer value out of range for target type");
-        return -1;
-    }
-    *out = static_cast<T>(value);
-    return 0;
 }
 
 #endif /* __cplusplus */

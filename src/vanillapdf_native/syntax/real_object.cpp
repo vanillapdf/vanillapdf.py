@@ -18,7 +18,7 @@ PyObject* real_object_create(PyObject* self, PyObject* args) {
     }
 
     RealObjectHandle* real = nullptr;
-    error_type create_err = RealObject_CreateFromData(static_cast<real_type>(value), static_cast<integer_type>(precision), &real);
+    error_type create_err = RealObject_CreateFromData(value, precision, &real);
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "RealObject_CreateFromData");
     }
@@ -52,7 +52,7 @@ PyObject* real_object_get_value(PyObject* self, PyObject* args) {
         return raise_last_error(err, "RealObject_GetValue");
     }
 
-    return PyFloat_FromDouble(static_cast<double>(value));
+    return to_python(value);
 }
 
 PyObject* real_object_set_value(PyObject* self, PyObject* args) {
@@ -69,7 +69,7 @@ PyObject* real_object_set_value(PyObject* self, PyObject* args) {
     }
     auto guard = make_scope_guard([&] { RealObject_Release(real); });
 
-    error_type err = RealObject_SetValue(real, static_cast<real_type>(value));
+    error_type err = RealObject_SetValue(real, value);
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "RealObject_SetValue");
     }
