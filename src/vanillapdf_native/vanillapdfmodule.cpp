@@ -22,11 +22,22 @@
 #include "syntax/dictionary_object.h"
 #include "syntax/indirect_reference_object.h"
 #include "syntax/stream_object.h"
+#include "semantics/catalog.h"
+#include "semantics/page_tree.h"
+#include "semantics/page_object.h"
+#include "semantics/rectangle.h"
+#include "semantics/document_info.h"
 
 static PyMethodDef VanillapdfMethods[] = {
     /* Document methods */
     {"document_open", document_open, METH_VARARGS, "Open a Document"},
+    {"document_create", document_create, METH_VARARGS, "Create a new Document"},
+    {"document_open_file", document_open_file, METH_VARARGS, "Open a Document from a File"},
     {"document_save", document_save, METH_VARARGS, "Save a Document"},
+    {"document_save_incremental", document_save_incremental, METH_VARARGS, "Save a Document incrementally"},
+    {"document_get_catalog", document_get_catalog, METH_VARARGS, "Get the Document catalog"},
+    {"document_get_document_info", document_get_document_info, METH_VARARGS, "Get the Document info"},
+    {"document_append_document", document_append_document, METH_VARARGS, "Append another Document"},
     {"document_release", document_release, METH_VARARGS, "Release a Document"},
     /* Buffer methods */
     {"buffer_create", buffer_create, METH_NOARGS, "Create a Buffer"},
@@ -138,6 +149,41 @@ static PyMethodDef VanillapdfMethods[] = {
     {"stream_object_get_body", stream_object_get_body, METH_VARARGS, "Get Stream body (decoded)"},
     {"stream_object_get_body_raw", stream_object_get_body_raw, METH_VARARGS, "Get Stream body (raw)"},
     {"stream_object_set_body", stream_object_set_body, METH_VARARGS, "Set Stream body"},
+    /* Catalog */
+    {"catalog_get_pages", catalog_get_pages, METH_VARARGS, "Get the page tree"},
+    {"catalog_release", catalog_release, METH_VARARGS, "Release a Catalog"},
+    /* Page tree */
+    {"page_tree_get_page_count", page_tree_get_page_count, METH_VARARGS, "Get page count"},
+    {"page_tree_get_page", page_tree_get_page, METH_VARARGS, "Get a page by index"},
+    {"page_tree_insert_page", page_tree_insert_page, METH_VARARGS, "Insert a page"},
+    {"page_tree_append_page", page_tree_append_page, METH_VARARGS, "Append a page"},
+    {"page_tree_remove_page", page_tree_remove_page, METH_VARARGS, "Remove a page"},
+    {"page_tree_release", page_tree_release, METH_VARARGS, "Release a PageTree"},
+    /* Page object */
+    {"page_object_create_from_document", page_object_create_from_document, METH_VARARGS, "Create a page for a document"},
+    {"page_object_get_media_box", page_object_get_media_box, METH_VARARGS, "Get the media box"},
+    {"page_object_set_media_box", page_object_set_media_box, METH_VARARGS, "Set the media box"},
+    {"page_object_get_base_object", page_object_get_base_object, METH_VARARGS, "Get the underlying dictionary"},
+    {"page_object_release", page_object_release, METH_VARARGS, "Release a PageObject"},
+    /* Rectangle */
+    {"rectangle_create", rectangle_create, METH_NOARGS, "Create a Rectangle"},
+    {"rectangle_get_lower_left_x", rectangle_get_lower_left_x, METH_VARARGS, "Get lower-left X"},
+    {"rectangle_set_lower_left_x", rectangle_set_lower_left_x, METH_VARARGS, "Set lower-left X"},
+    {"rectangle_get_lower_left_y", rectangle_get_lower_left_y, METH_VARARGS, "Get lower-left Y"},
+    {"rectangle_set_lower_left_y", rectangle_set_lower_left_y, METH_VARARGS, "Set lower-left Y"},
+    {"rectangle_get_upper_right_x", rectangle_get_upper_right_x, METH_VARARGS, "Get upper-right X"},
+    {"rectangle_set_upper_right_x", rectangle_set_upper_right_x, METH_VARARGS, "Set upper-right X"},
+    {"rectangle_get_upper_right_y", rectangle_get_upper_right_y, METH_VARARGS, "Get upper-right Y"},
+    {"rectangle_set_upper_right_y", rectangle_set_upper_right_y, METH_VARARGS, "Set upper-right Y"},
+    {"rectangle_release", rectangle_release, METH_VARARGS, "Release a Rectangle"},
+    /* Document info */
+    {"document_info_get_title", document_info_get_title, METH_VARARGS, "Get title"},
+    {"document_info_get_author", document_info_get_author, METH_VARARGS, "Get author"},
+    {"document_info_get_subject", document_info_get_subject, METH_VARARGS, "Get subject"},
+    {"document_info_get_keywords", document_info_get_keywords, METH_VARARGS, "Get keywords"},
+    {"document_info_get_creator", document_info_get_creator, METH_VARARGS, "Get creator"},
+    {"document_info_get_producer", document_info_get_producer, METH_VARARGS, "Get producer"},
+    {"document_info_release", document_info_release, METH_VARARGS, "Release a DocumentInfo"},
     {nullptr, nullptr, 0, nullptr}
 };
 

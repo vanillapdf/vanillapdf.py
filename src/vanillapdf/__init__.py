@@ -23,6 +23,11 @@ from .syntax.objects import (
     IndirectReferenceObject,
 )
 from .semantics.document import Document
+from .semantics.catalog import Catalog
+from .semantics.page_tree import PageTree
+from .semantics.page_object import PageObject
+from .semantics.rectangle import Rectangle
+from .semantics.document_info import DocumentInfo
 
 try:
     from ._version import version as __version__
@@ -56,5 +61,10 @@ __all__ = [
     "DictionaryObject",
     "StreamObject",
     "IndirectReferenceObject",
+    "Catalog",
+    "PageTree",
+    "PageObject",
+    "Rectangle",
+    "DocumentInfo",
     "__version__",
 ]

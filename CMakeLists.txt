@@ -110,6 +110,16 @@ add_library(_vanillapdf MODULE
     # semantics
     src/vanillapdf_native/semantics/document.cpp
     src/vanillapdf_native/semantics/document.h
+    src/vanillapdf_native/semantics/catalog.cpp
+    src/vanillapdf_native/semantics/catalog.h
+    src/vanillapdf_native/semantics/page_tree.cpp
+    src/vanillapdf_native/semantics/page_tree.h
+    src/vanillapdf_native/semantics/page_object.cpp
+    src/vanillapdf_native/semantics/page_object.h
+    src/vanillapdf_native/semantics/rectangle.cpp
+    src/vanillapdf_native/semantics/rectangle.h
+    src/vanillapdf_native/semantics/document_info.cpp
+    src/vanillapdf_native/semantics/document_info.h
 )
 
 # Allow includes relative to the native source root (e.g. "syntax/object.h")

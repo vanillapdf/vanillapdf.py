@@ -54,13 +54,15 @@ class Object(Handle):
         """A human-readable representation of the object."""
         handle = self._require_handle()
         buffer_handle = _vanillapdf.object_to_string(handle)
-        return Buffer._from_handle(buffer_handle).data
+        buffer = Buffer._from_handle(buffer_handle)
+        return buffer.data
 
     def to_pdf(self) -> bytes:
         """The object serialized as it would appear in a PDF file."""
         handle = self._require_handle()
         buffer_handle = _vanillapdf.object_to_pdf(handle)
-        return Buffer._from_handle(buffer_handle).data
+        buffer = Buffer._from_handle(buffer_handle)
+        return buffer.data
 
     @staticmethod
     def type_name(object_type: ObjectType) -> str:
@@ -89,13 +91,15 @@ class Object(Handle):
 class NullObject(Object):
     @staticmethod
     def create() -> "NullObject":
-        return NullObject(_vanillapdf.null_object_create())
+        handle = _vanillapdf.null_object_create()
+        return NullObject(handle)
 
 
 class BooleanObject(Object):
     @staticmethod
     def create(value: bool) -> "BooleanObject":
-        return BooleanObject(_vanillapdf.boolean_object_create(value))
+        handle = _vanillapdf.boolean_object_create(value)
+        return BooleanObject(handle)
 
     @property
     def value(self) -> bool:
@@ -111,7 +115,8 @@ class BooleanObject(Object):
 class IntegerObject(Object):
     @staticmethod
     def create(value: int) -> "IntegerObject":
-        return IntegerObject(_vanillapdf.integer_object_create(value))
+        handle = _vanillapdf.integer_object_create(value)
+        return IntegerObject(handle)
 
     @property
     def value(self) -> int:
@@ -127,7 +132,8 @@ class IntegerObject(Object):
 class RealObject(Object):
     @staticmethod
     def create(value: float, precision: int = 6) -> "RealObject":
-        return RealObject(_vanillapdf.real_object_create(value, precision))
+        handle = _vanillapdf.real_object_create(value, precision)
+        return RealObject(handle)
 
     @property
     def value(self) -> float:
@@ -143,13 +149,15 @@ class RealObject(Object):
 class NameObject(Object):
     @staticmethod
     def create(value: str) -> "NameObject":
-        return NameObject(_vanillapdf.name_object_create_from_decoded_string(value))
+        handle = _vanillapdf.name_object_create_from_decoded_string(value)
+        return NameObject(handle)
 
     @property
     def value(self) -> bytes:
         handle = self._require_handle()
         buffer_handle = _vanillapdf.name_object_get_value(handle)
-        return Buffer._from_handle(buffer_handle).data
+        buffer = Buffer._from_handle(buffer_handle)
+        return buffer.data
 
     def value_string(self, encoding: str = "utf-8") -> str:
         return self.value.decode(encoding)
@@ -159,13 +167,15 @@ class StringObject(Object):
     @property
     def string_type(self) -> StringType:
         handle = self._require_handle()
-        return StringType(_vanillapdf.string_object_get_string_type(handle))
+        type_value = _vanillapdf.string_object_get_string_type(handle)
+        return StringType(type_value)
 
     @property
     def value(self) -> bytes:
         handle = self._require_handle()
         buffer_handle = _vanillapdf.string_object_get_value(handle)
-        return Buffer._from_handle(buffer_handle).data
+        buffer = Buffer._from_handle(buffer_handle)
+        return buffer.data
 
     @value.setter
     def value(self, buffer: Buffer) -> None:
@@ -179,21 +189,22 @@ class StringObject(Object):
 class LiteralStringObject(StringObject):
     @staticmethod
     def create(value: str) -> "LiteralStringObject":
-        return LiteralStringObject(
-            _vanillapdf.literal_string_object_create_from_decoded_string(value))
+        handle = _vanillapdf.literal_string_object_create_from_decoded_string(value)
+        return LiteralStringObject(handle)
 
 
 class HexadecimalStringObject(StringObject):
     @staticmethod
     def create(value: str) -> "HexadecimalStringObject":
-        return HexadecimalStringObject(
-            _vanillapdf.hexadecimal_string_object_create_from_decoded_string(value))
+        handle = _vanillapdf.hexadecimal_string_object_create_from_decoded_string(value)
+        return HexadecimalStringObject(handle)
 
 
 class ArrayObject(Object):
     @staticmethod
     def create() -> "ArrayObject":
-        return ArrayObject(_vanillapdf.array_object_create())
+        handle = _vanillapdf.array_object_create()
+        return ArrayObject(handle)
 
     def __len__(self) -> int:
         handle = self._require_handle()
@@ -210,7 +221,8 @@ class ArrayObject(Object):
     def __getitem__(self, index: int) -> Object:
         index = self._normalize_index(index)
         handle = self._require_handle()
-        return Object._wrap(_vanillapdf.array_object_get_value(handle, index))
+        element = _vanillapdf.array_object_get_value(handle, index)
+        return Object._wrap(element)
 
     def __setitem__(self, index: int, value: Object) -> None:
         index = self._normalize_index(index)
@@ -246,22 +258,29 @@ class _DictionaryIterator(Handle):
         self._handle = handle
 
     def is_valid(self) -> bool:
-        return _vanillapdf.dictionary_iterator_is_valid(self._require_handle())
+        handle = self._require_handle()
+        return _vanillapdf.dictionary_iterator_is_valid(handle)
 
     def key(self) -> Object:
-        return Object._wrap(_vanillapdf.dictionary_iterator_get_key(self._require_handle()))
+        handle = self._require_handle()
+        key = _vanillapdf.dictionary_iterator_get_key(handle)
+        return Object._wrap(key)
 
     def value(self) -> Object:
-        return Object._wrap(_vanillapdf.dictionary_iterator_get_value(self._require_handle()))
+        handle = self._require_handle()
+        value = _vanillapdf.dictionary_iterator_get_value(handle)
+        return Object._wrap(value)
 
     def advance(self) -> None:
-        _vanillapdf.dictionary_iterator_next(self._require_handle())
+        handle = self._require_handle()
+        _vanillapdf.dictionary_iterator_next(handle)
 
 
 class DictionaryObject(Object):
     @staticmethod
     def create() -> "DictionaryObject":
-        return DictionaryObject(_vanillapdf.dictionary_object_create())
+        handle = _vanillapdf.dictionary_object_create()
+        return DictionaryObject(handle)
 
     def __len__(self) -> int:
         handle = self._require_handle()
@@ -331,7 +350,8 @@ class DictionaryObject(Object):
 
     def items(self):
         handle = self._require_handle()
-        iterator = _DictionaryIterator(_vanillapdf.dictionary_object_get_iterator(handle))
+        iterator_handle = _vanillapdf.dictionary_object_get_iterator(handle)
+        iterator = _DictionaryIterator(iterator_handle)
         try:
             while iterator.is_valid():
                 yield iterator.key(), iterator.value()
@@ -353,12 +373,14 @@ class DictionaryObject(Object):
 class StreamObject(Object):
     @staticmethod
     def create() -> "StreamObject":
-        return StreamObject(_vanillapdf.stream_object_create())
+        handle = _vanillapdf.stream_object_create()
+        return StreamObject(handle)
 
     @property
     def header(self) -> "DictionaryObject":
         handle = self._require_handle()
-        return Object._wrap(_vanillapdf.stream_object_get_header(handle))
+        header = _vanillapdf.stream_object_get_header(handle)
+        return Object._wrap(header)
 
     @header.setter
     def header(self, value: "DictionaryObject") -> None:
@@ -369,7 +391,9 @@ class StreamObject(Object):
     def body(self) -> bytes:
         """The decoded (filters applied) stream body."""
         handle = self._require_handle()
-        return Buffer._from_handle(_vanillapdf.stream_object_get_body(handle)).data
+        buffer_handle = _vanillapdf.stream_object_get_body(handle)
+        buffer = Buffer._from_handle(buffer_handle)
+        return buffer.data
 
     @body.setter
     def body(self, data: bytes) -> None:
@@ -384,13 +408,16 @@ class StreamObject(Object):
     def body_raw(self) -> bytes:
         """The raw (undecoded) stream body."""
         handle = self._require_handle()
-        return Buffer._from_handle(_vanillapdf.stream_object_get_body_raw(handle)).data
+        buffer_handle = _vanillapdf.stream_object_get_body_raw(handle)
+        buffer = Buffer._from_handle(buffer_handle)
+        return buffer.data
 
 
 class IndirectReferenceObject(Object):
     @staticmethod
     def create() -> "IndirectReferenceObject":
-        return IndirectReferenceObject(_vanillapdf.indirect_reference_object_create())
+        handle = _vanillapdf.indirect_reference_object_create()
+        return IndirectReferenceObject(handle)
 
     @property
     def object_number(self) -> int:
@@ -415,7 +442,8 @@ class IndirectReferenceObject(Object):
     @property
     def referenced_object(self) -> Object:
         handle = self._require_handle()
-        return Object._wrap(_vanillapdf.indirect_reference_object_get_referenced_object(handle))
+        referenced = _vanillapdf.indirect_reference_object_get_referenced_object(handle)
+        return Object._wrap(referenced)
 
     @referenced_object.setter
     def referenced_object(self, value: Object) -> None:
