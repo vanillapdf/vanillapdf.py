@@ -61,19 +61,29 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
 
 # Build the Python extension module
 add_library(_vanillapdf MODULE
-    src/vanillapdf_native/vanillapdfmodule.c
+    src/vanillapdf_native/vanillapdfmodule.cpp
     src/vanillapdf_native/vanillapdfmodule.h
 
-    src/vanillapdf_native/documentmodule.c
+    src/vanillapdf_native/common.cpp
+    src/vanillapdf_native/common.h
+
+    src/vanillapdf_native/documentmodule.cpp
     src/vanillapdf_native/documentmodule.h
-    src/vanillapdf_native/buffermodule.c
+    src/vanillapdf_native/buffermodule.cpp
     src/vanillapdf_native/buffermodule.h
-    src/vanillapdf_native/filemodule.c
+    src/vanillapdf_native/filemodule.cpp
     src/vanillapdf_native/filemodule.h
-    src/vanillapdf_native/libraryinfomodule.c
+    src/vanillapdf_native/libraryinfomodule.cpp
     src/vanillapdf_native/libraryinfomodule.h
-    src/vanillapdf_native/loggingmodule.c
+    src/vanillapdf_native/loggingmodule.cpp
     src/vanillapdf_native/loggingmodule.h
+
+    src/vanillapdf_native/errorsmodule.cpp
+    src/vanillapdf_native/errorsmodule.h
+    src/vanillapdf_native/licenseinfomodule.cpp
+    src/vanillapdf_native/licenseinfomodule.h
+    src/vanillapdf_native/miscutilsmodule.cpp
+    src/vanillapdf_native/miscutilsmodule.h
 )
 
 target_link_libraries(_vanillapdf PRIVATE

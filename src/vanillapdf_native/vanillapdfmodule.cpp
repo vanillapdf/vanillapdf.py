@@ -2,11 +2,15 @@
 
 #include <Python.h>
 
+#include "common.h"
 #include "documentmodule.h"
 #include "buffermodule.h"
 #include "filemodule.h"
 #include "libraryinfomodule.h"
 #include "loggingmodule.h"
+#include "errorsmodule.h"
+#include "licenseinfomodule.h"
+#include "miscutilsmodule.h"
 
 static PyMethodDef VanillapdfMethods[] = {
     /* Document methods */
@@ -41,7 +45,19 @@ static PyMethodDef VanillapdfMethods[] = {
     {"logging_set_severity", logging_set_severity, METH_VARARGS, "Set logging severity"},
     {"logging_set_pattern", logging_set_pattern, METH_VARARGS, "Set logging pattern"},
     {"logging_shutdown", logging_shutdown, METH_NOARGS, "Shutdown logging"},
-    {NULL, NULL, 0, NULL}
+    /* Errors methods */
+    {"errors_get_last_error", errors_get_last_error, METH_NOARGS, "Get last error code"},
+    {"errors_get_printable_error_text", errors_get_printable_error_text, METH_VARARGS, "Get printable name for an error code"},
+    {"errors_get_last_error_message", errors_get_last_error_message, METH_NOARGS, "Get last error detail message"},
+    /* LicenseInfo methods */
+    {"license_info_set_license_file", license_info_set_license_file, METH_VARARGS, "Set license from a file"},
+    {"license_info_set_license_buffer", license_info_set_license_buffer, METH_VARARGS, "Set license from a buffer"},
+    {"license_info_is_valid", license_info_is_valid, METH_NOARGS, "Check whether a valid license is set"},
+    {"license_info_is_temporary", license_info_is_temporary, METH_NOARGS, "Check whether the license is temporary"},
+    /* MiscUtils methods */
+    {"misc_utils_initialize_openssl", misc_utils_initialize_openssl, METH_NOARGS, "Initialize OpenSSL"},
+    {"misc_utils_cleanup_openssl", misc_utils_cleanup_openssl, METH_NOARGS, "Cleanup OpenSSL"},
+    {nullptr, nullptr, 0, nullptr}
 };
 
 static struct PyModuleDef vanillapdfmodule = {
@@ -54,5 +70,15 @@ static struct PyModuleDef vanillapdfmodule = {
 
 PyMODINIT_FUNC
 PyInit__vanillapdf(void) {
-    return PyModule_Create(&vanillapdfmodule);
+    PyObject* module = PyModule_Create(&vanillapdfmodule);
+    if (module == nullptr) {
+        return nullptr;
+    }
+
+    if (register_exceptions(module) < 0) {
+        Py_DECREF(module);
+        return nullptr;
+    }
+
+    return module;
 }
