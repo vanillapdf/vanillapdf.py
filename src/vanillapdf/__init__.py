@@ -17,6 +17,10 @@ from .syntax.objects import (
     StringObject,
     LiteralStringObject,
     HexadecimalStringObject,
+    ArrayObject,
+    DictionaryObject,
+    StreamObject,
+    IndirectReferenceObject,
 )
 from .semantics.document import Document
 
@@ -48,5 +52,9 @@ __all__ = [
     "StringObject",
     "LiteralStringObject",
     "HexadecimalStringObject",
+    "ArrayObject",
+    "DictionaryObject",
+    "StreamObject",
+    "IndirectReferenceObject",
     "__version__",
 ]

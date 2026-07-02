@@ -4,9 +4,11 @@
 
 #include <vanillapdf/c_values.h>
 #include <vanillapdf/syntax/c_file.h>
+#include <vanillapdf/syntax/c_object.h>
 #include <vanillapdf/utils/c_pdf_version.h>
 
 #include "syntax/file.h"
+#include "syntax/object.h"
 #include "utils/buffer.h"
 #include "common.h"
 
@@ -127,6 +129,33 @@ PyObject* file_set_encryption_password(PyObject* self, PyObject* args) {
     }
 
     Py_RETURN_NONE;
+}
+
+PyObject* file_get_indirect_object(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    unsigned long long object_number;
+    int generation_value;
+    if (!PyArg_ParseTuple(args, "OKi", &capsule, &object_number, &generation_value)) {
+        return nullptr;
+    }
+
+    ushort_type generation = 0;
+    if (safe_convert(generation_value, &generation) < 0) {
+        return nullptr;
+    }
+
+    FileHandle* handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
+    if (handle == nullptr) {
+        return nullptr;
+    }
+
+    ObjectHandle* object = nullptr;
+    error_type err = File_GetIndirectObject(handle, object_number, generation, &object);
+    if (err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(err, "File_GetIndirectObject");
+    }
+
+    return object_capsule_from_handle(object);
 }
 
 PyObject* file_release(PyObject* self, PyObject* args) {

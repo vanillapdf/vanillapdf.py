@@ -2,6 +2,7 @@ from enum import IntEnum
 from .. import _vanillapdf
 from ..utils.buffer import Buffer
 from ..handle import Handle
+from .objects import Object
 
 
 class PDFVersion(IntEnum):
@@ -85,3 +86,9 @@ class File(Handle):
         """Set the password for an encrypted file."""
         handle = self._require_handle()
         _vanillapdf.file_set_encryption_password(handle, password)
+
+    def get_indirect_object(self, object_number: int, generation_number: int = 0) -> Object:
+        """Get an indirect object by its object and generation number."""
+        handle = self._require_handle()
+        result = _vanillapdf.file_get_indirect_object(handle, object_number, generation_number)
+        return Object._wrap(result)

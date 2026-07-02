@@ -14,6 +14,10 @@ from vanillapdf import (
     StringObject,
     LiteralStringObject,
     HexadecimalStringObject,
+    ArrayObject,
+    DictionaryObject,
+    StreamObject,
+    IndirectReferenceObject,
 )
 
 
@@ -150,3 +154,79 @@ def test_repr():
     assert "IntegerObject" in repr(obj)
     obj.close()
     assert "closed" in repr(obj)
+
+
+def test_array_object():
+    with ArrayObject.create() as arr:
+        assert arr.object_type == ObjectType.ARRAY
+        assert len(arr) == 0
+        for v in (1, 2, 3):
+            arr.append(IntegerObject.create(v))
+        assert len(arr) == 3
+        assert isinstance(arr[0], IntegerObject)
+        assert [o.value for o in arr] == [1, 2, 3]
+        assert arr[-1].value == 3
+        arr[0] = IntegerObject.create(9)
+        assert arr[0].value == 9
+        del arr[0]
+        assert len(arr) == 2
+        with pytest.raises(IndexError):
+            _ = arr[10]
+
+
+def test_array_wrap():
+    arr = ArrayObject.create()
+    wrapped = Object._wrap(arr._handle)
+    arr._handle = None
+    try:
+        assert isinstance(wrapped, ArrayObject)
+    finally:
+        wrapped.close()
+
+
+def test_dictionary_object():
+    with DictionaryObject.create() as d:
+        assert d.object_type == ObjectType.DICTIONARY
+        assert len(d) == 0
+        d["Type"] = IntegerObject.create(1)
+        d["Count"] = IntegerObject.create(5)
+        assert len(d) == 2
+        assert "Type" in d
+        assert "Missing" not in d
+        assert d["Count"].value == 5
+        assert d.get("Missing") is None
+        assert d.get("Type").value == 1
+        assert sorted(k.value_string() for k in d.keys()) == ["Count", "Type"]
+        items = {k.value_string(): v.value for k, v in d.items()}
+        assert items == {"Type": 1, "Count": 5}
+        del d["Type"]
+        assert "Type" not in d
+        with pytest.raises(KeyError):
+            _ = d["Nope"]
+
+
+def test_dictionary_name_key():
+    with DictionaryObject.create() as d:
+        with NameObject.create("Root") as key:
+            d[key] = BooleanObject.create(True)
+            assert key in d
+            assert d[key].value is True
+
+
+def test_indirect_reference_object():
+    with IndirectReferenceObject.create() as ref:
+        assert ref.object_type == ObjectType.INDIRECT_REFERENCE
+        ref.object_number = 12
+        ref.generation_number = 3
+        assert ref.object_number == 12
+        assert ref.generation_number == 3
+
+
+def test_stream_object():
+    with StreamObject.create() as stream:
+        assert stream.object_type == ObjectType.STREAM
+        # set_body stores the decoded body; body_raw is the encoded on-disk form
+        # (populated only on serialization), so round-trip through body.
+        stream.body = b"hello stream"
+        assert stream.body == b"hello stream"
+        assert isinstance(stream.header, DictionaryObject)

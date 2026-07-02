@@ -190,6 +190,239 @@ class HexadecimalStringObject(StringObject):
             _vanillapdf.hexadecimal_string_object_create_from_decoded_string(value))
 
 
+class ArrayObject(Object):
+    @staticmethod
+    def create() -> "ArrayObject":
+        return ArrayObject(_vanillapdf.array_object_create())
+
+    def __len__(self) -> int:
+        handle = self._require_handle()
+        return _vanillapdf.array_object_get_size(handle)
+
+    def _normalize_index(self, index: int) -> int:
+        size = len(self)
+        if index < 0:
+            index += size
+        if index < 0 or index >= size:
+            raise IndexError("array index out of range")
+        return index
+
+    def __getitem__(self, index: int) -> Object:
+        index = self._normalize_index(index)
+        handle = self._require_handle()
+        return Object._wrap(_vanillapdf.array_object_get_value(handle, index))
+
+    def __setitem__(self, index: int, value: Object) -> None:
+        index = self._normalize_index(index)
+        handle = self._require_handle()
+        _vanillapdf.array_object_set_value(handle, index, value._handle)
+
+    def __delitem__(self, index: int) -> None:
+        index = self._normalize_index(index)
+        handle = self._require_handle()
+        _vanillapdf.array_object_remove(handle, index)
+
+    def __iter__(self):
+        for i in range(len(self)):
+            yield self[i]
+
+    def append(self, value: Object) -> None:
+        handle = self._require_handle()
+        _vanillapdf.array_object_append(handle, value._handle)
+
+    def insert(self, index: int, value: Object) -> None:
+        handle = self._require_handle()
+        _vanillapdf.array_object_insert(handle, index, value._handle)
+
+    def clear(self) -> None:
+        handle = self._require_handle()
+        _vanillapdf.array_object_clear(handle)
+
+
+class _DictionaryIterator(Handle):
+    _release = staticmethod(_vanillapdf.dictionary_iterator_release)
+
+    def __init__(self, handle):
+        self._handle = handle
+
+    def is_valid(self) -> bool:
+        return _vanillapdf.dictionary_iterator_is_valid(self._require_handle())
+
+    def key(self) -> Object:
+        return Object._wrap(_vanillapdf.dictionary_iterator_get_key(self._require_handle()))
+
+    def value(self) -> Object:
+        return Object._wrap(_vanillapdf.dictionary_iterator_get_value(self._require_handle()))
+
+    def advance(self) -> None:
+        _vanillapdf.dictionary_iterator_next(self._require_handle())
+
+
+class DictionaryObject(Object):
+    @staticmethod
+    def create() -> "DictionaryObject":
+        return DictionaryObject(_vanillapdf.dictionary_object_create())
+
+    def __len__(self) -> int:
+        handle = self._require_handle()
+        return _vanillapdf.dictionary_object_get_size(handle)
+
+    @staticmethod
+    def _as_name(key):
+        """Return (NameObject, owned) for a str or NameObject key. `owned` is
+        True when we created a temporary that the caller must close."""
+        if isinstance(key, NameObject):
+            return key, False
+        if isinstance(key, str):
+            return NameObject.create(key), True
+        raise TypeError(
+            f"dictionary key must be str or NameObject, not {type(key).__name__}")
+
+    def __contains__(self, key) -> bool:
+        name, owned = self._as_name(key)
+        try:
+            handle = self._require_handle()
+            return _vanillapdf.dictionary_object_contains(handle, name._handle)
+        finally:
+            if owned:
+                name.close()
+
+    def get(self, key, default=None):
+        name, owned = self._as_name(key)
+        try:
+            handle = self._require_handle()
+            result = _vanillapdf.dictionary_object_try_find(handle, name._handle)
+        finally:
+            if owned:
+                name.close()
+        if result is None:
+            return default
+        return Object._wrap(result)
+
+    def __getitem__(self, key) -> Object:
+        value = self.get(key)
+        if value is None:
+            raise KeyError(key)
+        return value
+
+    def __setitem__(self, key, value: Object) -> None:
+        name, owned = self._as_name(key)
+        try:
+            handle = self._require_handle()
+            _vanillapdf.dictionary_object_insert(handle, name._handle, value._handle, True)
+        finally:
+            if owned:
+                name.close()
+
+    def __delitem__(self, key) -> None:
+        name, owned = self._as_name(key)
+        try:
+            handle = self._require_handle()
+            removed = _vanillapdf.dictionary_object_remove(handle, name._handle)
+        finally:
+            if owned:
+                name.close()
+        if not removed:
+            raise KeyError(key)
+
+    def clear(self) -> None:
+        handle = self._require_handle()
+        _vanillapdf.dictionary_object_clear(handle)
+
+    def items(self):
+        handle = self._require_handle()
+        iterator = _DictionaryIterator(_vanillapdf.dictionary_object_get_iterator(handle))
+        try:
+            while iterator.is_valid():
+                yield iterator.key(), iterator.value()
+                iterator.advance()
+        finally:
+            iterator.close()
+
+    def keys(self):
+        return [key for key, _ in self.items()]
+
+    def values(self):
+        return [value for _, value in self.items()]
+
+    def __iter__(self):
+        for key, _ in self.items():
+            yield key
+
+
+class StreamObject(Object):
+    @staticmethod
+    def create() -> "StreamObject":
+        return StreamObject(_vanillapdf.stream_object_create())
+
+    @property
+    def header(self) -> "DictionaryObject":
+        handle = self._require_handle()
+        return Object._wrap(_vanillapdf.stream_object_get_header(handle))
+
+    @header.setter
+    def header(self, value: "DictionaryObject") -> None:
+        handle = self._require_handle()
+        _vanillapdf.stream_object_set_header(handle, value._handle)
+
+    @property
+    def body(self) -> bytes:
+        """The decoded (filters applied) stream body."""
+        handle = self._require_handle()
+        return Buffer._from_handle(_vanillapdf.stream_object_get_body(handle)).data
+
+    @body.setter
+    def body(self, data: bytes) -> None:
+        handle = self._require_handle()
+        buffer = Buffer.create_from_data(data)
+        try:
+            _vanillapdf.stream_object_set_body(handle, buffer._handle)
+        finally:
+            buffer.close()
+
+    @property
+    def body_raw(self) -> bytes:
+        """The raw (undecoded) stream body."""
+        handle = self._require_handle()
+        return Buffer._from_handle(_vanillapdf.stream_object_get_body_raw(handle)).data
+
+
+class IndirectReferenceObject(Object):
+    @staticmethod
+    def create() -> "IndirectReferenceObject":
+        return IndirectReferenceObject(_vanillapdf.indirect_reference_object_create())
+
+    @property
+    def object_number(self) -> int:
+        handle = self._require_handle()
+        return _vanillapdf.indirect_reference_object_get_referenced_object_number(handle)
+
+    @object_number.setter
+    def object_number(self, value: int) -> None:
+        handle = self._require_handle()
+        _vanillapdf.indirect_reference_object_set_object_number(handle, value)
+
+    @property
+    def generation_number(self) -> int:
+        handle = self._require_handle()
+        return _vanillapdf.indirect_reference_object_get_referenced_generation_number(handle)
+
+    @generation_number.setter
+    def generation_number(self, value: int) -> None:
+        handle = self._require_handle()
+        _vanillapdf.indirect_reference_object_set_generation_number(handle, value)
+
+    @property
+    def referenced_object(self) -> Object:
+        handle = self._require_handle()
+        return Object._wrap(_vanillapdf.indirect_reference_object_get_referenced_object(handle))
+
+    @referenced_object.setter
+    def referenced_object(self, value: Object) -> None:
+        handle = self._require_handle()
+        _vanillapdf.indirect_reference_object_set_referenced_object(handle, value._handle)
+
+
 _OBJECT_TYPE_MAP = {
     ObjectType.NULL: NullObject,
     ObjectType.BOOLEAN: BooleanObject,
@@ -197,8 +430,10 @@ _OBJECT_TYPE_MAP = {
     ObjectType.REAL: RealObject,
     ObjectType.NAME: NameObject,
     ObjectType.STRING: StringObject,
-    # ARRAY / DICTIONARY / STREAM / INDIRECT_REFERENCE arrive with the
-    # container layer; until then _wrap falls back to the base Object.
+    ObjectType.ARRAY: ArrayObject,
+    ObjectType.DICTIONARY: DictionaryObject,
+    ObjectType.STREAM: StreamObject,
+    ObjectType.INDIRECT_REFERENCE: IndirectReferenceObject,
 }
 
 _STRING_TYPE_MAP = {

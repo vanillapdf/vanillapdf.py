@@ -18,6 +18,10 @@
 #include "syntax/real_object.h"
 #include "syntax/name_object.h"
 #include "syntax/string_object.h"
+#include "syntax/array_object.h"
+#include "syntax/dictionary_object.h"
+#include "syntax/indirect_reference_object.h"
+#include "syntax/stream_object.h"
 
 static PyMethodDef VanillapdfMethods[] = {
     /* Document methods */
@@ -37,6 +41,7 @@ static PyMethodDef VanillapdfMethods[] = {
     {"file_get_filename", file_get_filename, METH_VARARGS, "Get filename"},
     {"file_is_encrypted", file_is_encrypted, METH_VARARGS, "Check if file is encrypted"},
     {"file_set_encryption_password", file_set_encryption_password, METH_VARARGS, "Set encryption password"},
+    {"file_get_indirect_object", file_get_indirect_object, METH_VARARGS, "Get an indirect object by number/generation"},
     {"file_release", file_release, METH_VARARGS, "Release a File"},
     /* LibraryInfo methods */
     {"library_info_get_version_major", library_info_get_version_major, METH_NOARGS, "Get library version major"},
@@ -94,6 +99,45 @@ static PyMethodDef VanillapdfMethods[] = {
     {"string_object_set_value", string_object_set_value, METH_VARARGS, "Set String value"},
     {"literal_string_object_create_from_decoded_string", literal_string_object_create_from_decoded_string, METH_VARARGS, "Create a Literal String object from a decoded string"},
     {"hexadecimal_string_object_create_from_decoded_string", hexadecimal_string_object_create_from_decoded_string, METH_VARARGS, "Create a Hexadecimal String object from a decoded string"},
+    /* Array object */
+    {"array_object_create", array_object_create, METH_NOARGS, "Create an Array object"},
+    {"array_object_get_size", array_object_get_size, METH_VARARGS, "Get Array size"},
+    {"array_object_get_value", array_object_get_value, METH_VARARGS, "Get Array element"},
+    {"array_object_set_value", array_object_set_value, METH_VARARGS, "Set Array element"},
+    {"array_object_append", array_object_append, METH_VARARGS, "Append to Array"},
+    {"array_object_insert", array_object_insert, METH_VARARGS, "Insert into Array"},
+    {"array_object_remove", array_object_remove, METH_VARARGS, "Remove Array element"},
+    {"array_object_clear", array_object_clear, METH_VARARGS, "Clear Array"},
+    /* Dictionary object */
+    {"dictionary_object_create", dictionary_object_create, METH_NOARGS, "Create a Dictionary object"},
+    {"dictionary_object_get_size", dictionary_object_get_size, METH_VARARGS, "Get Dictionary size"},
+    {"dictionary_object_find", dictionary_object_find, METH_VARARGS, "Find value by key"},
+    {"dictionary_object_try_find", dictionary_object_try_find, METH_VARARGS, "Find value by key or None"},
+    {"dictionary_object_contains", dictionary_object_contains, METH_VARARGS, "Check if key present"},
+    {"dictionary_object_get_iterator", dictionary_object_get_iterator, METH_VARARGS, "Get Dictionary iterator"},
+    {"dictionary_object_remove", dictionary_object_remove, METH_VARARGS, "Remove key"},
+    {"dictionary_object_clear", dictionary_object_clear, METH_VARARGS, "Clear Dictionary"},
+    {"dictionary_object_insert", dictionary_object_insert, METH_VARARGS, "Insert key/value"},
+    {"dictionary_iterator_get_key", dictionary_iterator_get_key, METH_VARARGS, "Iterator current key"},
+    {"dictionary_iterator_get_value", dictionary_iterator_get_value, METH_VARARGS, "Iterator current value"},
+    {"dictionary_iterator_is_valid", dictionary_iterator_is_valid, METH_VARARGS, "Iterator is valid"},
+    {"dictionary_iterator_next", dictionary_iterator_next, METH_VARARGS, "Advance iterator"},
+    {"dictionary_iterator_release", dictionary_iterator_release, METH_VARARGS, "Release iterator"},
+    /* Indirect reference object */
+    {"indirect_reference_object_create", indirect_reference_object_create, METH_NOARGS, "Create an Indirect reference"},
+    {"indirect_reference_object_get_referenced_object_number", indirect_reference_object_get_referenced_object_number, METH_VARARGS, "Get referenced object number"},
+    {"indirect_reference_object_get_referenced_generation_number", indirect_reference_object_get_referenced_generation_number, METH_VARARGS, "Get referenced generation number"},
+    {"indirect_reference_object_get_referenced_object", indirect_reference_object_get_referenced_object, METH_VARARGS, "Get referenced object"},
+    {"indirect_reference_object_set_object_number", indirect_reference_object_set_object_number, METH_VARARGS, "Set referenced object number"},
+    {"indirect_reference_object_set_generation_number", indirect_reference_object_set_generation_number, METH_VARARGS, "Set referenced generation number"},
+    {"indirect_reference_object_set_referenced_object", indirect_reference_object_set_referenced_object, METH_VARARGS, "Set referenced object"},
+    /* Stream object */
+    {"stream_object_create", stream_object_create, METH_NOARGS, "Create a Stream object"},
+    {"stream_object_get_header", stream_object_get_header, METH_VARARGS, "Get Stream header dictionary"},
+    {"stream_object_set_header", stream_object_set_header, METH_VARARGS, "Set Stream header dictionary"},
+    {"stream_object_get_body", stream_object_get_body, METH_VARARGS, "Get Stream body (decoded)"},
+    {"stream_object_get_body_raw", stream_object_get_body_raw, METH_VARARGS, "Get Stream body (raw)"},
+    {"stream_object_set_body", stream_object_set_body, METH_VARARGS, "Set Stream body"},
     {nullptr, nullptr, 0, nullptr}
 };
 

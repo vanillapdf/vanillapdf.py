@@ -98,6 +98,14 @@ add_library(_vanillapdf MODULE
     src/vanillapdf_native/syntax/name_object.h
     src/vanillapdf_native/syntax/string_object.cpp
     src/vanillapdf_native/syntax/string_object.h
+    src/vanillapdf_native/syntax/array_object.cpp
+    src/vanillapdf_native/syntax/array_object.h
+    src/vanillapdf_native/syntax/dictionary_object.cpp
+    src/vanillapdf_native/syntax/dictionary_object.h
+    src/vanillapdf_native/syntax/indirect_reference_object.cpp
+    src/vanillapdf_native/syntax/indirect_reference_object.h
+    src/vanillapdf_native/syntax/stream_object.cpp
+    src/vanillapdf_native/syntax/stream_object.h
 
     # semantics
     src/vanillapdf_native/semantics/document.cpp
