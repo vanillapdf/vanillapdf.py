@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "dependencies": [
         "spdlog",
-        "nlohmann-json",
+        "fmt",
         "openssl",
         "libjpeg-turbo",
         "openjpeg",

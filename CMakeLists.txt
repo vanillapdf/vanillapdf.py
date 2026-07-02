@@ -41,7 +41,7 @@ project(vanillapdf.py C CXX)
 # Fetch VanillaPDF library
 # VANILLAPDF_GIT_TAG can be overridden (e.g. -DVANILLAPDF_GIT_TAG=main) to build
 # against the upstream library's development branch, as bleeding-edge.yml does
-set(VANILLAPDF_GIT_TAG "v2.2.0" CACHE STRING "vanillapdf git tag, branch, or commit to fetch")
+set(VANILLAPDF_GIT_TAG "v2.3.0-beta.1" CACHE STRING "vanillapdf git tag, branch, or commit to fetch")
 
 include(FetchContent)
 FetchContent_Declare(vanillapdf
