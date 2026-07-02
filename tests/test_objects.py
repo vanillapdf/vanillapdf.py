@@ -174,6 +174,16 @@ def test_array_object():
             _ = arr[10]
 
 
+def test_array_insert_and_clear():
+    with ArrayObject.create() as arr:
+        arr.append(IntegerObject.create(1))
+        arr.append(IntegerObject.create(3))
+        arr.insert(1, IntegerObject.create(2))
+        assert [o.value for o in arr] == [1, 2, 3]
+        arr.clear()
+        assert len(arr) == 0
+
+
 def test_array_wrap():
     arr = ArrayObject.create()
     wrapped = Object._wrap(arr._handle)

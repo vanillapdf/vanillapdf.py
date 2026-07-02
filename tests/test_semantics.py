@@ -1,4 +1,3 @@
-from pathlib import Path
 import pytest
 import vanillapdf
 from vanillapdf import (
@@ -11,12 +10,8 @@ from vanillapdf import (
 )
 
 
-def _pdf() -> str:
-    return str(Path(__file__).parent.parent / "assets" / "pdf-test.pdf")
-
-
-def test_catalog_pages_media_box():
-    with vanillapdf.Document(_pdf()) as doc:
+def test_catalog_pages_media_box(test_pdf):
+    with vanillapdf.Document(test_pdf) as doc:
         catalog = doc.get_catalog()
         assert isinstance(catalog, Catalog)
         pages = catalog.get_pages()
@@ -35,8 +30,8 @@ def test_catalog_pages_media_box():
         assert media_box.height == 792
 
 
-def test_page_tree_iteration_and_bounds():
-    with vanillapdf.Document(_pdf()) as doc:
+def test_page_tree_iteration_and_bounds(test_pdf):
+    with vanillapdf.Document(test_pdf) as doc:
         pages = doc.get_catalog().get_pages()
         collected = list(pages)
         assert len(collected) == len(pages) == 1
@@ -45,16 +40,31 @@ def test_page_tree_iteration_and_bounds():
             _ = pages[5]
 
 
-def test_page_base_object_is_dictionary():
-    with vanillapdf.Document(_pdf()) as doc:
+def test_page_base_object_is_dictionary(test_pdf):
+    with vanillapdf.Document(test_pdf) as doc:
         page = doc.get_catalog().get_pages()[0]
         base = page.base_object
         assert isinstance(base, DictionaryObject)
         assert "Type" in base
 
 
-def test_document_info():
-    with vanillapdf.Document(_pdf()) as doc:
+def test_rectangle_coordinates():
+    with Rectangle.create() as rect:
+        rect.lower_left_x = 10
+        rect.lower_left_y = 20
+        rect.upper_right_x = 110
+        rect.upper_right_y = 220
+        assert rect.lower_left_x == 10
+        assert rect.lower_left_y == 20
+        assert rect.upper_right_x == 110
+        assert rect.upper_right_y == 220
+        assert rect.width == 100
+        assert rect.height == 200
+        assert "Rectangle" in repr(rect)
+
+
+def test_document_info(test_pdf):
+    with vanillapdf.Document(test_pdf) as doc:
         info = doc.get_document_info()
         assert info is not None
 
