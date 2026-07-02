@@ -1,5 +1,26 @@
 from pathlib import Path
+import pytest
 import vanillapdf
+
+
+def test_file_open_nonexistent_raises_pdf_error():
+    """Opening a missing file surfaces the library's real error as PdfError."""
+    with pytest.raises(vanillapdf.PdfError) as exc:
+        vanillapdf.File("this-file-does-not-exist-Ω.pdf")
+    assert isinstance(exc.value.error_code, int)
+    assert "File_Open" in str(exc.value)
+
+
+def test_file_use_after_close_raises():
+    base = Path(__file__).parent
+    test_input = base.parent / "assets" / "pdf-test.pdf"
+
+    f = vanillapdf.File(str(test_input))
+    f.close()
+    with pytest.raises(ValueError):
+        f.get_version()
+    # close() is idempotent
+    f.close()
 
 
 def test_file_open_and_version():

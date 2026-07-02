@@ -1,6 +1,7 @@
 from enum import IntEnum
 from . import _vanillapdf
 from .buffer import Buffer
+from .handle import Handle
 
 
 class PDFVersion(IntEnum):
@@ -17,29 +18,25 @@ class PDFVersion(IntEnum):
     PDF_2_0 = 9
 
 
-class File:
+class File(Handle):
     """Low-level PDF file access.
 
     Provides access to PDF structure including version and encryption status.
     Must call initialize() after opening to read xref tables.
     """
 
+    _release = staticmethod(_vanillapdf.file_release)
+
     def __init__(self, filename: str):
         self._handle = _vanillapdf.file_open(filename)
-        if self._handle is None:
-            raise RuntimeError(f"Failed to open file '{filename}'")
 
     def initialize(self) -> None:
         """Initialize the file by reading xref tables."""
-        if self._handle is None:
-            raise ValueError("File has been closed")
-        _vanillapdf.file_initialize(self._handle)
+        _vanillapdf.file_initialize(self._require_handle())
 
     def get_version(self) -> PDFVersion:
         """Get the PDF version as an enum."""
-        if self._handle is None:
-            raise ValueError("File has been closed")
-        return PDFVersion(_vanillapdf.file_get_version(self._handle))
+        return PDFVersion(_vanillapdf.file_get_version(self._require_handle()))
 
     def get_version_string(self) -> str:
         """Get the PDF version as a string (e.g., '1.7', '2.0')."""
@@ -59,9 +56,7 @@ class File:
 
     def get_filename(self) -> Buffer:
         """Get the filename as a Buffer."""
-        if self._handle is None:
-            raise ValueError("File has been closed")
-        buffer_handle = _vanillapdf.file_get_filename(self._handle)
+        buffer_handle = _vanillapdf.file_get_filename(self._require_handle())
         return Buffer._from_handle(buffer_handle)
 
     def get_filename_string(self, encoding: str = 'utf-8') -> str:
@@ -79,27 +74,8 @@ class File:
     @property
     def is_encrypted(self) -> bool:
         """Check if the file is encrypted."""
-        if self._handle is None:
-            raise ValueError("File has been closed")
-        return _vanillapdf.file_is_encrypted(self._handle)
+        return _vanillapdf.file_is_encrypted(self._require_handle())
 
     def set_encryption_password(self, password: str) -> None:
         """Set the password for an encrypted file."""
-        if self._handle is None:
-            raise ValueError("File has been closed")
-        _vanillapdf.file_set_encryption_password(self._handle, password)
-
-    def close(self) -> None:
-        """Release the file handle."""
-        if self._handle is not None:
-            _vanillapdf.file_release(self._handle)
-            self._handle = None
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
-
-    def __del__(self):
-        self.close()
+        _vanillapdf.file_set_encryption_password(self._require_handle(), password)

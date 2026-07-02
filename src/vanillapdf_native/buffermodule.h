@@ -4,12 +4,8 @@
 #include <Python.h>
 #include <vanillapdf/utils/c_buffer.h>
 
-/* Heap-allocated box that the capsule points to */
-typedef struct {
-    BufferHandle* handle;  /* NULL => released */
-} BufferHandleBox;
-
-/* Create a Python capsule from an existing BufferHandle */
+/* Wrap an existing BufferHandle in a capsule (takes ownership). Public so
+ * other modules can return Buffers produced by the library. */
 PyObject* buffer_capsule_from_handle(BufferHandle* handle);
 
 PyObject* buffer_create(PyObject* self, PyObject* args);
