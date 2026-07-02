@@ -32,11 +32,14 @@ class File(Handle):
 
     def initialize(self) -> None:
         """Initialize the file by reading xref tables."""
-        _vanillapdf.file_initialize(self._require_handle())
+        handle = self._require_handle()
+        _vanillapdf.file_initialize(handle)
 
     def get_version(self) -> PDFVersion:
         """Get the PDF version as an enum."""
-        return PDFVersion(_vanillapdf.file_get_version(self._require_handle()))
+        handle = self._require_handle()
+        version = _vanillapdf.file_get_version(handle)
+        return PDFVersion(version)
 
     def get_version_string(self) -> str:
         """Get the PDF version as a string (e.g., '1.7', '2.0')."""
@@ -56,7 +59,8 @@ class File(Handle):
 
     def get_filename(self) -> Buffer:
         """Get the filename as a Buffer."""
-        buffer_handle = _vanillapdf.file_get_filename(self._require_handle())
+        handle = self._require_handle()
+        buffer_handle = _vanillapdf.file_get_filename(handle)
         return Buffer._from_handle(buffer_handle)
 
     def get_filename_string(self, encoding: str = 'utf-8') -> str:
@@ -74,8 +78,10 @@ class File(Handle):
     @property
     def is_encrypted(self) -> bool:
         """Check if the file is encrypted."""
-        return _vanillapdf.file_is_encrypted(self._require_handle())
+        handle = self._require_handle()
+        return _vanillapdf.file_is_encrypted(handle)
 
     def set_encryption_password(self, password: str) -> None:
         """Set the password for an encrypted file."""
-        _vanillapdf.file_set_encryption_password(self._require_handle(), password)
+        handle = self._require_handle()
+        _vanillapdf.file_set_encryption_password(handle, password)

@@ -12,4 +12,5 @@ class Document(Handle):
             raise NotImplementedError("Currently only opening existing documents is supported.")
 
     def save(self, filename: str):
-        _vanillapdf.document_save(self._require_handle(), filename)
+        handle = self._require_handle()
+        _vanillapdf.document_save(handle, filename)

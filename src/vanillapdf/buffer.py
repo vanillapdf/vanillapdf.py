@@ -28,10 +28,12 @@ class Buffer(Handle):
         return cls(handle)
 
     def set_data(self, data: bytes) -> None:
-        _vanillapdf.buffer_set_data(self._require_handle(), data)
+        handle = self._require_handle()
+        _vanillapdf.buffer_set_data(handle, data)
 
     def get_data(self) -> bytes:
-        return _vanillapdf.buffer_get_data(self._require_handle())
+        handle = self._require_handle()
+        return _vanillapdf.buffer_get_data(handle)
 
     @property
     def data(self) -> bytes:
