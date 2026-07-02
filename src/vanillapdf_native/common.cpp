@@ -168,61 +168,69 @@ static char* fetch_last_error_message(void) {
     return data;
 }
 
-PyObject* raise_last_error(error_type err, const char* operation) {
-    /* Callers invoke this immediately after a failing library call, on the
-     * same thread and with the GIL held, so the thread-local error state has
-     * not been disturbed. Note 'err' is the code the failing call returned - we
-     * do NOT re-read it from Errors_GetLastError - and the printable text is a
-     * pure function of that code. Only 'detail' comes from thread-local storage,
-     * and only a same-thread later error could overwrite it (which cannot
-     * happen in this inline window). */
+/* Build the "operation: NAME (detail)" message string for an error.
+ *
+ * 'err' is the code the failing call returned - we do NOT re-read it from
+ * Errors_GetLastError, and the printable NAME is a pure function of it. Only the
+ * optional 'detail' comes from thread-local storage; callers invoke us inline
+ * right after the failing call (same thread, GIL held), so it is still current.
+ * Returns a new reference, or nullptr with a Python exception set. */
+static PyObject* build_error_message(error_type err, const char* operation) {
     char* printable = fetch_printable_error_text(err);
+    auto printable_guard = make_scope_guard([&] { PyMem_Free(printable); });
+
     char* detail = fetch_last_error_message();
+    auto detail_guard = make_scope_guard([&] { PyMem_Free(detail); });
 
-    PyObject* message;
-    if (detail != nullptr) {
-        message = PyUnicode_FromFormat("%s: %s (%s)",
-                                       operation,
-                                       printable ? printable : "unknown error",
-                                       detail);
-    } else {
-        message = PyUnicode_FromFormat("%s: %s",
-                                       operation,
-                                       printable ? printable : "unknown error");
+    const char* name = printable ? printable : "unknown error";
+    if (detail) {
+        return PyUnicode_FromFormat("%s: %s (%s)", operation, name, detail);
     }
+    return PyUnicode_FromFormat("%s: %s", operation, name);
+}
 
-    if (printable != nullptr) {
-        PyMem_Free(printable);
-    }
-    if (detail != nullptr) {
-        PyMem_Free(detail);
-    }
-
-    if (message == nullptr) {
+/* Create a PdfError instance carrying 'message' and the numeric 'error_code'.
+ * Returns a new reference, or nullptr with a Python exception set. */
+static PyObject* make_pdf_error(PyObject* message, error_type err) {
+    PyObject* exc = PyObject_CallFunctionObjArgs(PdfError, message, nullptr);
+    if (exc == nullptr) {
         return nullptr;
     }
 
-    /* Instantiate PdfError(message) explicitly (rather than PyErr_SetString)
-     * so we can attach the numeric error_code attribute to the instance. */
-    PyObject* exc = nullptr;
-    if (PdfError != nullptr) {
-        exc = PyObject_CallFunctionObjArgs(PdfError, message, nullptr);
+    PyObject* code = to_python(err);
+    if (code != nullptr) {
+        PyObject_SetAttrString(exc, "error_code", code);
+        Py_DECREF(code);
     }
 
-    if (exc != nullptr) {
-        PyObject* code = to_python(err);
-        if (code != nullptr) {
-            PyObject_SetAttrString(exc, "error_code", code);
-            Py_DECREF(code);
-        }
-        PyErr_SetObject(PdfError, exc);
-        Py_DECREF(exc);
-    } else {
-        /* Fallback if PdfError missing or instantiation failed. */
-        PyErr_SetObject(PdfError ? PdfError : PyExc_RuntimeError, message);
+    return exc;
+}
+
+PyObject* raise_last_error(error_type err, const char* operation) {
+    PyObject* message = build_error_message(err, operation);
+    if (message == nullptr) {
+        return nullptr;
+    }
+    auto message_guard = make_scope_guard([&] { Py_DECREF(message); });
+
+    /* PdfError is created at module init; if that somehow failed, degrade to a
+     * plain RuntimeError so we still raise something meaningful. */
+    if (PdfError == nullptr) {
+        PyErr_SetObject(PyExc_RuntimeError, message);
+        return nullptr;
     }
 
-    Py_DECREF(message);
+    /* Prefer a PdfError instance with the error_code attribute; if building it
+     * fails (e.g. out of memory), still raise PdfError with just the message. */
+    PyObject* exc = make_pdf_error(message, err);
+    if (exc == nullptr) {
+        PyErr_Clear();
+        PyErr_SetObject(PdfError, message);
+        return nullptr;
+    }
+
+    PyErr_SetObject(PdfError, exc);
+    Py_DECREF(exc);
     return nullptr;
 }
 
