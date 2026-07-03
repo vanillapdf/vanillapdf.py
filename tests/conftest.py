@@ -1,7 +1,26 @@
 from pathlib import Path
+
 import pytest
 
 ASSETS_DIR = Path(__file__).parent.parent / "assets"
+
+
+@pytest.fixture(autouse=True)
+def _silence_native_logging():
+    """WORKAROUND (not a fix) for a native-library bug: disable native logging.
+
+    The C++ library logs to stdout (fd 1). Under pytest's default `--capture=fd`
+    (which dup2's a temp file over fd 1 and truncates it between tests), the
+    library's logging I/O state gets corrupted and bleeds into the parser,
+    causing spurious `PARSE_EXCEPTION`s. This is isolated, without pytest, in
+    `repro/logging_fd_capture_parse_bug.py` and must be fixed in the native
+    library. Until then we disable logging per-test (per-test so test_logging
+    can't re-enable it for a later test). Remove this once the native bug is
+    fixed. Do NOT paper over it by loosening assertions elsewhere.
+    """
+    from vanillapdf import Logging, LoggingSeverity
+
+    Logging.set_severity(LoggingSeverity.OFF)
 
 
 @pytest.fixture
@@ -29,7 +48,6 @@ def plain_pdf(tmp_path):
     The bundled assets/pdf-test.pdf is itself encrypted (empty user password),
     so tests that need a plaintext source generate one here.
     """
-    import vanillapdf
     from vanillapdf import Document, File, PageObject, Rectangle
 
     path = str(tmp_path / "plain.pdf")

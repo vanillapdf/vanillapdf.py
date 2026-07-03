@@ -1,4 +1,3 @@
-from . import _vanillapdf
 
 
 class Handle:

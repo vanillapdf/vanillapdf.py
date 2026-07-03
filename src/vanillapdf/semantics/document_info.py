@@ -1,6 +1,6 @@
 from .. import _vanillapdf
 from ..handle import Handle
-from ..syntax.objects import Object, StringObject
+from ..syntax.objects import Object
 
 
 class DocumentInfo(Handle):

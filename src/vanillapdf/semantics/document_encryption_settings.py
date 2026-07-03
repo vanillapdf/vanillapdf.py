@@ -1,4 +1,5 @@
 from enum import IntEnum, IntFlag
+
 from .. import _vanillapdf
 from ..handle import Handle
 from ..utils.buffer import Buffer

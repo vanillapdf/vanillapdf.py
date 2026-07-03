@@ -1,7 +1,9 @@
 import gc
+
 import pytest
+
 import vanillapdf
-from vanillapdf import IntegerObject, Buffer, ObjectType, _vanillapdf
+from vanillapdf import Buffer, IntegerObject, ObjectType, _vanillapdf
 
 
 def test_double_close_is_idempotent():
@@ -19,9 +21,8 @@ def test_context_manager_closes():
 
 def test_exception_in_with_still_closes():
     obj = IntegerObject.create(1)
-    with pytest.raises(RuntimeError):
-        with obj:
-            raise RuntimeError("boom")
+    with pytest.raises(RuntimeError), obj:
+        raise RuntimeError("boom")
     # __exit__ ran despite the exception, so the handle is released.
     with pytest.raises(ValueError):
         _ = obj.value

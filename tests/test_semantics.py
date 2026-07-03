@@ -1,11 +1,12 @@
 import pytest
+
 import vanillapdf
 from vanillapdf import (
     Catalog,
-    PageTree,
-    PageObject,
-    Rectangle,
     DictionaryObject,
+    PageObject,
+    PageTree,
+    Rectangle,
     StringObject,
 )
 

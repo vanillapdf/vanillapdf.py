@@ -1,4 +1,3 @@
-import vanillapdf
 from vanillapdf import Document, PageObject, Rectangle
 
 

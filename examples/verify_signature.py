@@ -12,8 +12,8 @@ import sys
 
 from vanillapdf import (
     Document,
-    TrustedCertificateStore,
     SignatureVerificationSettings,
+    TrustedCertificateStore,
 )
 
 

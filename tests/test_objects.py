@@ -1,23 +1,22 @@
 import pytest
-import vanillapdf
+
 from vanillapdf import (
-    _vanillapdf,
-    PdfError,
-    ObjectType,
-    StringType,
-    Object,
-    NullObject,
-    BooleanObject,
-    IntegerObject,
-    RealObject,
-    NameObject,
-    StringObject,
-    LiteralStringObject,
-    HexadecimalStringObject,
     ArrayObject,
+    BooleanObject,
     DictionaryObject,
-    StreamObject,
+    HexadecimalStringObject,
     IndirectReferenceObject,
+    IntegerObject,
+    LiteralStringObject,
+    NameObject,
+    NullObject,
+    Object,
+    ObjectType,
+    PdfError,
+    RealObject,
+    StreamObject,
+    StringType,
+    _vanillapdf,
 )
 
 
@@ -206,7 +205,8 @@ def test_dictionary_object():
         assert d["Count"].value == 5
         assert d.get("Missing") is None
         assert d.get("Type").value == 1
-        assert sorted(k.value_string() for k in d.keys()) == ["Count", "Type"]
+        keys = d.keys()
+        assert sorted(k.value_string() for k in keys) == ["Count", "Type"]
         items = {k.value_string(): v.value for k, v in d.items()}
         assert items == {"Type": 1, "Count": 5}
         del d["Type"]
@@ -216,11 +216,10 @@ def test_dictionary_object():
 
 
 def test_dictionary_name_key():
-    with DictionaryObject.create() as d:
-        with NameObject.create("Root") as key:
-            d[key] = BooleanObject.create(True)
-            assert key in d
-            assert d[key].value is True
+    with DictionaryObject.create() as d, NameObject.create("Root") as key:
+        d[key] = BooleanObject.create(True)
+        assert key in d
+        assert d[key].value is True
 
 
 def test_indirect_reference_object():

@@ -1,8 +1,8 @@
 from .. import _vanillapdf
 from ..handle import Handle
 from .catalog import Catalog
-from .document_info import DocumentInfo
 from .document_encryption_settings import DocumentEncryptionSettings
+from .document_info import DocumentInfo
 
 
 class Document(Handle):

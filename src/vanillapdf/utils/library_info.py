@@ -1,4 +1,5 @@
 from datetime import date
+
 from .. import _vanillapdf
 
 
@@ -48,7 +49,11 @@ class LibraryInfo:
     @staticmethod
     def get_version() -> str:
         """Get the full version string (e.g., '2.2.0.0')."""
-        return f"{LibraryInfo.get_version_major()}.{LibraryInfo.get_version_minor()}.{LibraryInfo.get_version_patch()}.{LibraryInfo.get_version_build()}"
+        major = LibraryInfo.get_version_major()
+        minor = LibraryInfo.get_version_minor()
+        patch = LibraryInfo.get_version_patch()
+        build = LibraryInfo.get_version_build()
+        return f"{major}.{minor}.{patch}.{build}"
 
     @staticmethod
     def get_build_date() -> date:

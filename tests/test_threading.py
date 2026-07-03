@@ -1,6 +1,7 @@
 import threading
+
 import vanillapdf
-from vanillapdf import IntegerObject, Errors, PdfError, ObjectType
+from vanillapdf import Errors, IntegerObject, ObjectType, PdfError
 
 THREADS = 8
 ITERATIONS = 150

@@ -1,5 +1,7 @@
 from pathlib import Path
+
 import vanillapdf
+
 
 def test_open_save_release():
     base = Path(__file__).parent

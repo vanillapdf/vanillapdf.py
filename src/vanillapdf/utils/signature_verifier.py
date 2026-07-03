@@ -1,4 +1,5 @@
 from enum import IntEnum
+
 from .. import _vanillapdf
 from ..handle import Handle
 from .buffer import Buffer
@@ -90,8 +91,9 @@ class SignatureVerificationSettings(Handle):
     @skip_certificate_validation.setter
     def skip_certificate_validation(self, value: bool) -> None:
         handle = self._require_handle()
-        _vanillapdf.signature_verification_settings_set_skip_certificate_validation(handle, bool(value))
-        self._skip_certificate_validation = bool(value)
+        flag = bool(value)
+        _vanillapdf.signature_verification_settings_set_skip_certificate_validation(handle, flag)
+        self._skip_certificate_validation = flag
 
     @property
     def allow_weak_algorithms(self) -> bool:

@@ -1,7 +1,7 @@
 from .. import _vanillapdf
 from ..handle import Handle
-from .page_tree import PageTree
 from .interactive_form import InteractiveForm
+from .page_tree import PageTree
 
 
 class Catalog(Handle):

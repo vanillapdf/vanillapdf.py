@@ -1,13 +1,15 @@
 import os
+
 import pytest
+
 from vanillapdf import (
     Document,
-    File,
-    PKCS12Key,
-    SigningKey,
     DocumentSignatureSettings,
+    File,
     MessageDigestAlgorithm,
     PdfError,
+    PKCS12Key,
+    SigningKey,
 )
 
 KEY_PASSWORD = "test"

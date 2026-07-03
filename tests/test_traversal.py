@@ -1,5 +1,5 @@
 import vanillapdf
-from vanillapdf import DictionaryObject, StreamObject, NameObject
+from vanillapdf import DictionaryObject, NameObject, StreamObject
 
 
 def test_get_indirect_object_dictionary(test_pdf):

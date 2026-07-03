@@ -107,6 +107,39 @@ pytest tests/test_document.py    # Run single test file
 pytest tests/ -v                 # Verbose output
 ```
 
+### Zero tolerance for flakiness
+
+Flaky tests are treated as **bugs, not noise**. This project must not ship any
+non-deterministic test behaviour.
+
+- **Never assume a re-run fixes a failure.** A test that fails then passes on
+  re-run is a defect to be root-caused immediately — inspect logs, error
+  messages, crash dumps, allocator diagnostics, whatever it takes. Do not
+  proceed until the cause is understood and eliminated.
+- **Debug immediately and empirically.** Reproduce in a loop, bisect the
+  trigger (isolate operations/tests, vary one factor at a time), and prove the
+  fix by hammering the previously-failing case many times (dozens of runs).
+- **Fix the trigger, don't mask it.** Removing the actual cause (see below) is a
+  fix; loosening an assertion or retrying is masking and is not acceptable.
+
+Known native-library bug (root-caused and isolated). The failure needs **both**
+the native library's logging enabled **and** pytest's default `--capture=fd`.
+The library logs to **stdout (fd 1)**; `--capture=fd` `dup2`s a temp file over
+fd 1 and `ftruncate`s it between tests, and truncating that file underneath the
+library's logging corrupts its I/O state, which bleeds into the parser as
+spurious `PARSE_EXCEPTION` ("Could not parse object at offset N"). It is **not**
+the file (byte-valid) and **not** a PyMem/bindings issue (Python debug allocator
+clean). Reproduced **without pytest** in `repro/logging_fd_capture_parse_bug.py`
+(logging on → intermittent failures; `--off` → 0). **This must be fixed in the
+native C++ library.** Until then, `tests/conftest.py` disables native logging
+per-test as a **workaround** (documented there) — it removes the trigger; it is
+not a fix and must be removed once the native bug is resolved.
+
+### Linting
+
+Ruff enforces style/quality (config in `pyproject.toml`, incl. `SIM117`
+multiple-with-statements). Run `ruff check .`; CI runs it in `lint.yml`.
+
 ## CI/CD
 
 - **sanity-check.yml** - Runs on push/PR to main; builds and tests on Ubuntu, Windows, macOS

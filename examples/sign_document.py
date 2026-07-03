@@ -9,10 +9,10 @@ import sys
 
 from vanillapdf import (
     Document,
-    File,
-    PKCS12Key,
     DocumentSignatureSettings,
+    File,
     MessageDigestAlgorithm,
+    PKCS12Key,
 )
 
 

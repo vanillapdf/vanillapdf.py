@@ -9,7 +9,6 @@ import sys
 
 from vanillapdf import Document
 
-
 # The document info entries are optional: a missing entry is returned as None
 # rather than raising, so guard each one before decoding it.
 FIELDS = ("title", "author", "subject", "keywords", "creator", "producer")

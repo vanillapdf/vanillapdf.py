@@ -1,11 +1,12 @@
 import pytest
+
 from vanillapdf import (
     Document,
-    File,
     DocumentEncryptionSettings,
     EncryptionAlgorithm,
-    UserAccessPermission,
+    File,
     PdfError,
+    UserAccessPermission,
 )
 
 OWNER_PASSWORD = "owner-secret"

@@ -1,4 +1,5 @@
 from enum import IntEnum
+
 from .. import _vanillapdf
 from ..handle import Handle
 from ..utils.signing_key import SigningKey

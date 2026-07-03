@@ -1,7 +1,8 @@
 from enum import IntEnum
+
 from .. import _vanillapdf
-from ..utils.buffer import Buffer
 from ..handle import Handle
+from ..utils.buffer import Buffer
 from .objects import Object
 
 
