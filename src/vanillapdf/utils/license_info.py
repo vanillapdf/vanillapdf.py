@@ -3,10 +3,11 @@ from .buffer import Buffer
 
 
 class LicenseInfo:
-    """Manage the VanillaPDF license.
+    """Optional VanillaPDF license management.
 
-    A valid license unlocks the full library; without one, licensed operations
-    fail with :class:`~vanillapdf.errors.PdfError`.
+    Setting a license is **opt-in and not required** — the library's
+    functionality is not gated on it. These methods simply expose the library's
+    license state for callers that want to inspect or set it.
     """
 
     @staticmethod
