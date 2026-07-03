@@ -279,5 +279,14 @@ PyInit__vanillapdf(void) {
         return nullptr;
     }
 
+    /* Route native logging into Python's `logging` module before any other
+     * native call. The library defaults to an stdout sink at INFO; under fd
+     * redirection (e.g. pytest --capture=fd) that writes log text into files
+     * the library saves, corrupting them. Best-effort: a failure here must not
+     * break import, but it should not normally fail. */
+    if (install_native_logging() < 0) {
+        PyErr_Clear();
+    }
+
     return module;
 }

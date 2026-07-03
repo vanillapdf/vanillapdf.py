@@ -1,40 +1,25 @@
-"""Minimal reproducer: native logging + fd-level stdout capture -> spurious parse errors.
+"""Reproducer mirror for the native logging/stdout-capture bug (see README.md).
 
-This isolates a bug in the native Vanilla.PDF library (NOT the Python bindings)
-for debugging in the C++ codebase. No pytest required.
+This documents a bug in the native Vanilla.PDF library. The pure-C
+`logging_fd_capture_parse_bug.c` is the canonical reproducer; this Python mirror
+now reports 0/300 because the bindings FIX the issue at import (see below).
 
-SYMPTOM
-    Intermittent, spurious `VANILLAPDF_ERROR_PARSE_EXCEPTION
-    ("Could not parse object at offset N")` while parsing well-formed PDFs.
+MECHANISM
+    The native library logs to STDOUT (fd 1) by default (INFO). When stdout is
+    redirected onto a file and juggled with dup2 (as pytest's `--capture=fd`
+    does), the stdout sink's stale/aliased handle intermittently writes log text
+    into the PDF the library is SAVING, corrupting the trailer. The parser then
+    correctly rejects a genuinely-corrupt file -> spurious PARSE_EXCEPTION.
 
-CONDITIONS (all required; remove any one and it never fails)
-    1. Native logging enabled (spdlog). The library logs to STDOUT (fd 1).
-    2. fd 1 is redirected via dup2() onto a regular file.
-    3. That file is periodically ftruncate(0)+lseek(0)'d underneath the library
-       while it keeps writing log lines to it (fd shares the file offset via the
-       dup2'd description).
-    This is exactly what pytest's default `--capture=fd` does to its capture
-    buffer between tests, which is how this first surfaced (the Python test
-    suite; see tests/conftest.py, which disables logging as a workaround).
-
-EVIDENCE that it is not the file or the Python layer
-    - The generated PDF is byte-valid and deterministic apart from the random
-      trailer /ID; the failing offset is a fixed, valid object.
-    - Python's debug allocator (PYTHONMALLOC=debug) reports nothing -> not a
-      PyMem/bindings heap issue.
-    - Toggling ONLY the log severity (TRACE vs OFF) flips failures on/off with
-      everything else identical (see the control run below).
-
-LIKELY AREA
-    The library's logging output path (buffered stdio / stream state, or a
-    logging-thread race) becomes inconsistent when the underlying fd-1 file is
-    truncated/seeked out from under it, and that corruption bleeds into the
-    parser's I/O. A native debugger / AddressSanitizer / ThreadSanitizer on this
-    loop should pinpoint it.
+BINDINGS FIX (why this now reports 0/300)
+    The bindings install a callback logger at import that routes native logs
+    into Python's `logging` ("vanillapdf" logger), so spdlog never touches
+    stdout. To observe the original NATIVE bug, use the C reproducer, which
+    links libvanillapdf directly with its default stdout sink.
 
 RUN
-    python repro/logging_fd_capture_parse_bug.py           # expect: N/300 failures (N>0)
-    python repro/logging_fd_capture_parse_bug.py --off      # control: 0/300 failures
+    python repro/logging_fd_capture_parse_bug.py           # fixed bindings -> 0/300
+    python repro/logging_fd_capture_parse_bug.py --off      # control -> 0/300
 """
 import os
 import sys

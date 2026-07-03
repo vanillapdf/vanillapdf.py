@@ -28,12 +28,16 @@
  *       -o repro && ./repro
  *   (or drop it into the library's C test project and link vanillapdf).
  *
- * The parser reads a different, valid object each run; the failing offset is
- * consistent within a run. The file on disk is byte-valid (only the trailer
- * /ID differs run-to-run), so this is an I/O/logging-state bug in the library,
- * not malformed output. Suspect: the logging output path (buffered stdio /
- * stream state, or a logging-thread race) going inconsistent when fd 1 is
- * truncated out from under it, bleeding into the parser's I/O.
+ * MECHANISM
+ *   The default stdout log sink's cached OS output handle goes stale/aliased
+ *   under the fd juggling, so log writes intermittently land in the wrong file:
+ *   the PDF the library is SAVING. The library's own log text (e.g.
+ *   "[info] File destructor ...") is written into the saved PDF, clobbering the
+ *   "startxref ... %%EOF" tail of the trailer. The file on disk is then
+ *   genuinely corrupt, and the parser correctly rejects it. NOT a parser race
+ *   or shared parser I/O -- re-parsing the corrupt file keeps failing, and
+ *   routing logs through a callback sink (or freopen with a private fd) makes
+ *   it vanish. Recommended fix: don't default diagnostics to the stdout sink.
  */
 #include <stdio.h>
 #include <string.h>

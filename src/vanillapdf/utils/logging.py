@@ -16,7 +16,19 @@ class LoggingSeverity(IntEnum):
 
 
 class Logging:
-    """Logging configuration for VanillaPDF."""
+    """Logging configuration for VanillaPDF.
+
+    Native library log output is routed into Python's standard :mod:`logging`
+    under the ``"vanillapdf"`` logger (installed at import), so it never writes
+    to stdout. It is silent by default; to see it, configure that logger::
+
+        import logging
+        logging.basicConfig(level=logging.DEBUG)
+        logging.getLogger("vanillapdf").setLevel(logging.DEBUG)
+
+    :meth:`set_severity` still controls how verbose the native side is before it
+    reaches Python logging.
+    """
 
     @staticmethod
     def get_severity() -> LoggingSeverity:

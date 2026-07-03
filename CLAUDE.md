@@ -122,18 +122,23 @@ non-deterministic test behaviour.
 - **Fix the trigger, don't mask it.** Removing the actual cause (see below) is a
   fix; loosening an assertion or retrying is masking and is not acceptable.
 
-Known native-library bug (root-caused and isolated). The failure needs **both**
-the native library's logging enabled **and** pytest's default `--capture=fd`.
-The library logs to **stdout (fd 1)**; `--capture=fd` `dup2`s a temp file over
-fd 1 and `ftruncate`s it between tests, and truncating that file underneath the
-library's logging corrupts its I/O state, which bleeds into the parser as
-spurious `PARSE_EXCEPTION` ("Could not parse object at offset N"). It is **not**
-the file (byte-valid) and **not** a PyMem/bindings issue (Python debug allocator
-clean). Reproduced **without pytest** in `repro/logging_fd_capture_parse_bug.py`
-(logging on → intermittent failures; `--off` → 0). **This must be fixed in the
-native C++ library.** Until then, `tests/conftest.py` disables native logging
-per-test as a **workaround** (documented there) — it removes the trigger; it is
-not a fix and must be removed once the native bug is resolved.
+Native logging must never reach stdout (root-caused native bug, fixed at the
+binding boundary). The native library defaults to an **stdout log sink at INFO**.
+When stdout (fd 1) is redirected onto a file and juggled with `dup2` (exactly
+what pytest's `--capture=fd` does to its capture buffer), the sink's
+stale/aliased handle intermittently writes **log text into the PDF the library
+is saving**, clobbering the trailer — the file on disk is genuinely corrupt and
+the parser correctly rejects it (`PARSE_EXCEPTION`). It is not a parser race and
+not a PyMem/bindings issue. Isolated in pure C (no Python) in
+`repro/logging_fd_capture_parse_bug.c` (see `repro/README.md`).
+
+**Fix (in the bindings):** `PyInit__vanillapdf` calls `install_native_logging()`
+(`utils/logging.cpp`), which installs a `Logging_SetCallbackLogger` sink routing
+native logs into Python's `logging` under the `"vanillapdf"` logger — so spdlog
+never writes to stdout. This eliminates the corruption (verified: repro 0/300,
+full suite deterministic under `--capture=fd` with no test-side workaround). Do
+not remove this. The underlying stdout-sink default should also be fixed in the
+native library (don't emit to stdout implicitly).
 
 ### Linting
 
