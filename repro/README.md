@@ -55,17 +55,63 @@ cmake --build build --target native_logging_repro --config Release
 
 ## Recommended native fix
 
-The stdout sink is **spdlog's** default (a stdout/wincolor sink), and spdlog has
-declined to change it upstream. So Vanilla.PDF must **explicitly install its own
-default sink at library-init instead of inheriting spdlog's** — e.g. a null sink
-with opt-in (callback / file / stderr) via `spdlog::set_default_logger(...)` in
-the logging setup, rather than leaving the default in place. A library whose
-consumers legitimately redirect stdout should not emit to it implicitly. (Also:
-`File constructor`/`File destructor` at `info` level is very noisy.)
+The stdout sink is **spdlog's** default (a stdout/wincolor sink) and spdlog has
+declined to change it upstream, so Vanilla.PDF must stop relying on the global
+default and drive all logging through its **own logger with a null default
+sink**. A library whose consumers legitimately redirect stdout must not emit to
+it implicitly.
 
-The Python bindings already do exactly this from the consumer side — they
-install a `Logging_SetCallbackLogger` sink at import, so they do not depend on
-this native change landing.
+Do **not** just call `spdlog::set_default_logger(...)`: ~121 call sites use the
+free functions `spdlog::{trace,debug,info,warn,error,critical}(...)` (plus the
+`LOG_*` macros in `utils/log.h`, which hardcode `spdlog::error`). Those resolve
+to the global default logger — the stdout sink — and a raw call that fires
+before any lazy init still hits stdout. The guarantee only holds if nothing logs
+through the global default.
+
+Concrete plan:
+
+1. **Private logger + lazy init (no load hook).** A function-local accessor,
+   initialized once with a null sink; safe before `main`, no `DllMain` (loader
+   lock) and no static-init-order fiasco. Return a **snapshot by value**, not a
+   `shared_ptr<logger>&`.
+
+   ```cpp
+   // returns a stable snapshot; safe default = null sink (never stdout)
+   std::shared_ptr<spdlog::logger> vpdf_logger();
+   ```
+
+2. **Macro chokepoint + sweep.** Route every call site through macros and ban
+   raw spdlog free calls so this can't regress:
+
+   ```cpp
+   #define VPDF_LOG_INFO(...)  vpdf_logger()->info(__VA_ARGS__)
+   // ... trace/debug/warn/error/critical; redefine LOG_ERROR_AND_THROW* too
+   ```
+
+   Migrate all ~121 calls to the macros, then add a CI grep that fails on
+   `spdlog::(trace|debug|info|warn|error|critical)\(` under `src/`.
+
+3. **Thread-safe reconfiguration.** `Logging_SetCallbackLogger` /
+   `SetRotatingFileLogger` must build a **new** logger and **atomically replace**
+   the whole `shared_ptr<logger>` (`std::atomic_store`, or a mutex in the
+   accessor) — never mutate `logger->sinks()` in place (that races concurrent
+   logging; spdlog locks within a sink, not around sink-vector replacement).
+   `SetSeverity` -> `set_level()` is fine directly (level is atomic);
+   `SetPattern` mutates the formatter, so route it through the swap or lock.
+
+4. **Migrate the whole `Logging_*` surface** onto the private logger:
+   `GetSeverity` -> `level()`, `SetPattern` -> `set_pattern()`,
+   `SetRotatingFileLogger`, `SetCallbackLogger`, `Shutdown`.
+
+5. **Release note the behavior change.** Today `Trace` prints to stdout; after
+   this the default is silent, so anyone relying on stdout logging must opt into
+   a stdout/stderr sink explicitly. (Also: `File constructor`/`File destructor`
+   at `info` is very noisy.)
+
+The Python bindings install a `Logging_SetCallbackLogger` sink at import to route
+native logs into Python's `logging`, so they don't depend on this native change
+landing — but the native null default is still needed to protect unconfigured C
+and .NET consumers.
 
 ## Python bindings: fixed
 
