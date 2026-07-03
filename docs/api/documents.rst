@@ -40,3 +40,17 @@ DocumentInfo
 
 .. autoclass:: vanillapdf.DocumentInfo
    :members:
+
+Encryption
+----------
+
+.. autoclass:: vanillapdf.DocumentEncryptionSettings
+   :members:
+
+.. autoclass:: vanillapdf.EncryptionAlgorithm
+   :members:
+   :undoc-members:
+
+.. autoclass:: vanillapdf.UserAccessPermission
+   :members:
+   :undoc-members:

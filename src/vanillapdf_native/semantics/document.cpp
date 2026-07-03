@@ -7,6 +7,7 @@
 #include <vanillapdf/semantics/c_document.h>
 #include <vanillapdf/semantics/c_catalog.h>
 #include <vanillapdf/semantics/c_document_info.h>
+#include <vanillapdf/semantics/c_document_encryption_settings.h>
 
 #include "semantics/document.h"
 #include "semantics/catalog.h"
@@ -172,6 +173,52 @@ PyObject* document_append_document(PyObject* self, PyObject* args) {
     error_type err = Document_AppendDocument(handle, source);
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_AppendDocument");
+    }
+
+    Py_RETURN_NONE;
+}
+
+PyObject* document_add_encryption(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    PyObject* settings_capsule;
+    if (!PyArg_ParseTuple(args, "OO", &capsule, &settings_capsule)) {
+        return nullptr;
+    }
+
+    DocumentEncryptionSettingsHandle* settings =
+        capsule_cast<DocumentEncryptionSettingsHandle>(
+            settings_capsule, "VanillaPDF.DocumentEncryptionSettings");
+    if (settings == nullptr) {
+        return nullptr;
+    }
+
+    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (handle == nullptr) {
+        return nullptr;
+    }
+
+    error_type err = Document_AddEncryption(handle, settings);
+    if (err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(err, "Document_AddEncryption");
+    }
+
+    Py_RETURN_NONE;
+}
+
+PyObject* document_remove_encryption(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    if (!PyArg_ParseTuple(args, "O", &capsule)) {
+        return nullptr;
+    }
+
+    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (handle == nullptr) {
+        return nullptr;
+    }
+
+    error_type err = Document_RemoveEncryption(handle);
+    if (err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(err, "Document_RemoveEncryption");
     }
 
     Py_RETURN_NONE;

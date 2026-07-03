@@ -27,6 +27,7 @@
 #include "semantics/page_object.h"
 #include "semantics/rectangle.h"
 #include "semantics/document_info.h"
+#include "semantics/document_encryption_settings.h"
 
 static PyMethodDef VanillapdfMethods[] = {
     /* Document methods */
@@ -38,6 +39,8 @@ static PyMethodDef VanillapdfMethods[] = {
     {"document_get_catalog", document_get_catalog, METH_VARARGS, "Get the Document catalog"},
     {"document_get_document_info", document_get_document_info, METH_VARARGS, "Get the Document info"},
     {"document_append_document", document_append_document, METH_VARARGS, "Append another Document"},
+    {"document_add_encryption", document_add_encryption, METH_VARARGS, "Add encryption to a Document"},
+    {"document_remove_encryption", document_remove_encryption, METH_VARARGS, "Remove encryption from a Document"},
     {"document_release", document_release, METH_VARARGS, "Release a Document"},
     /* Buffer methods */
     {"buffer_create", buffer_create, METH_NOARGS, "Create a Buffer"},
@@ -184,6 +187,17 @@ static PyMethodDef VanillapdfMethods[] = {
     {"document_info_get_creator", document_info_get_creator, METH_VARARGS, "Get creator"},
     {"document_info_get_producer", document_info_get_producer, METH_VARARGS, "Get producer"},
     {"document_info_release", document_info_release, METH_VARARGS, "Release a DocumentInfo"},
+    /* Document encryption settings */
+    {"document_encryption_settings_create", document_encryption_settings_create, METH_NOARGS, "Create DocumentEncryptionSettings"},
+    {"document_encryption_settings_get_algorithm", document_encryption_settings_get_algorithm, METH_VARARGS, "Get encryption algorithm"},
+    {"document_encryption_settings_set_algorithm", document_encryption_settings_set_algorithm, METH_VARARGS, "Set encryption algorithm"},
+    {"document_encryption_settings_get_key_length", document_encryption_settings_get_key_length, METH_VARARGS, "Get encryption key length"},
+    {"document_encryption_settings_set_key_length", document_encryption_settings_set_key_length, METH_VARARGS, "Set encryption key length"},
+    {"document_encryption_settings_get_user_access_permissions", document_encryption_settings_get_user_access_permissions, METH_VARARGS, "Get user access permissions"},
+    {"document_encryption_settings_set_user_access_permissions", document_encryption_settings_set_user_access_permissions, METH_VARARGS, "Set user access permissions"},
+    {"document_encryption_settings_set_user_password", document_encryption_settings_set_user_password, METH_VARARGS, "Set user password"},
+    {"document_encryption_settings_set_owner_password", document_encryption_settings_set_owner_password, METH_VARARGS, "Set owner password"},
+    {"document_encryption_settings_release", document_encryption_settings_release, METH_VARARGS, "Release DocumentEncryptionSettings"},
     {nullptr, nullptr, 0, nullptr}
 };
 

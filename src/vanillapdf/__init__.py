@@ -28,6 +28,11 @@ from .semantics.page_tree import PageTree
 from .semantics.page_object import PageObject
 from .semantics.rectangle import Rectangle
 from .semantics.document_info import DocumentInfo
+from .semantics.document_encryption_settings import (
+    DocumentEncryptionSettings,
+    EncryptionAlgorithm,
+    UserAccessPermission,
+)
 
 try:
     from ._version import version as __version__
@@ -66,5 +71,8 @@ __all__ = [
     "PageObject",
     "Rectangle",
     "DocumentInfo",
+    "DocumentEncryptionSettings",
+    "EncryptionAlgorithm",
+    "UserAccessPermission",
     "__version__",
 ]

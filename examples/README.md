@@ -10,6 +10,7 @@ python examples/create_document.py output.pdf         # create a blank one-page 
 python examples/read_metadata.py assets/pdf-test.pdf  # print the info dictionary
 python examples/inspect_pages.py assets/pdf-test.pdf  # list pages + media boxes
 python examples/traverse_objects.py assets/pdf-test.pdf 2 0  # resolve object 2 0
+python examples/encrypt_document.py plain.pdf encrypted.pdf # AES-128 encrypt
 ```
 
 | Script | Layer | Shows |
@@ -18,3 +19,4 @@ python examples/traverse_objects.py assets/pdf-test.pdf 2 0  # resolve object 2 
 | `read_metadata.py` | semantic | Read optional document-info entries (None when absent) |
 | `inspect_pages.py` | semantic | Traverse the 0-based page tree, read media boxes |
 | `traverse_objects.py` | syntax | Initialize a `File`, resolve an indirect object, walk a dictionary |
+| `encrypt_document.py` | semantic | Encrypt a document with AES-128 + user/owner passwords |

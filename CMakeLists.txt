@@ -120,6 +120,8 @@ add_library(_vanillapdf MODULE
     src/vanillapdf_native/semantics/rectangle.h
     src/vanillapdf_native/semantics/document_info.cpp
     src/vanillapdf_native/semantics/document_info.h
+    src/vanillapdf_native/semantics/document_encryption_settings.cpp
+    src/vanillapdf_native/semantics/document_encryption_settings.h
 )
 
 # Allow includes relative to the native source root (e.g. "syntax/object.h")

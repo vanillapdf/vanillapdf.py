@@ -2,6 +2,7 @@ from .. import _vanillapdf
 from ..handle import Handle
 from .catalog import Catalog
 from .document_info import DocumentInfo
+from .document_encryption_settings import DocumentEncryptionSettings
 
 
 class Document(Handle):
@@ -58,3 +59,13 @@ class Document(Handle):
     def append_document(self, source: "Document") -> None:
         handle = self._require_handle()
         _vanillapdf.document_append_document(handle, source._handle)
+
+    def add_encryption(self, settings: DocumentEncryptionSettings) -> None:
+        """Encrypt the document using `settings`. Takes effect on the next save."""
+        handle = self._require_handle()
+        _vanillapdf.document_add_encryption(handle, settings._handle)
+
+    def remove_encryption(self) -> None:
+        """Remove encryption from the document. Takes effect on the next save."""
+        handle = self._require_handle()
+        _vanillapdf.document_remove_encryption(handle)
