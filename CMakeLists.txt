@@ -194,6 +194,15 @@ if(VANILLAPDF_PY_PACKAGE_BUILD)
     endif()
 endif()
 
+# Native C reproducer for the logging/fd-capture parse bug (OFF by default).
+# Links the C API directly (no Python) so the vanillapdf native team can build
+# and debug it under ASan/gdb. Enable with -DVANILLAPDF_PY_BUILD_NATIVE_REPRO=ON.
+option(VANILLAPDF_PY_BUILD_NATIVE_REPRO "Build the native C reproducer" OFF)
+if(VANILLAPDF_PY_BUILD_NATIVE_REPRO)
+    add_executable(native_logging_repro repro/logging_fd_capture_parse_bug.c)
+    target_link_libraries(native_logging_repro PRIVATE vanillapdf::vanillapdf)
+endif()
+
 # Tests
 enable_testing()
 
