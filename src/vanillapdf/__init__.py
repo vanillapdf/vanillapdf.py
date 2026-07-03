@@ -6,6 +6,12 @@ from .utils.license_info import LicenseInfo
 from .utils.misc_utils import MiscUtils
 from .utils.signing_key import SigningKey
 from .utils.pkcs12_key import PKCS12Key
+from .utils.signature_verifier import (
+    TrustedCertificateStore,
+    SignatureVerificationSettings,
+    SignatureVerificationResult,
+    SignatureVerificationStatus,
+)
 from .syntax.file import File, PDFVersion
 from .syntax.objects import (
     ObjectType,
@@ -30,6 +36,9 @@ from .semantics.page_tree import PageTree
 from .semantics.page_object import PageObject
 from .semantics.rectangle import Rectangle
 from .semantics.document_info import DocumentInfo
+from .semantics.interactive_form import InteractiveForm
+from .semantics.fields import FieldCollection, Field, SignatureField, FieldType
+from .semantics.digital_signature import DigitalSignature
 from .semantics.document_encryption_settings import (
     DocumentEncryptionSettings,
     EncryptionAlgorithm,
@@ -59,6 +68,10 @@ __all__ = [
     "MiscUtils",
     "SigningKey",
     "PKCS12Key",
+    "TrustedCertificateStore",
+    "SignatureVerificationSettings",
+    "SignatureVerificationResult",
+    "SignatureVerificationStatus",
     "ObjectType",
     "StringType",
     "Object",
@@ -84,5 +97,11 @@ __all__ = [
     "UserAccessPermission",
     "DocumentSignatureSettings",
     "MessageDigestAlgorithm",
+    "InteractiveForm",
+    "FieldCollection",
+    "Field",
+    "SignatureField",
+    "FieldType",
+    "DigitalSignature",
     "__version__",
 ]

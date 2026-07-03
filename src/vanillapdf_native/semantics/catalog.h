@@ -12,6 +12,7 @@ PyObject* catalog_capsule_from_handle(CatalogHandle* handle);
 
 /* Document catalog ("VanillaPDF.Catalog" capsule). */
 PyObject* catalog_get_pages(PyObject* self, PyObject* args);
+PyObject* catalog_get_acro_form(PyObject* self, PyObject* args);
 PyObject* catalog_release(PyObject* self, PyObject* args);
 
 #endif /* VANILLAPDF_PY_SEMANTICS_CATALOG_H */

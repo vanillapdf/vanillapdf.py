@@ -53,6 +53,22 @@ Signing keys
 .. autoclass:: vanillapdf.SigningKey
    :members:
 
+Signature verification
+----------------------
+
+.. autoclass:: vanillapdf.TrustedCertificateStore
+   :members:
+
+.. autoclass:: vanillapdf.SignatureVerificationSettings
+   :members:
+
+.. autoclass:: vanillapdf.SignatureVerificationResult
+   :members:
+
+.. autoclass:: vanillapdf.SignatureVerificationStatus
+   :members:
+   :undoc-members:
+
 Miscellaneous
 -------------
 

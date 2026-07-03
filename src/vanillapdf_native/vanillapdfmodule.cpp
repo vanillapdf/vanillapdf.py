@@ -13,6 +13,7 @@
 #include "utils/misc_utils.h"
 #include "utils/signing_key.h"
 #include "utils/pkcs12_key.h"
+#include "utils/signature_verifier.h"
 #include "syntax/object.h"
 #include "syntax/null_object.h"
 #include "syntax/boolean_object.h"
@@ -31,6 +32,9 @@
 #include "semantics/document_info.h"
 #include "semantics/document_encryption_settings.h"
 #include "semantics/document_signature_settings.h"
+#include "semantics/interactive_form.h"
+#include "semantics/fields.h"
+#include "semantics/digital_signature.h"
 
 static PyMethodDef VanillapdfMethods[] = {
     /* Document methods */
@@ -165,6 +169,7 @@ static PyMethodDef VanillapdfMethods[] = {
     {"stream_object_set_body", stream_object_set_body, METH_VARARGS, "Set Stream body"},
     /* Catalog */
     {"catalog_get_pages", catalog_get_pages, METH_VARARGS, "Get the page tree"},
+    {"catalog_get_acro_form", catalog_get_acro_form, METH_VARARGS, "Get the interactive form (AcroForm) or None"},
     {"catalog_release", catalog_release, METH_VARARGS, "Release a Catalog"},
     /* Page tree */
     {"page_tree_get_page_count", page_tree_get_page_count, METH_VARARGS, "Get page count"},
@@ -215,6 +220,42 @@ static PyMethodDef VanillapdfMethods[] = {
     {"document_signature_settings_set_digest", document_signature_settings_set_digest, METH_VARARGS, "Set signature digest algorithm"},
     {"document_signature_settings_set_signing_key", document_signature_settings_set_signing_key, METH_VARARGS, "Set signing key"},
     {"document_signature_settings_release", document_signature_settings_release, METH_VARARGS, "Release DocumentSignatureSettings"},
+    /* Interactive form */
+    {"interactive_form_get_fields", interactive_form_get_fields, METH_VARARGS, "Get the form's fields"},
+    {"interactive_form_release", interactive_form_release, METH_VARARGS, "Release an InteractiveForm"},
+    /* Fields */
+    {"field_collection_get_size", field_collection_get_size, METH_VARARGS, "Get field count"},
+    {"field_collection_at", field_collection_at, METH_VARARGS, "Get a field by index"},
+    {"field_collection_release", field_collection_release, METH_VARARGS, "Release a FieldCollection"},
+    {"field_get_type", field_get_type, METH_VARARGS, "Get the field type"},
+    {"field_release", field_release, METH_VARARGS, "Release a Field"},
+    {"signature_field_from_field", signature_field_from_field, METH_VARARGS, "Reinterpret a Field as a SignatureField"},
+    {"signature_field_get_value", signature_field_get_value, METH_VARARGS, "Get the field's DigitalSignature"},
+    {"signature_field_release", signature_field_release, METH_VARARGS, "Release a SignatureField"},
+    /* Digital signature */
+    {"digital_signature_release", digital_signature_release, METH_VARARGS, "Release a DigitalSignature"},
+    {"digital_signature_verify", digital_signature_verify, METH_VARARGS, "Verify a DigitalSignature"},
+    /* Trusted certificate store */
+    {"trusted_certificate_store_create", trusted_certificate_store_create, METH_NOARGS, "Create a TrustedCertificateStore"},
+    {"trusted_certificate_store_add_certificate_from_pem", trusted_certificate_store_add_certificate_from_pem, METH_VARARGS, "Add a PEM certificate"},
+    {"trusted_certificate_store_add_certificate_from_der", trusted_certificate_store_add_certificate_from_der, METH_VARARGS, "Add a DER certificate"},
+    {"trusted_certificate_store_load_from_directory", trusted_certificate_store_load_from_directory, METH_VARARGS, "Load certificates from a directory"},
+    {"trusted_certificate_store_load_system_defaults", trusted_certificate_store_load_system_defaults, METH_VARARGS, "Load system default certificates"},
+    {"trusted_certificate_store_release", trusted_certificate_store_release, METH_VARARGS, "Release a TrustedCertificateStore"},
+    /* Signature verification settings */
+    {"signature_verification_settings_create", signature_verification_settings_create, METH_NOARGS, "Create SignatureVerificationSettings"},
+    {"signature_verification_settings_set_skip_certificate_validation", signature_verification_settings_set_skip_certificate_validation, METH_VARARGS, "Set skip-certificate-validation flag"},
+    {"signature_verification_settings_set_allow_weak_algorithms", signature_verification_settings_set_allow_weak_algorithms, METH_VARARGS, "Set allow-weak-algorithms flag"},
+    {"signature_verification_settings_set_check_signing_time", signature_verification_settings_set_check_signing_time, METH_VARARGS, "Set check-signing-time flag"},
+    {"signature_verification_settings_release", signature_verification_settings_release, METH_VARARGS, "Release SignatureVerificationSettings"},
+    /* Signature verification result */
+    {"signature_verification_result_get_status", signature_verification_result_get_status, METH_VARARGS, "Get verification status"},
+    {"signature_verification_result_is_signature_valid", signature_verification_result_is_signature_valid, METH_VARARGS, "Is the signature cryptographically valid"},
+    {"signature_verification_result_is_document_intact", signature_verification_result_is_document_intact, METH_VARARGS, "Is the document unmodified since signing"},
+    {"signature_verification_result_is_certificate_trusted", signature_verification_result_is_certificate_trusted, METH_VARARGS, "Is the signer certificate trusted"},
+    {"signature_verification_result_get_signer_common_name", signature_verification_result_get_signer_common_name, METH_VARARGS, "Get the signer common name"},
+    {"signature_verification_result_get_message", signature_verification_result_get_message, METH_VARARGS, "Get the verification message"},
+    {"signature_verification_result_release", signature_verification_result_release, METH_VARARGS, "Release a SignatureVerificationResult"},
     {nullptr, nullptr, 0, nullptr}
 };
 

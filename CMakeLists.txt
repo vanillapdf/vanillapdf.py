@@ -84,6 +84,8 @@ add_library(_vanillapdf MODULE
     src/vanillapdf_native/utils/signing_key.h
     src/vanillapdf_native/utils/pkcs12_key.cpp
     src/vanillapdf_native/utils/pkcs12_key.h
+    src/vanillapdf_native/utils/signature_verifier.cpp
+    src/vanillapdf_native/utils/signature_verifier.h
 
     # syntax
     src/vanillapdf_native/syntax/file.cpp
@@ -128,6 +130,12 @@ add_library(_vanillapdf MODULE
     src/vanillapdf_native/semantics/document_encryption_settings.h
     src/vanillapdf_native/semantics/document_signature_settings.cpp
     src/vanillapdf_native/semantics/document_signature_settings.h
+    src/vanillapdf_native/semantics/interactive_form.cpp
+    src/vanillapdf_native/semantics/interactive_form.h
+    src/vanillapdf_native/semantics/fields.cpp
+    src/vanillapdf_native/semantics/fields.h
+    src/vanillapdf_native/semantics/digital_signature.cpp
+    src/vanillapdf_native/semantics/digital_signature.h
 )
 
 # Allow includes relative to the native source root (e.g. "syntax/object.h")

@@ -56,3 +56,12 @@ than calling :meth:`~vanillapdf.Document.save`.
 
 .. literalinclude:: ../examples/sign_document.py
    :language: python
+
+Verify a signature
+------------------
+
+Walk a document's signature fields and verify each signature. Navigation goes
+Catalog → AcroForm → fields → signature field → digital signature.
+
+.. literalinclude:: ../examples/verify_signature.py
+   :language: python

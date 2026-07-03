@@ -8,6 +8,7 @@
 
 #include "semantics/catalog.h"
 #include "semantics/page_tree.h"
+#include "semantics/interactive_form.h"
 #include "common.h"
 
 static const char* const CATALOG_CAPSULE = "VanillaPDF.Catalog";
@@ -34,6 +35,29 @@ PyObject* catalog_get_pages(PyObject* self, PyObject* args) {
     }
 
     return page_tree_capsule_from_handle(pages);
+}
+
+PyObject* catalog_get_acro_form(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    if (!PyArg_ParseTuple(args, "O", &capsule)) {
+        return nullptr;
+    }
+
+    CatalogHandle* catalog = capsule_cast<CatalogHandle>(capsule, CATALOG_CAPSULE);
+    if (catalog == nullptr) {
+        return nullptr;
+    }
+
+    InteractiveFormHandle* form = nullptr;
+    error_type err = Catalog_GetAcroForm(catalog, &form);
+    if (is_missing_error(err)) {
+        Py_RETURN_NONE;
+    }
+    if (err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(err, "Catalog_GetAcroForm");
+    }
+
+    return interactive_form_capsule_from_handle(form);
 }
 
 PyObject* catalog_release(PyObject* self, PyObject* args) {
