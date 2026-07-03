@@ -55,11 +55,17 @@ cmake --build build --target native_logging_repro --config Release
 
 ## Recommended native fix
 
-Don't default diagnostics to the stdout sink — a library whose consumers
-legitimately redirect stdout shouldn't emit to it implicitly. Default to a null
-sink with explicit opt-in (callback / file / stderr), or at minimum document
-that enabling logging writes to stdout. (`File constructor`/`File destructor` at
-`info` level is also very noisy.)
+The stdout sink is **spdlog's** default (a stdout/wincolor sink), and spdlog has
+declined to change it upstream. So Vanilla.PDF must **explicitly install its own
+default sink at library-init instead of inheriting spdlog's** — e.g. a null sink
+with opt-in (callback / file / stderr) via `spdlog::set_default_logger(...)` in
+the logging setup, rather than leaving the default in place. A library whose
+consumers legitimately redirect stdout should not emit to it implicitly. (Also:
+`File constructor`/`File destructor` at `info` level is very noisy.)
+
+The Python bindings already do exactly this from the consumer side — they
+install a `Logging_SetCallbackLogger` sink at import, so they do not depend on
+this native change landing.
 
 ## Python bindings: fixed
 
