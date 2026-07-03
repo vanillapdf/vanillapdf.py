@@ -34,7 +34,7 @@ classifiers = [
 [project.urls]
 Homepage = "https://vanillapdf.com"
 Repository = "https://github.com/vanillapdf/vanillapdf"
-Documentation = "https://vanillapdf.github.io/vanillapdf"
+Documentation = "https://vanillapdf-py.readthedocs.io"
 Issues = "https://github.com/vanillapdf/vanillapdf/issues"
 
 [build-system]

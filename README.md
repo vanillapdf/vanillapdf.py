@@ -6,6 +6,8 @@
 
 Python bindings for [Vanilla.PDF](https://github.com/vanillapdf/vanillapdf), a high-performance C++17 library for PDF document processing.
 
+📖 **Documentation:** [vanillapdf-py.readthedocs.io](https://vanillapdf-py.readthedocs.io) — API reference and examples.
+
 ## Installation
 
 ```bash
