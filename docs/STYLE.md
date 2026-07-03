@@ -74,6 +74,26 @@ VanillaPDF **C API** only.
   against a failed `__init__`.
 - Pull the handle into a local before a native call rather than nesting
   `self._require_handle()` as an argument.
+- Manage handle lifetimes with `with`, not nested `try/finally`. When several
+  handles are live at once, chain them in one parenthesized `with` (Python
+  3.10+); later items may reference earlier ones, and they close in reverse
+  order on exit. Prefer:
+
+  ```python
+  with (
+      PKCS12Key.create_from_file(path, pw) as key,
+      key.to_signing_key() as signing_key,
+      DocumentSignatureSettings.create() as settings,
+      Document(source) as doc,
+      File.create(destination) as dest,
+  ):
+      settings.set_signing_key(signing_key)
+      doc.sign(dest, settings)
+  ```
+
+  over a `try/finally` pyramid. Reach for `try/finally` (or
+  `contextlib.ExitStack`) only when a handle's lifetime can't follow lexical
+  scope.
 - Enums (`IntEnum`) mirror the native enum values exactly. Do **not** hardcode
   the `VANILLAPDF_ERROR_*` codes — they are link-time constants, not stable
   numbers.

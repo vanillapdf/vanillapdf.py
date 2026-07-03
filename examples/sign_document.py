@@ -17,28 +17,19 @@ from vanillapdf import (
 
 
 def sign(source: str, destination: str, key_path: str, key_password: str) -> None:
-    key = PKCS12Key.create_from_file(key_path, key_password)
-    try:
-        signing_key = key.to_signing_key()
-        try:
-            settings = DocumentSignatureSettings.create()
-            try:
-                settings.digest = MessageDigestAlgorithm.SHA256
-                settings.set_signing_key(signing_key)
-
-                with Document(source) as doc:
-                    # Signing writes to a destination File (not doc.save()).
-                    dest = File.create(destination)
-                    try:
-                        doc.sign(dest, settings)
-                    finally:
-                        dest.close()  # release flushes the signed output
-            finally:
-                settings.close()
-        finally:
-            signing_key.close()
-    finally:
-        key.close()
+    # Every handle here is a context manager, so a single `with` closes them all
+    # in reverse order on exit (the destination File is released last-in/first-out,
+    # which flushes the signed output). Later items can reference earlier ones.
+    with (
+        PKCS12Key.create_from_file(key_path, key_password) as key,
+        key.to_signing_key() as signing_key,
+        DocumentSignatureSettings.create() as settings,
+        Document(source) as doc,
+        File.create(destination) as dest,  # signing writes here, not via doc.save()
+    ):
+        settings.digest = MessageDigestAlgorithm.SHA256
+        settings.set_signing_key(signing_key)
+        doc.sign(dest, settings)
 
     print(f"Wrote signed document to {destination}")
 
