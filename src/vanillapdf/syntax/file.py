@@ -31,6 +31,18 @@ class File(Handle):
     def __init__(self, filename: str):
         self._handle = _vanillapdf.file_open(filename)
 
+    @classmethod
+    def _from_handle(cls, handle) -> "File":
+        file = cls.__new__(cls)
+        file._handle = handle
+        return file
+
+    @staticmethod
+    def create(filename: str) -> "File":
+        """Create a new file for writing (e.g. a signing destination)."""
+        handle = _vanillapdf.file_create(filename)
+        return File._from_handle(handle)
+
     def initialize(self) -> None:
         """Initialize the file by reading xref tables."""
         handle = self._require_handle()

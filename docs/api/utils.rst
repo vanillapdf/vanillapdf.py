@@ -44,6 +44,15 @@ License
 .. autoclass:: vanillapdf.LicenseInfo
    :members:
 
+Signing keys
+------------
+
+.. autoclass:: vanillapdf.PKCS12Key
+   :members:
+
+.. autoclass:: vanillapdf.SigningKey
+   :members:
+
 Miscellaneous
 -------------
 

@@ -54,3 +54,16 @@ Encryption
 .. autoclass:: vanillapdf.UserAccessPermission
    :members:
    :undoc-members:
+
+Signing
+-------
+
+.. autoclass:: vanillapdf.DocumentSignatureSettings
+   :members:
+
+.. autoclass:: vanillapdf.MessageDigestAlgorithm
+   :members:
+   :undoc-members:
+
+See also :class:`vanillapdf.PKCS12Key` and :class:`vanillapdf.SigningKey` in
+:doc:`utils`.

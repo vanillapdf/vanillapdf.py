@@ -46,3 +46,13 @@ with the password, then :meth:`~vanillapdf.Document.remove_encryption` and save.
 
 .. literalinclude:: ../examples/encrypt_document.py
    :language: python
+
+Sign a document
+---------------
+
+Sign a document with a PKCS#12 key. Signing writes to a destination
+:class:`~vanillapdf.File` created with :meth:`~vanillapdf.File.create`, rather
+than calling :meth:`~vanillapdf.Document.save`.
+
+.. literalinclude:: ../examples/sign_document.py
+   :language: python

@@ -13,6 +13,7 @@ PyObject* document_get_document_info(PyObject* self, PyObject* args);
 PyObject* document_append_document(PyObject* self, PyObject* args);
 PyObject* document_add_encryption(PyObject* self, PyObject* args);
 PyObject* document_remove_encryption(PyObject* self, PyObject* args);
+PyObject* document_sign(PyObject* self, PyObject* args);
 PyObject* document_release(PyObject* self, PyObject* args);
 
 #endif // VANILLAPDF_PY_SEMANTICS_DOCUMENT_H

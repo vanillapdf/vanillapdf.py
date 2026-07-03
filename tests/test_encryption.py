@@ -2,8 +2,6 @@ import pytest
 from vanillapdf import (
     Document,
     File,
-    PageObject,
-    Rectangle,
     DocumentEncryptionSettings,
     EncryptionAlgorithm,
     UserAccessPermission,
@@ -12,31 +10,6 @@ from vanillapdf import (
 
 OWNER_PASSWORD = "owner-secret"
 USER_PASSWORD = "user-secret"
-
-
-@pytest.fixture
-def plain_pdf(tmp_path) -> str:
-    """Create a fresh, unencrypted single-page PDF and return its path.
-
-    The bundled assets/pdf-test.pdf is itself encrypted (empty user password),
-    so encryption tests need a document known to start out unencrypted.
-    """
-    path = str(tmp_path / "plain.pdf")
-    with Document.create(path) as doc:
-        page = PageObject.create_from_document(doc)
-        rect = Rectangle.create()
-        rect.lower_left_x = 0
-        rect.lower_left_y = 0
-        rect.upper_right_x = 200
-        rect.upper_right_y = 300
-        page.media_box = rect
-        doc.get_catalog().get_pages().append(page)
-        doc.save(path)
-
-    with File(path) as f:
-        f.initialize()
-        assert f.is_encrypted is False  # sanity: the source really is plaintext
-    return path
 
 
 def _encrypt(source: str, destination: str) -> None:

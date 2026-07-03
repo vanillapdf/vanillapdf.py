@@ -4,6 +4,8 @@ from .utils.logging import Logging, LoggingSeverity
 from .utils.errors import PdfError, Errors
 from .utils.license_info import LicenseInfo
 from .utils.misc_utils import MiscUtils
+from .utils.signing_key import SigningKey
+from .utils.pkcs12_key import PKCS12Key
 from .syntax.file import File, PDFVersion
 from .syntax.objects import (
     ObjectType,
@@ -33,6 +35,10 @@ from .semantics.document_encryption_settings import (
     EncryptionAlgorithm,
     UserAccessPermission,
 )
+from .semantics.document_signature_settings import (
+    DocumentSignatureSettings,
+    MessageDigestAlgorithm,
+)
 
 try:
     from ._version import version as __version__
@@ -51,6 +57,8 @@ __all__ = [
     "Errors",
     "LicenseInfo",
     "MiscUtils",
+    "SigningKey",
+    "PKCS12Key",
     "ObjectType",
     "StringType",
     "Object",
@@ -74,5 +82,7 @@ __all__ = [
     "DocumentEncryptionSettings",
     "EncryptionAlgorithm",
     "UserAccessPermission",
+    "DocumentSignatureSettings",
+    "MessageDigestAlgorithm",
     "__version__",
 ]

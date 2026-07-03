@@ -8,6 +8,7 @@
 #include <vanillapdf/semantics/c_catalog.h>
 #include <vanillapdf/semantics/c_document_info.h>
 #include <vanillapdf/semantics/c_document_encryption_settings.h>
+#include <vanillapdf/semantics/c_document_signature_settings.h>
 
 #include "semantics/document.h"
 #include "semantics/catalog.h"
@@ -219,6 +220,40 @@ PyObject* document_remove_encryption(PyObject* self, PyObject* args) {
     error_type err = Document_RemoveEncryption(handle);
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_RemoveEncryption");
+    }
+
+    Py_RETURN_NONE;
+}
+
+PyObject* document_sign(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    PyObject* destination_capsule;
+    PyObject* settings_capsule;
+    if (!PyArg_ParseTuple(args, "OOO", &capsule, &destination_capsule, &settings_capsule)) {
+        return nullptr;
+    }
+
+    FileHandle* destination =
+        capsule_cast<FileHandle>(destination_capsule, "VanillaPDF.File");
+    if (destination == nullptr) {
+        return nullptr;
+    }
+
+    DocumentSignatureSettingsHandle* settings =
+        capsule_cast<DocumentSignatureSettingsHandle>(
+            settings_capsule, "VanillaPDF.DocumentSignatureSettings");
+    if (settings == nullptr) {
+        return nullptr;
+    }
+
+    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (handle == nullptr) {
+        return nullptr;
+    }
+
+    error_type err = Document_Sign(handle, destination, settings);
+    if (err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(err, "Document_Sign");
     }
 
     Py_RETURN_NONE;

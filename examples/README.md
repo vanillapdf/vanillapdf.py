@@ -11,6 +11,7 @@ python examples/read_metadata.py assets/pdf-test.pdf  # print the info dictionar
 python examples/inspect_pages.py assets/pdf-test.pdf  # list pages + media boxes
 python examples/traverse_objects.py assets/pdf-test.pdf 2 0  # resolve object 2 0
 python examples/encrypt_document.py plain.pdf encrypted.pdf # AES-128 encrypt
+python examples/sign_document.py plain.pdf signed.pdf assets/test-signing-key.pfx test
 ```
 
 | Script | Layer | Shows |
@@ -20,3 +21,4 @@ python examples/encrypt_document.py plain.pdf encrypted.pdf # AES-128 encrypt
 | `inspect_pages.py` | semantic | Traverse the 0-based page tree, read media boxes |
 | `traverse_objects.py` | syntax | Initialize a `File`, resolve an indirect object, walk a dictionary |
 | `encrypt_document.py` | semantic | Encrypt a document with AES-128 + user/owner passwords |
+| `sign_document.py` | semantic | Sign a document with a PKCS#12 key (SHA-256) |

@@ -11,6 +11,8 @@
 #include "utils/errors.h"
 #include "utils/license_info.h"
 #include "utils/misc_utils.h"
+#include "utils/signing_key.h"
+#include "utils/pkcs12_key.h"
 #include "syntax/object.h"
 #include "syntax/null_object.h"
 #include "syntax/boolean_object.h"
@@ -28,6 +30,7 @@
 #include "semantics/rectangle.h"
 #include "semantics/document_info.h"
 #include "semantics/document_encryption_settings.h"
+#include "semantics/document_signature_settings.h"
 
 static PyMethodDef VanillapdfMethods[] = {
     /* Document methods */
@@ -41,6 +44,7 @@ static PyMethodDef VanillapdfMethods[] = {
     {"document_append_document", document_append_document, METH_VARARGS, "Append another Document"},
     {"document_add_encryption", document_add_encryption, METH_VARARGS, "Add encryption to a Document"},
     {"document_remove_encryption", document_remove_encryption, METH_VARARGS, "Remove encryption from a Document"},
+    {"document_sign", document_sign, METH_VARARGS, "Sign a Document into a destination File"},
     {"document_release", document_release, METH_VARARGS, "Release a Document"},
     /* Buffer methods */
     {"buffer_create", buffer_create, METH_NOARGS, "Create a Buffer"},
@@ -50,6 +54,7 @@ static PyMethodDef VanillapdfMethods[] = {
     {"buffer_release", buffer_release, METH_VARARGS, "Release a Buffer"},
     /* File methods */
     {"file_open", file_open, METH_VARARGS, "Open a PDF file"},
+    {"file_create", file_create, METH_VARARGS, "Create a new PDF file for writing"},
     {"file_initialize", file_initialize, METH_VARARGS, "Initialize file (read xref tables)"},
     {"file_get_version", file_get_version, METH_VARARGS, "Get PDF version"},
     {"file_get_filename", file_get_filename, METH_VARARGS, "Get filename"},
@@ -83,6 +88,12 @@ static PyMethodDef VanillapdfMethods[] = {
     /* MiscUtils methods */
     {"misc_utils_initialize_openssl", misc_utils_initialize_openssl, METH_NOARGS, "Initialize OpenSSL"},
     {"misc_utils_cleanup_openssl", misc_utils_cleanup_openssl, METH_NOARGS, "Cleanup OpenSSL"},
+    /* PKCS12 key + signing key */
+    {"pkcs12_key_create_from_file", pkcs12_key_create_from_file, METH_VARARGS, "Load a PKCS#12 key from a file"},
+    {"pkcs12_key_create_from_buffer", pkcs12_key_create_from_buffer, METH_VARARGS, "Load a PKCS#12 key from a buffer"},
+    {"pkcs12_key_to_signing_key", pkcs12_key_to_signing_key, METH_VARARGS, "Convert a PKCS#12 key to a SigningKey"},
+    {"pkcs12_key_release", pkcs12_key_release, METH_VARARGS, "Release a PKCS12Key"},
+    {"signing_key_release", signing_key_release, METH_VARARGS, "Release a SigningKey"},
     /* Object (base) methods */
     {"object_get_object_type", object_get_object_type, METH_VARARGS, "Get object type"},
     {"object_type_name", object_type_name, METH_VARARGS, "Get printable object type name"},
@@ -198,6 +209,12 @@ static PyMethodDef VanillapdfMethods[] = {
     {"document_encryption_settings_set_user_password", document_encryption_settings_set_user_password, METH_VARARGS, "Set user password"},
     {"document_encryption_settings_set_owner_password", document_encryption_settings_set_owner_password, METH_VARARGS, "Set owner password"},
     {"document_encryption_settings_release", document_encryption_settings_release, METH_VARARGS, "Release DocumentEncryptionSettings"},
+    /* Document signature settings */
+    {"document_signature_settings_create", document_signature_settings_create, METH_NOARGS, "Create DocumentSignatureSettings"},
+    {"document_signature_settings_get_digest", document_signature_settings_get_digest, METH_VARARGS, "Get signature digest algorithm"},
+    {"document_signature_settings_set_digest", document_signature_settings_set_digest, METH_VARARGS, "Set signature digest algorithm"},
+    {"document_signature_settings_set_signing_key", document_signature_settings_set_signing_key, METH_VARARGS, "Set signing key"},
+    {"document_signature_settings_release", document_signature_settings_release, METH_VARARGS, "Release DocumentSignatureSettings"},
     {nullptr, nullptr, 0, nullptr}
 };
 

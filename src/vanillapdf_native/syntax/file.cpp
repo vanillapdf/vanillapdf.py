@@ -29,6 +29,21 @@ PyObject* file_open(PyObject* self, PyObject* args) {
     return capsule_new(handle, FILE_CAPSULE, RELEASE_FN(File_Release));
 }
 
+PyObject* file_create(PyObject* self, PyObject* args) {
+    const char* filename;
+    if (!PyArg_ParseTuple(args, "s", &filename)) {
+        return nullptr;
+    }
+
+    FileHandle* handle = nullptr;
+    error_type err = File_Create(filename, &handle);
+    if (err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(err, "File_Create");
+    }
+
+    return capsule_new(handle, FILE_CAPSULE, RELEASE_FN(File_Release));
+}
+
 PyObject* file_initialize(PyObject* self, PyObject* args) {
     PyObject* capsule;
     if (!PyArg_ParseTuple(args, "O", &capsule)) {

@@ -69,3 +69,14 @@ class Document(Handle):
         """Remove encryption from the document. Takes effect on the next save."""
         handle = self._require_handle()
         _vanillapdf.document_remove_encryption(handle)
+
+    def sign(self, destination, settings) -> None:
+        """Sign the document, writing the signed result to `destination`.
+
+        `destination` is a writable :class:`~vanillapdf.File` (see
+        :meth:`~vanillapdf.File.create`); `settings` is a
+        :class:`~vanillapdf.DocumentSignatureSettings`. Unlike :meth:`save`,
+        signing writes directly to the destination file.
+        """
+        handle = self._require_handle()
+        _vanillapdf.document_sign(handle, destination._handle, settings._handle)
