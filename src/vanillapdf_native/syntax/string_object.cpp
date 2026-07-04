@@ -25,7 +25,7 @@ PyObject* string_object_get_string_type(PyObject* self, PyObject* args) {
     if (string == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { StringObject_Release(string); });
+    SCOPE_GUARD([string] { StringObject_Release(string); });
 
     StringType type = StringType_Undefined;
     error_type err = StringObject_GetStringType(string, &type);
@@ -47,7 +47,7 @@ PyObject* string_object_get_value(PyObject* self, PyObject* args) {
     if (string == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { StringObject_Release(string); });
+    SCOPE_GUARD([string] { StringObject_Release(string); });
 
     BufferHandle* buffer = nullptr;
     error_type err = StringObject_GetValue(string, &buffer);
@@ -75,7 +75,7 @@ PyObject* string_object_set_value(PyObject* self, PyObject* args) {
     if (string == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { StringObject_Release(string); });
+    SCOPE_GUARD([string] { StringObject_Release(string); });
 
     error_type err = StringObject_SetValue(string, buffer);
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -98,14 +98,14 @@ PyObject* literal_string_object_create_from_decoded_string(PyObject* self, PyObj
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "LiteralStringObject_CreateFromDecodedString");
     }
-    auto literal_guard = make_scope_guard([&] { LiteralStringObject_Release(literal); });
+    SCOPE_GUARD([literal] { LiteralStringObject_Release(literal); });
 
     StringObjectHandle* string = nullptr;
     error_type to_string_err = LiteralStringObject_ToStringObject(literal, &string);
     if (to_string_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_string_err, "LiteralStringObject_ToStringObject");
     }
-    auto string_guard = make_scope_guard([&] { StringObject_Release(string); });
+    SCOPE_GUARD([string] { StringObject_Release(string); });
 
     ObjectHandle* object = nullptr;
     error_type to_object_err = StringObject_ToObject(string, &object);
@@ -127,14 +127,14 @@ PyObject* hexadecimal_string_object_create_from_decoded_string(PyObject* self, P
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "HexadecimalStringObject_CreateFromDecodedString");
     }
-    auto hex_guard = make_scope_guard([&] { HexadecimalStringObject_Release(hex); });
+    SCOPE_GUARD([hex] { HexadecimalStringObject_Release(hex); });
 
     StringObjectHandle* string = nullptr;
     error_type to_string_err = HexadecimalStringObject_ToStringObject(hex, &string);
     if (to_string_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_string_err, "HexadecimalStringObject_ToStringObject");
     }
-    auto string_guard = make_scope_guard([&] { StringObject_Release(string); });
+    SCOPE_GUARD([string] { StringObject_Release(string); });
 
     ObjectHandle* object = nullptr;
     error_type to_object_err = StringObject_ToObject(string, &object);

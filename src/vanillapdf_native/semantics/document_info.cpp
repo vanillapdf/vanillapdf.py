@@ -41,7 +41,7 @@ static PyObject* get_string_property(
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, operation);
     }
-    auto guard = make_scope_guard([&] { StringObject_Release(string); });
+    SCOPE_GUARD([string] { StringObject_Release(string); });
 
     ObjectHandle* object = nullptr;
     error_type to_object_err = StringObject_ToObject(string, &object);

@@ -23,7 +23,7 @@ PyObject* name_object_create_from_decoded_string(PyObject* self, PyObject* args)
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "NameObject_CreateFromDecodedString");
     }
-    auto guard = make_scope_guard([&] { NameObject_Release(name); });
+    SCOPE_GUARD([name] { NameObject_Release(name); });
 
     ObjectHandle* object = nullptr;
     error_type to_object_err = NameObject_ToObject(name, &object);
@@ -45,7 +45,7 @@ PyObject* name_object_get_value(PyObject* self, PyObject* args) {
     if (name == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { NameObject_Release(name); });
+    SCOPE_GUARD([name] { NameObject_Release(name); });
 
     BufferHandle* buffer = nullptr;
     error_type err = NameObject_GetValue(name, &buffer);

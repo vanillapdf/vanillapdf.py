@@ -101,7 +101,7 @@ PyObject* page_object_get_base_object(PyObject* self, PyObject* args) {
     if (base_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(base_err, "PageObject_GetBaseObject");
     }
-    auto base_guard = make_scope_guard([&] { DictionaryObject_Release(base); });
+    SCOPE_GUARD([base] { DictionaryObject_Release(base); });
 
     ObjectHandle* object = nullptr;
     error_type to_object_err = DictionaryObject_ToObject(base, &object);

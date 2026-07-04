@@ -16,7 +16,7 @@ PyObject* indirect_reference_object_create(PyObject* self, PyObject* args) {
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "IndirectReferenceObject_Create");
     }
-    auto guard = make_scope_guard([&] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
 
     ObjectHandle* object = nullptr;
     error_type to_object_err = IndirectReferenceObject_ToObject(reference, &object);
@@ -42,7 +42,7 @@ PyObject* indirect_reference_object_get_referenced_object_number(PyObject* self,
     if (reference == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
 
     biguint_type number = 0;
     error_type err = IndirectReferenceObject_GetReferencedObjectNumber(reference, &number);
@@ -63,7 +63,7 @@ PyObject* indirect_reference_object_get_referenced_generation_number(PyObject* s
     if (reference == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
 
     ushort_type generation = 0;
     error_type err = IndirectReferenceObject_GetReferencedGenerationNumber(reference, &generation);
@@ -84,7 +84,7 @@ PyObject* indirect_reference_object_get_referenced_object(PyObject* self, PyObje
     if (reference == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
 
     ObjectHandle* object = nullptr;
     error_type err = IndirectReferenceObject_GetReferencedObject(reference, &object);
@@ -106,7 +106,7 @@ PyObject* indirect_reference_object_set_object_number(PyObject* self, PyObject* 
     if (reference == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
 
     error_type err = IndirectReferenceObject_SetObjectNumber(reference, number);
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -132,7 +132,7 @@ PyObject* indirect_reference_object_set_generation_number(PyObject* self, PyObje
     if (reference == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
 
     error_type err = IndirectReferenceObject_SetGenerationNumber(reference, generation);
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -158,7 +158,7 @@ PyObject* indirect_reference_object_set_referenced_object(PyObject* self, PyObje
     if (reference == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
 
     error_type err = IndirectReferenceObject_SetReferencedObject(reference, value);
     if (err != VANILLAPDF_ERROR_SUCCESS) {

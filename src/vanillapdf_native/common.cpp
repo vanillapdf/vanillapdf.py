@@ -40,7 +40,7 @@ PyObject* capsule_new(void* handle, const char* name, release_fn release) {
         return nullptr;
     }
 
-    auto handle_guard = make_scope_guard([&] {
+    auto handle_guard = make_scope_guard([handle, release] {
         if (release != nullptr) {
             release(handle);
         }
@@ -50,7 +50,7 @@ PyObject* capsule_new(void* handle, const char* name, release_fn release) {
     if (box == nullptr) {
         return PyErr_NoMemory();
     }
-    auto box_guard = make_scope_guard([&] { PyMem_Free(box); });
+    auto box_guard = make_scope_guard([box] { PyMem_Free(box); });
 
     box->handle = handle;
     box->release = release;
@@ -131,7 +131,7 @@ static char* fetch_printable_error_text(error_type value) {
     if (data == nullptr) {
         return nullptr;
     }
-    auto data_guard = make_scope_guard([&] { PyMem_Free(data); });
+    auto data_guard = make_scope_guard([data] { PyMem_Free(data); });
 
     /* Length already includes the trailing NUL character. */
     error_type text_err = Errors_GetPrintableErrorText(value, data, size);
@@ -157,7 +157,7 @@ static char* fetch_last_error_message(void) {
     if (data == nullptr) {
         return nullptr;
     }
-    auto data_guard = make_scope_guard([&] { PyMem_Free(data); });
+    auto data_guard = make_scope_guard([data] { PyMem_Free(data); });
 
     error_type message_err = Errors_GetLastErrorMessage(data, size);
     if (message_err != VANILLAPDF_ERROR_SUCCESS) {
@@ -177,10 +177,10 @@ static char* fetch_last_error_message(void) {
  * Returns a new reference, or nullptr with a Python exception set. */
 static PyObject* build_error_message(error_type err, const char* operation) {
     char* printable = fetch_printable_error_text(err);
-    auto printable_guard = make_scope_guard([&] { PyMem_Free(printable); });
+    SCOPE_GUARD([printable] { PyMem_Free(printable); });
 
     char* detail = fetch_last_error_message();
-    auto detail_guard = make_scope_guard([&] { PyMem_Free(detail); });
+    SCOPE_GUARD([detail] { PyMem_Free(detail); });
 
     const char* name = printable ? printable : "unknown error";
     if (detail) {
@@ -211,7 +211,7 @@ PyObject* raise_last_error(error_type err, const char* operation) {
     if (message == nullptr) {
         return nullptr;
     }
-    auto message_guard = make_scope_guard([&] { Py_DECREF(message); });
+    SCOPE_GUARD([message] { Py_DECREF(message); });
 
     /* PdfError is created at module init; if that somehow failed, degrade to a
      * plain RuntimeError so we still raise something meaningful. */
@@ -245,12 +245,10 @@ int register_exceptions(PyObject* module) {
         return -1;
     }
 
-    /* PyModule_AddObject steals a reference on success but NOT on failure, so
-     * we INCREF first to keep our own long-lived global reference. On failure
-     * we drop that extra ref and clear the global so it stays nullptr. */
-    Py_INCREF(PdfError);
-    if (PyModule_AddObject(module, "PdfError", PdfError) < 0) {
-        Py_DECREF(PdfError);
+    /* PyModule_AddObjectRef (3.10+) does not steal a reference: it adds its own
+     * on success and leaves our global holding the one from NewExceptionWithDoc.
+     * On failure, clear the global so it stays nullptr. */
+    if (PyModule_AddObjectRef(module, "PdfError", PdfError) < 0) {
         Py_CLEAR(PdfError);
         return -1;
     }

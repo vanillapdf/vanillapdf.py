@@ -19,7 +19,7 @@ PyObject* dictionary_object_create(PyObject* self, PyObject* args) {
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "DictionaryObject_Create");
     }
-    auto guard = make_scope_guard([&] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
 
     ObjectHandle* object = nullptr;
     error_type to_object_err = DictionaryObject_ToObject(dictionary, &object);
@@ -41,7 +41,7 @@ PyObject* dictionary_object_get_size(PyObject* self, PyObject* args) {
     if (dictionary == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
 
     size_type size = 0;
     error_type err = DictionaryObject_GetSize(dictionary, &size);
@@ -89,8 +89,8 @@ PyObject* dictionary_object_find(PyObject* self, PyObject* args) {
     if (extract_dictionary_and_key(capsule, key_capsule, &dictionary, &key) < 0) {
         return nullptr;
     }
-    auto dict_guard = make_scope_guard([&] { DictionaryObject_Release(dictionary); });
-    auto key_guard = make_scope_guard([&] { NameObject_Release(key); });
+    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([key] { NameObject_Release(key); });
 
     ObjectHandle* object = nullptr;
     error_type err = DictionaryObject_Find(dictionary, key, &object);
@@ -113,8 +113,8 @@ PyObject* dictionary_object_try_find(PyObject* self, PyObject* args) {
     if (extract_dictionary_and_key(capsule, key_capsule, &dictionary, &key) < 0) {
         return nullptr;
     }
-    auto dict_guard = make_scope_guard([&] { DictionaryObject_Release(dictionary); });
-    auto key_guard = make_scope_guard([&] { NameObject_Release(key); });
+    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([key] { NameObject_Release(key); });
 
     boolean_type found = VANILLAPDF_RV_FALSE;
     ObjectHandle* object = nullptr;
@@ -142,8 +142,8 @@ PyObject* dictionary_object_contains(PyObject* self, PyObject* args) {
     if (extract_dictionary_and_key(capsule, key_capsule, &dictionary, &key) < 0) {
         return nullptr;
     }
-    auto dict_guard = make_scope_guard([&] { DictionaryObject_Release(dictionary); });
-    auto key_guard = make_scope_guard([&] { NameObject_Release(key); });
+    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([key] { NameObject_Release(key); });
 
     boolean_type contains = VANILLAPDF_RV_FALSE;
     error_type err = DictionaryObject_Contains(dictionary, key, &contains);
@@ -169,8 +169,8 @@ PyObject* dictionary_object_remove(PyObject* self, PyObject* args) {
     if (extract_dictionary_and_key(capsule, key_capsule, &dictionary, &key) < 0) {
         return nullptr;
     }
-    auto dict_guard = make_scope_guard([&] { DictionaryObject_Release(dictionary); });
-    auto key_guard = make_scope_guard([&] { NameObject_Release(key); });
+    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([key] { NameObject_Release(key); });
 
     boolean_type removed = VANILLAPDF_RV_FALSE;
     error_type err = DictionaryObject_Remove(dictionary, key, &removed);
@@ -203,8 +203,8 @@ PyObject* dictionary_object_insert(PyObject* self, PyObject* args) {
     if (extract_dictionary_and_key(capsule, key_capsule, &dictionary, &key) < 0) {
         return nullptr;
     }
-    auto dict_guard = make_scope_guard([&] { DictionaryObject_Release(dictionary); });
-    auto key_guard = make_scope_guard([&] { NameObject_Release(key); });
+    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([key] { NameObject_Release(key); });
 
     error_type err = DictionaryObject_Insert(
         dictionary, key, value, overwrite ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE);
@@ -226,7 +226,7 @@ PyObject* dictionary_object_clear(PyObject* self, PyObject* args) {
     if (dictionary == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
 
     error_type err = DictionaryObject_Clear(dictionary);
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -247,7 +247,7 @@ PyObject* dictionary_object_get_iterator(PyObject* self, PyObject* args) {
     if (dictionary == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
 
     DictionaryObjectIteratorHandle* iterator = nullptr;
     error_type err = DictionaryObject_GetIterator(dictionary, &iterator);
@@ -277,7 +277,7 @@ PyObject* dictionary_iterator_get_key(PyObject* self, PyObject* args) {
     if (key_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(key_err, "DictionaryObjectIterator_GetKey");
     }
-    auto key_guard = make_scope_guard([&] { NameObject_Release(key); });
+    SCOPE_GUARD([key] { NameObject_Release(key); });
 
     ObjectHandle* object = nullptr;
     error_type to_object_err = NameObject_ToObject(key, &object);

@@ -21,7 +21,7 @@ PyObject* boolean_object_create(PyObject* self, PyObject* args) {
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "BooleanObject_Create");
     }
-    auto guard = make_scope_guard([&] { BooleanObject_Release(boolean); });
+    SCOPE_GUARD([boolean] { BooleanObject_Release(boolean); });
 
     error_type set_err = BooleanObject_SetValue(boolean, value ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE);
     if (set_err != VANILLAPDF_ERROR_SUCCESS) {
@@ -48,7 +48,7 @@ PyObject* boolean_object_get_value(PyObject* self, PyObject* args) {
     if (boolean == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { BooleanObject_Release(boolean); });
+    SCOPE_GUARD([boolean] { BooleanObject_Release(boolean); });
 
     boolean_type value = VANILLAPDF_RV_FALSE;
     error_type err = BooleanObject_GetValue(boolean, &value);
@@ -74,7 +74,7 @@ PyObject* boolean_object_set_value(PyObject* self, PyObject* args) {
     if (boolean == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { BooleanObject_Release(boolean); });
+    SCOPE_GUARD([boolean] { BooleanObject_Release(boolean); });
 
     error_type err = BooleanObject_SetValue(boolean, value ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE);
     if (err != VANILLAPDF_ERROR_SUCCESS) {

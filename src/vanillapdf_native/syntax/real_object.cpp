@@ -22,7 +22,7 @@ PyObject* real_object_create(PyObject* self, PyObject* args) {
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "RealObject_CreateFromData");
     }
-    auto guard = make_scope_guard([&] { RealObject_Release(real); });
+    SCOPE_GUARD([real] { RealObject_Release(real); });
 
     ObjectHandle* object = nullptr;
     error_type to_object_err = RealObject_ToObject(real, &object);
@@ -44,7 +44,7 @@ PyObject* real_object_get_value(PyObject* self, PyObject* args) {
     if (real == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { RealObject_Release(real); });
+    SCOPE_GUARD([real] { RealObject_Release(real); });
 
     real_type value = 0.0;
     error_type err = RealObject_GetValue(real, &value);
@@ -67,7 +67,7 @@ PyObject* real_object_set_value(PyObject* self, PyObject* args) {
     if (real == nullptr) {
         return nullptr;
     }
-    auto guard = make_scope_guard([&] { RealObject_Release(real); });
+    SCOPE_GUARD([real] { RealObject_Release(real); });
 
     error_type err = RealObject_SetValue(real, value);
     if (err != VANILLAPDF_ERROR_SUCCESS) {

@@ -16,7 +16,7 @@ PyObject* null_object_create(PyObject* self, PyObject* args) {
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "NullObject_Create");
     }
-    auto guard = make_scope_guard([&] { NullObject_Release(null_object); });
+    SCOPE_GUARD([null_object] { NullObject_Release(null_object); });
 
     ObjectHandle* object = nullptr;
     error_type to_object_err = NullObject_ToObject(null_object, &object);

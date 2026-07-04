@@ -46,7 +46,7 @@ PyObject* errors_get_printable_error_text(PyObject* self, PyObject* args) {
     if (data == nullptr) {
         return PyErr_NoMemory();
     }
-    auto data_guard = make_scope_guard([&] { PyMem_Free(data); });
+    SCOPE_GUARD([data] { PyMem_Free(data); });
 
     error_type text_err = Errors_GetPrintableErrorText(value, data, size);
     if (text_err != VANILLAPDF_ERROR_SUCCESS) {
@@ -73,7 +73,7 @@ PyObject* errors_get_last_error_message(PyObject* self, PyObject* args) {
     if (data == nullptr) {
         return PyErr_NoMemory();
     }
-    auto data_guard = make_scope_guard([&] { PyMem_Free(data); });
+    SCOPE_GUARD([data] { PyMem_Free(data); });
 
     error_type message_err = Errors_GetLastErrorMessage(data, size);
     if (message_err != VANILLAPDF_ERROR_SUCCESS) {

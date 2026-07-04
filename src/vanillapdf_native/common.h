@@ -73,9 +73,12 @@ static_assert(sizeof(size_t) >= sizeof(size_type),
  * Modeled on vanillapdf's ScopeGuard (its util.h is library-internal, so we
  * keep a small self-contained copy here).
  *
- *   auto guard = make_scope_guard([&] { PyMem_Free(data); });
+ *   auto guard = make_scope_guard([data] { PyMem_Free(data); });
  *   ...
- *   guard.dismiss();   // ownership transferred; skip the cleanup */
+ *   guard.dismiss();   // ownership transferred; skip the cleanup
+ *
+ * Prefer explicit captures over [&]. When you never dismiss(), use the
+ * SCOPE_GUARD macro below instead of naming the guard. */
 template <typename Fn>
 class ScopeGuard {
 public:
