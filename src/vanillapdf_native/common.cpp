@@ -68,13 +68,21 @@ PyObject* capsule_new(void* handle, const char* name, release_fn release) {
     return capsule;
 }
 
-void* capsule_get(PyObject* capsule, const char* name) {
+/* Validate a capsule of the given name and return its box, or nullptr with a
+ * Python TypeError set. Shared preamble for capsule_get / capsule_release.
+ * PyCapsule_IsValid guarantees a non-NULL stored pointer, so GetPointer here
+ * succeeds. */
+static HandleBox* get_valid_box(PyObject* capsule, const char* name) {
     if (!PyCapsule_IsValid(capsule, name)) {
         PyErr_Format(PyExc_TypeError, "Invalid %s handle", name);
         return nullptr;
     }
 
-    HandleBox* box = static_cast<HandleBox*>(PyCapsule_GetPointer(capsule, name));
+    return static_cast<HandleBox*>(PyCapsule_GetPointer(capsule, name));
+}
+
+void* capsule_get(PyObject* capsule, const char* name) {
+    HandleBox* box = get_valid_box(capsule, name);
     if (box == nullptr) {
         return nullptr;
     }
@@ -88,25 +96,18 @@ void* capsule_get(PyObject* capsule, const char* name) {
 }
 
 PyObject* capsule_release(PyObject* capsule, const char* name) {
-    if (!PyCapsule_IsValid(capsule, name)) {
-        PyErr_Format(PyExc_TypeError, "Invalid %s handle", name);
-        return nullptr;
-    }
-
-    HandleBox* box = static_cast<HandleBox*>(PyCapsule_GetPointer(capsule, name));
+    HandleBox* box = get_valid_box(capsule, name);
     if (box == nullptr) {
         return nullptr;
     }
 
-    if (box->handle == nullptr) {
-        /* Already released - idempotent success. */
-        Py_RETURN_NONE;
+    /* Idempotent: releasing an already-released box is a no-op success. */
+    if (box->handle != nullptr) {
+        if (box->release != nullptr) {
+            box->release(box->handle);
+        }
+        box->handle = nullptr;
     }
-
-    if (box->release != nullptr) {
-        box->release(box->handle);
-    }
-    box->handle = nullptr;
 
     Py_RETURN_NONE;
 }

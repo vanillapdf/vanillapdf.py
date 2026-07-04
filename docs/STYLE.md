@@ -45,8 +45,11 @@ VanillaPDF **C API** only.
   `capsule_new(handle, "VanillaPDF.Type", RELEASE_FN(Type_Release))`,
   `capsule_cast<T>(capsule, "VanillaPDF.Type")`, `capsule_release(...)`.
 - Allocate with `py_malloc<T>()`, not a cast around `PyMem_Malloc`.
-- Free/release on error paths with `make_scope_guard([&]{ … })`; call
-  `.dismiss()` when ownership transfers out (e.g. to a capsule or the caller).
+- Free/release on error paths with a scope guard. Use `SCOPE_GUARD([h]{
+  X_Release(h); })` for the common fire-and-forget case; use a named
+  `auto g = make_scope_guard([h]{ … })` only when you need `g.dismiss()`
+  (ownership transfers out, e.g. to a capsule or the caller). **Capture the
+  specific variables explicitly (`[h]`, `[data]`), never `[&]`.**
 - Every out-parameter handle is AddRef'd by the library → exactly one matching
   `X_Release` per handle.
 
