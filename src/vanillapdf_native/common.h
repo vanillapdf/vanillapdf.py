@@ -99,6 +99,15 @@ ScopeGuard<Fn> make_scope_guard(Fn fn) {
     return ScopeGuard<Fn>(std::move(fn));
 }
 
+/* Fire-and-forget scope guard: declares a uniquely-named guard so call sites
+ * don't repeat `auto x = make_scope_guard(...)`. Prefer explicit captures:
+ *   SCOPE_GUARD([fd] { close(fd); });
+ * Use make_scope_guard directly when you need to dismiss(). */
+#define SCOPE_GUARD_CONCAT_(a, b) a##b
+#define SCOPE_GUARD_CONCAT(a, b) SCOPE_GUARD_CONCAT_(a, b)
+#define SCOPE_GUARD(...) \
+    auto SCOPE_GUARD_CONCAT(scope_guard_, __LINE__) = make_scope_guard(__VA_ARGS__)
+
 /* Allocate raw, uninitialized memory for `count` objects of type T via
  * PyMem_Malloc, returning a typed pointer (nullptr on failure, no exception
  * set - callers raise PyErr_NoMemory). Does not construct T; intended for the
