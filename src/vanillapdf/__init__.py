@@ -1,3 +1,6 @@
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _metadata_version
+
 from .semantics.catalog import Catalog
 from .semantics.digital_signature import DigitalSignature
 from .semantics.document import Document
@@ -49,9 +52,12 @@ from .utils.signature_verifier import (
 )
 from .utils.signing_key import SigningKey
 
+# Read the installed distribution metadata rather than importing the generated
+# _version.py (which is absent from a source checkout). This is setuptools-scm's
+# recommended runtime approach and keeps the type checker happy.
 try:
-    from ._version import version as __version__
-except ImportError:
+    __version__ = _metadata_version("vanillapdf")
+except PackageNotFoundError:
     __version__ = "0.0.0.dev"
 
 __all__ = [
