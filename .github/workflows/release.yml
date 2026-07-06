@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   build-wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }} (${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -27,6 +27,9 @@ jobs:
         include:
           - os: ubuntu-latest
             arch: x86_64
+
+          - os: ubuntu-24.04-arm  # native ARM64 runner (no QEMU emulation)
+            arch: aarch64
 
           - os: windows-latest
             arch: AMD64
@@ -40,6 +43,8 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # setuptools-scm needs tags to derive the release version
 
       - name: Cache vcpkg binaries
         uses: actions/cache@v6
@@ -64,10 +69,19 @@ jobs:
         env:
           CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
           CIBW_BUILD_VERBOSITY: 1
+          # musllinux (Alpine) is intentionally not built: the vendored C++ deps
+          # do not build cleanly against musl. Supported: manylinux glibc x86_64
+          # and aarch64.
           CIBW_SKIP: "cp*-musllinux_*"
           CIBW_ARCHS_WINDOWS: "${{ matrix.arch }}"
           CIBW_ARCHS_MACOS: "${{ matrix.arch }}"
           CIBW_ARCHS_LINUX: "${{ matrix.arch }}"
+          # Install the built wheel into a fresh env and run the suite against it,
+          # so a wheel that compiles but is broken at runtime (missing symbol,
+          # bad ABI, unshipped file) can never be published. Tests import the
+          # installed package; assets resolve from {project}/assets via conftest.
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {project}/tests
           CIBW_ENVIRONMENT_LINUX: "VCPKG_BINARY_SOURCES=clear;files,/project/.vcpkg-cache,readwrite"
           CIBW_ENVIRONMENT_MACOS: "MACOSX_DEPLOYMENT_TARGET=11.0 VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
           CIBW_ENVIRONMENT_WINDOWS: "VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
@@ -81,6 +95,12 @@ jobs:
         with:
           name: vanillapdf-wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: dist
+
+  # No sdist is published: building from source bootstraps vcpkg and FetchContents
+  # the C++ library from git at install time (toolchain + network required), so an
+  # sdist would only ever be used on unsupported platforms -- where a long build
+  # would likely fail anyway, a worse experience than pip's clean "no matching
+  # distribution". Source builds remain available via `pip install git+<repo>`.
 
   publish:
     name: Publish to Python Package Index
