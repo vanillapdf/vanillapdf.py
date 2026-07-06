@@ -1,8 +1,9 @@
 name: Sanitizers
 
-# Instrumented builds are slow, so this does not run on every push. It runs when
-# the sanitizer setup or the native sources change (so we can iterate it to green),
-# weekly for ongoing verification, and on manual dispatch.
+# Instrumented builds are slow, so this doesn't run on every push. It runs as a
+# PR check only when the sanitizer setup or the native sources change (so a memory
+# regression in the C extension is caught before merge), weekly for ongoing
+# verification, and on manual dispatch. Python-only PRs skip it.
 #
 # ASan + UBSan only. ThreadSanitizer is deliberately not run: stock CPython is not
 # built with -fsanitize=thread, so TSan cannot see the GIL/interpreter locks and
@@ -14,7 +15,7 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 3 * * 1"  # weekly, Monday 03:00 UTC
-  push:
+  pull_request:
     paths:
       - ".github/workflows/sanitizers.yml"
       - "src/vanillapdf_native/**"
