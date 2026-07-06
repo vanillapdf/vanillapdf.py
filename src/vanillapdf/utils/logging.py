@@ -18,16 +18,14 @@ class LoggingSeverity(IntEnum):
 class Logging:
     """Logging configuration for VanillaPDF.
 
-    Native library log output is routed into Python's standard :mod:`logging`
-    under the ``"vanillapdf"`` logger (installed at import), so it never writes
-    to stdout. It is silent by default; to see it, configure that logger::
+    The native library defaults to writing its log to stdout, which corrupts
+    saved files under output redirection, so at import the extension replaces
+    that sink with a discarding one -- **native logs are silent by default**.
 
-        import logging
-        logging.basicConfig(level=logging.DEBUG)
-        logging.getLogger("vanillapdf").setLevel(logging.DEBUG)
-
-    :meth:`set_severity` still controls how verbose the native side is before it
-    reaches Python logging.
+    To capture native logs (including verbose debug output), route them to a
+    rotating file with :meth:`set_rotating_file`; it streams to disk natively, so
+    it scales to heavy output and is safe under multi-threaded use.
+    :meth:`set_severity` controls how verbose the native side is.
     """
 
     @staticmethod
@@ -44,6 +42,19 @@ class Logging:
     def set_pattern(pattern: str) -> None:
         """Set the logging pattern format."""
         _vanillapdf.logging_set_pattern(pattern)
+
+    @staticmethod
+    def set_rotating_file(path: str, max_file_size: int = 5 * 1024 * 1024,
+                          max_files: int = 3) -> None:
+        """Route native logs to a rotating file sink at `path`.
+
+        Replaces the default (discarding) sink, so native library output -- as
+        verbose as :meth:`set_severity` allows -- is written to `path`, rolling
+        over to a new file every `max_file_size` bytes and keeping `max_files`
+        rotated files. Streamed to disk natively, so it scales to large debug
+        output and is safe to use with threads.
+        """
+        _vanillapdf.logging_set_rotating_file(path, max_file_size, max_files)
 
     @staticmethod
     def shutdown() -> None:

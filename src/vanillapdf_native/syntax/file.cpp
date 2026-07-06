@@ -21,7 +21,9 @@ PyObject* file_open(PyObject* self, PyObject* args) {
     }
 
     FileHandle* handle = nullptr;
-    error_type err = File_Open(filename, &handle);
+    error_type err = without_gil([filename, &handle] {
+        return File_Open(filename, &handle);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "File_Open");
     }
@@ -36,7 +38,9 @@ PyObject* file_create(PyObject* self, PyObject* args) {
     }
 
     FileHandle* handle = nullptr;
-    error_type err = File_Create(filename, &handle);
+    error_type err = without_gil([filename, &handle] {
+        return File_Create(filename, &handle);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "File_Create");
     }
@@ -55,7 +59,9 @@ PyObject* file_initialize(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = File_Initialize(handle);
+    error_type err = without_gil([handle] {
+        return File_Initialize(handle);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "File_Initialize");
     }
@@ -138,7 +144,9 @@ PyObject* file_set_encryption_password(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = File_SetEncryptionPassword(handle, password);
+    error_type err = without_gil([handle, password] {
+        return File_SetEncryptionPassword(handle, password);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "File_SetEncryptionPassword");
     }
@@ -165,7 +173,9 @@ PyObject* file_get_indirect_object(PyObject* self, PyObject* args) {
     }
 
     ObjectHandle* object = nullptr;
-    error_type err = File_GetIndirectObject(handle, object_number, generation, &object);
+    error_type err = without_gil([handle, object_number, generation, &object] {
+        return File_GetIndirectObject(handle, object_number, generation, &object);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "File_GetIndirectObject");
     }

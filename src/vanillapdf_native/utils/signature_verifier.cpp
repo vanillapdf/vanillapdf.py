@@ -52,7 +52,9 @@ static PyObject* add_certificate(
         return nullptr;
     }
 
-    error_type err = adder(store, buffer);
+    error_type err = without_gil([adder, store, buffer] {
+        return adder(store, buffer);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, operation);
     }
@@ -83,7 +85,9 @@ PyObject* trusted_certificate_store_load_from_directory(PyObject* self, PyObject
         return nullptr;
     }
 
-    error_type err = TrustedCertificateStore_LoadFromDirectory(store, directory);
+    error_type err = without_gil([store, directory] {
+        return TrustedCertificateStore_LoadFromDirectory(store, directory);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "TrustedCertificateStore_LoadFromDirectory");
     }
@@ -103,7 +107,9 @@ PyObject* trusted_certificate_store_load_system_defaults(PyObject* self, PyObjec
         return nullptr;
     }
 
-    error_type err = TrustedCertificateStore_LoadSystemDefaults(store);
+    error_type err = without_gil([store] {
+        return TrustedCertificateStore_LoadSystemDefaults(store);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "TrustedCertificateStore_LoadSystemDefaults");
     }
@@ -229,8 +235,10 @@ PyObject* digital_signature_verify(PyObject* self, PyObject* args) {
     }
 
     SignatureVerificationResultHandle* result = nullptr;
-    error_type err = DigitalSignatureExtensions_Verify(
-        signature, document, trust_store, settings, &result);
+    error_type err = without_gil([signature, document, trust_store, settings, &result] {
+        return DigitalSignatureExtensions_Verify(
+            signature, document, trust_store, settings, &result);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DigitalSignatureExtensions_Verify");
     }

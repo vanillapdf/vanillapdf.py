@@ -54,7 +54,9 @@ PyObject* page_tree_get_page(PyObject* self, PyObject* args) {
     }
 
     PageObjectHandle* page = nullptr;
-    error_type err = PageTree_GetPage(page_tree, at, &page);
+    error_type err = without_gil([page_tree, at, &page] {
+        return PageTree_GetPage(page_tree, at, &page);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "PageTree_GetPage");
     }
@@ -85,7 +87,9 @@ PyObject* page_tree_insert_page(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = PageTree_InsertPage(page_tree, at, page);
+    error_type err = without_gil([page_tree, at, page] {
+        return PageTree_InsertPage(page_tree, at, page);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "PageTree_InsertPage");
     }
@@ -110,7 +114,9 @@ PyObject* page_tree_append_page(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = PageTree_AppendPage(page_tree, page);
+    error_type err = without_gil([page_tree, page] {
+        return PageTree_AppendPage(page_tree, page);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "PageTree_AppendPage");
     }
@@ -135,7 +141,9 @@ PyObject* page_tree_remove_page(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = PageTree_RemovePage(page_tree, at);
+    error_type err = without_gil([page_tree, at] {
+        return PageTree_RemovePage(page_tree, at);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "PageTree_RemovePage");
     }

@@ -79,6 +79,8 @@ static PyMethodDef VanillapdfMethods[] = {
     {"logging_get_severity", logging_get_severity, METH_NOARGS, "Get logging severity"},
     {"logging_set_severity", logging_set_severity, METH_VARARGS, "Set logging severity"},
     {"logging_set_pattern", logging_set_pattern, METH_VARARGS, "Set logging pattern"},
+    {"logging_set_rotating_file", logging_set_rotating_file, METH_VARARGS,
+     "Route native logs to a rotating file sink"},
     {"logging_shutdown", logging_shutdown, METH_NOARGS, "Shutdown logging"},
     /* Errors methods */
     {"errors_get_last_error", errors_get_last_error, METH_NOARGS, "Get last error code"},

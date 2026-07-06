@@ -111,6 +111,38 @@ ScopeGuard<Fn> make_scope_guard(Fn fn) {
 #define SCOPE_GUARD(...) \
     auto SCOPE_GUARD_CONCAT(scope_guard_, __LINE__) = make_scope_guard(__VA_ARGS__)
 
+/* RAII: release the CPython GIL for this object's lifetime so other Python
+ * threads can run while a blocking native call executes. Between construction
+ * and destruction NOTHING may touch the Python C-API -- only the C++ library
+ * and locals. The library is internally thread-safe (atomics + recursive
+ * mutexes), so concurrent native calls are safe. */
+class GilRelease {
+public:
+    GilRelease() : _state(PyEval_SaveThread()) {}
+    ~GilRelease() { PyEval_RestoreThread(_state); }
+    GilRelease(const GilRelease&) = delete;
+    GilRelease& operator=(const GilRelease&) = delete;
+
+private:
+    PyThreadState* _state;
+};
+
+/* Run a blocking native call with the GIL released, returning its result (the
+ * library's error_type). `call` must touch only the C++ library and locals --
+ * no Python C-API, no capsule access, no object allocation. The GIL is held
+ * again by the time this returns, so the caller can inspect the result and
+ * raise. Capture the specific handles/values explicitly, never [&]:
+ *
+ *   error_type err = without_gil([doc, filename] {
+ *       return Document_Save(doc, filename);
+ *   });
+ *   if (err != VANILLAPDF_ERROR_SUCCESS) return raise_last_error(err, "Document_Save"); */
+template <typename Fn>
+auto without_gil(Fn&& call) -> decltype(call()) {
+    GilRelease release;
+    return call();
+}
+
 /* Allocate raw, uninitialized memory for `count` objects of type T via
  * PyMem_Malloc, returning a typed pointer (nullptr on failure, no exception
  * set - callers raise PyErr_NoMemory). Does not construct T; intended for the

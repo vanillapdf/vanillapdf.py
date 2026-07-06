@@ -25,7 +25,9 @@ PyObject* pkcs12_key_create_from_file(PyObject* self, PyObject* args) {
     }
 
     PKCS12KeyHandle* key = nullptr;
-    error_type err = PKCS12Key_CreateFromFile(path, password, &key);
+    error_type err = without_gil([path, password, &key] {
+        return PKCS12Key_CreateFromFile(path, password, &key);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "PKCS12Key_CreateFromFile");
     }
@@ -46,7 +48,9 @@ PyObject* pkcs12_key_create_from_buffer(PyObject* self, PyObject* args) {
     }
 
     PKCS12KeyHandle* key = nullptr;
-    error_type err = PKCS12Key_CreateFromBuffer(buffer, password, &key);
+    error_type err = without_gil([buffer, password, &key] {
+        return PKCS12Key_CreateFromBuffer(buffer, password, &key);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "PKCS12Key_CreateFromBuffer");
     }
@@ -66,7 +70,9 @@ PyObject* pkcs12_key_to_signing_key(PyObject* self, PyObject* args) {
     }
 
     SigningKeyHandle* signing_key = nullptr;
-    error_type err = PKCS12Key_ToSigningKey(key, &signing_key);
+    error_type err = without_gil([key, &signing_key] {
+        return PKCS12Key_ToSigningKey(key, &signing_key);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "PKCS12Key_ToSigningKey");
     }

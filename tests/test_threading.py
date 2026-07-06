@@ -1,7 +1,17 @@
 import threading
+import time
 
 import vanillapdf
-from vanillapdf import Errors, IntegerObject, ObjectType, PdfError
+from vanillapdf import (
+    ArrayObject,
+    Document,
+    Errors,
+    IntegerObject,
+    ObjectType,
+    PageObject,
+    PdfError,
+    Rectangle,
+)
 
 THREADS = 8
 ITERATIONS = 150
@@ -59,6 +69,79 @@ def test_concurrent_reads_from_shared_document(test_pdf):
                 failures.append(repr(exc))
 
         _run(worker)
+
+    assert failures == []
+
+
+def test_blocking_call_releases_gil():
+    """A blocking native call must release the GIL so other Python threads run.
+
+    A background thread spins a pure-Python counter. While a single ~30 ms native
+    serialization runs, the counter can only advance if the GIL was released for
+    that call -- if it were held, a C call (not a bytecode boundary) would block
+    the spinner entirely. The floor is generous; the real gap is held≈0 vs
+    released≈tens of thousands."""
+    arr = ArrayObject.create()
+    for i in range(100_000):
+        arr.append(IntegerObject.create(i))
+
+    counter = 0
+    running = True
+
+    def spin():
+        nonlocal counter
+        while running:
+            counter += 1
+
+    spinner = threading.Thread(target=spin)
+    spinner.start()
+    try:
+        time.sleep(0.02)  # let the spinner get going
+        before = counter
+        arr.to_pdf()      # one blocking native call; GIL released -> spinner runs
+        during = counter - before
+    finally:
+        running = False
+        spinner.join()
+        arr.close()
+
+    assert during > 1000, f"spinner advanced only {during} during the native call"
+
+
+def test_parallel_create_save_reopen(tmp_path):
+    """Many threads each build, save, and reopen their OWN document concurrently,
+    hammering the GIL-released write/open/traverse paths. Single-file-per-thread,
+    so any failure is a binding-layer race, not shared-handle contention."""
+    failures = []
+
+    def worker(index):
+        try:
+            for i in range(10):
+                path = str(tmp_path / f"doc_{index}_{i}.pdf")
+                with Document.create(path) as doc:
+                    page = PageObject.create_from_document(doc)
+                    rect = Rectangle.create()
+                    rect.upper_right_x = 200
+                    rect.upper_right_y = 300
+                    page.media_box = rect
+                    doc.get_catalog().get_pages().append(page)
+                    doc.save(path)
+                with Document(path) as reopened:
+                    assert len(reopened.get_catalog().get_pages()) >= 1
+        except Exception as exc:  # noqa: BLE001
+            failures.append(repr(exc))
+
+    barrier = threading.Barrier(THREADS)
+
+    def barriered(index):
+        barrier.wait()
+        worker(index)
+
+    threads = [threading.Thread(target=barriered, args=(i,)) for i in range(THREADS)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
 
     assert failures == []
 
