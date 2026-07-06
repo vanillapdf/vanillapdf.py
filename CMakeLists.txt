@@ -175,10 +175,17 @@ message(STATUS "Python extension will be built as: ${CMAKE_CURRENT_BINARY_DIR}/_
 if(VANILLAPDF_PY_PACKAGE_BUILD)
     include(GNUInstallDirs)
 
+    # Install only the Python extension under a dedicated component. The upstream
+    # vanillapdf FetchContent registers its own install() rules (headers, cmake
+    # package, share, vanillapdf.tools) under the "Development"/"Runtime"
+    # components; scikit-build-core is told to install only "python_extension"
+    # (see [tool.scikit-build] install.components), so none of that C++ SDK tree
+    # lands in the wheel. The library is statically linked into the extension, so
+    # the .so/.pyd is self-contained.
     install(TARGETS _vanillapdf
-        LIBRARY DESTINATION vanillapdf  # .so (Unix)
-        RUNTIME DESTINATION vanillapdf  # .dll (Windows)
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION vanillapdf COMPONENT python_extension  # .so (Unix)
+        RUNTIME DESTINATION vanillapdf COMPONENT python_extension  # .pyd (Windows)
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT python_extension
     )
 
     # Set RPATH for Unix platforms
