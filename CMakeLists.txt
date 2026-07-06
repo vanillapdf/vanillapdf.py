@@ -61,20 +61,90 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
 
 # Build the Python extension module
 add_library(_vanillapdf MODULE
-    src/vanillapdf_native/vanillapdfmodule.c
+    src/vanillapdf_native/vanillapdfmodule.cpp
     src/vanillapdf_native/vanillapdfmodule.h
+    src/vanillapdf_native/common.cpp
+    src/vanillapdf_native/common.h
+    src/vanillapdf_native/conversion.h
 
-    src/vanillapdf_native/documentmodule.c
-    src/vanillapdf_native/documentmodule.h
-    src/vanillapdf_native/buffermodule.c
-    src/vanillapdf_native/buffermodule.h
-    src/vanillapdf_native/filemodule.c
-    src/vanillapdf_native/filemodule.h
-    src/vanillapdf_native/libraryinfomodule.c
-    src/vanillapdf_native/libraryinfomodule.h
-    src/vanillapdf_native/loggingmodule.c
-    src/vanillapdf_native/loggingmodule.h
+    # utils
+    src/vanillapdf_native/utils/buffer.cpp
+    src/vanillapdf_native/utils/buffer.h
+    src/vanillapdf_native/utils/errors.cpp
+    src/vanillapdf_native/utils/errors.h
+    src/vanillapdf_native/utils/library_info.cpp
+    src/vanillapdf_native/utils/library_info.h
+    src/vanillapdf_native/utils/logging.cpp
+    src/vanillapdf_native/utils/logging.h
+    src/vanillapdf_native/utils/license_info.cpp
+    src/vanillapdf_native/utils/license_info.h
+    src/vanillapdf_native/utils/misc_utils.cpp
+    src/vanillapdf_native/utils/misc_utils.h
+    src/vanillapdf_native/utils/signing_key.cpp
+    src/vanillapdf_native/utils/signing_key.h
+    src/vanillapdf_native/utils/pkcs12_key.cpp
+    src/vanillapdf_native/utils/pkcs12_key.h
+    src/vanillapdf_native/utils/signature_verifier.cpp
+    src/vanillapdf_native/utils/signature_verifier.h
+
+    # syntax
+    src/vanillapdf_native/syntax/file.cpp
+    src/vanillapdf_native/syntax/file.h
+    src/vanillapdf_native/syntax/object.cpp
+    src/vanillapdf_native/syntax/object.h
+    src/vanillapdf_native/syntax/null_object.cpp
+    src/vanillapdf_native/syntax/null_object.h
+    src/vanillapdf_native/syntax/boolean_object.cpp
+    src/vanillapdf_native/syntax/boolean_object.h
+    src/vanillapdf_native/syntax/integer_object.cpp
+    src/vanillapdf_native/syntax/integer_object.h
+    src/vanillapdf_native/syntax/real_object.cpp
+    src/vanillapdf_native/syntax/real_object.h
+    src/vanillapdf_native/syntax/name_object.cpp
+    src/vanillapdf_native/syntax/name_object.h
+    src/vanillapdf_native/syntax/string_object.cpp
+    src/vanillapdf_native/syntax/string_object.h
+    src/vanillapdf_native/syntax/array_object.cpp
+    src/vanillapdf_native/syntax/array_object.h
+    src/vanillapdf_native/syntax/dictionary_object.cpp
+    src/vanillapdf_native/syntax/dictionary_object.h
+    src/vanillapdf_native/syntax/indirect_reference_object.cpp
+    src/vanillapdf_native/syntax/indirect_reference_object.h
+    src/vanillapdf_native/syntax/stream_object.cpp
+    src/vanillapdf_native/syntax/stream_object.h
+
+    # semantics
+    src/vanillapdf_native/semantics/document.cpp
+    src/vanillapdf_native/semantics/document.h
+    src/vanillapdf_native/semantics/catalog.cpp
+    src/vanillapdf_native/semantics/catalog.h
+    src/vanillapdf_native/semantics/page_tree.cpp
+    src/vanillapdf_native/semantics/page_tree.h
+    src/vanillapdf_native/semantics/page_object.cpp
+    src/vanillapdf_native/semantics/page_object.h
+    src/vanillapdf_native/semantics/rectangle.cpp
+    src/vanillapdf_native/semantics/rectangle.h
+    src/vanillapdf_native/semantics/document_info.cpp
+    src/vanillapdf_native/semantics/document_info.h
+    src/vanillapdf_native/semantics/document_encryption_settings.cpp
+    src/vanillapdf_native/semantics/document_encryption_settings.h
+    src/vanillapdf_native/semantics/document_signature_settings.cpp
+    src/vanillapdf_native/semantics/document_signature_settings.h
+    src/vanillapdf_native/semantics/interactive_form.cpp
+    src/vanillapdf_native/semantics/interactive_form.h
+    src/vanillapdf_native/semantics/fields.cpp
+    src/vanillapdf_native/semantics/fields.h
+    src/vanillapdf_native/semantics/digital_signature.cpp
+    src/vanillapdf_native/semantics/digital_signature.h
 )
+
+# Allow includes relative to the native source root (e.g. "syntax/object.h")
+target_include_directories(_vanillapdf PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/vanillapdf_native
+)
+
+# C++17 for if constexpr / std::make_unsigned used in the conversion helpers
+target_compile_features(_vanillapdf PRIVATE cxx_std_17)
 
 target_link_libraries(_vanillapdf PRIVATE
     vanillapdf::vanillapdf
@@ -122,6 +192,15 @@ if(VANILLAPDF_PY_PACKAGE_BUILD)
             BUILD_RPATH "@loader_path"
         )
     endif()
+endif()
+
+# Native C reproducer for the logging/fd-capture parse bug (OFF by default).
+# Links the C API directly (no Python) so the vanillapdf native team can build
+# and debug it under ASan/gdb. Enable with -DVANILLAPDF_PY_BUILD_NATIVE_REPRO=ON.
+option(VANILLAPDF_PY_BUILD_NATIVE_REPRO "Build the native C reproducer" OFF)
+if(VANILLAPDF_PY_BUILD_NATIVE_REPRO)
+    add_executable(native_logging_repro repro/logging_fd_capture_parse_bug.c)
+    target_link_libraries(native_logging_repro PRIVATE vanillapdf::vanillapdf)
 endif()
 
 # Tests

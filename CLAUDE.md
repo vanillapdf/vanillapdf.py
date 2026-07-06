@@ -60,12 +60,27 @@ Both classes support context managers and require explicit `close()` or `with` s
 
 ### C Extension (`src/vanillapdf_native/`)
 
-The `_vanillapdf` module bridges Python to the C++ library:
-- `vanillapdfmodule.c` - Main module definition
-- `documentmodule.c` - Document operations (open, save, release)
-- `buffermodule.c` - Buffer operations (create, get/set data, release)
+The `_vanillapdf` module bridges Python to the C++ library. Sources are **C++**
+(`.cpp`) and organized to mirror the upstream C API layout — one file per object
+type in subdirectories:
 
-C++ handles are wrapped as PyCapsule objects for safe passing between Python and C.
+- `vanillapdfmodule.cpp` - Module definition + method table
+- `common.cpp/.h` - Shared infrastructure: capsule helpers (`capsule_new/get/
+  release`, `capsule_cast<T>`), `raise_last_error` + the `PdfError` exception,
+  `ScopeGuard`, `py_malloc<T>`, `narrow_unsigned<T>`
+- `utils/` - buffer, errors, logging, library_info, license_info, misc_utils
+- `syntax/` - object (+ `object_cast<T>` helper), file, and one file per object
+  type (integer_object, boolean_object, string_object, ...)
+- `semantics/` - document (and higher-level PDF constructs)
+
+Includes are resolved from the native source root (e.g. `#include
+"syntax/object.h"`), configured via `target_include_directories` in CMake.
+Native library handles are wrapped as PyCapsule objects; every syntax object is
+exposed as a single `"VanillaPDF.Object"` capsule, with typed accessors
+converting to concrete handles internally via `X_FromObject`.
+
+See [`docs/STYLE.md`](docs/STYLE.md) for the coding conventions (casts, error
+handling, handles/memory, Python wrappers).
 
 ### Build System
 
@@ -91,6 +106,44 @@ pytest tests/                    # Run all tests
 pytest tests/test_document.py    # Run single test file
 pytest tests/ -v                 # Verbose output
 ```
+
+### Zero tolerance for flakiness
+
+Flaky tests are treated as **bugs, not noise**. This project must not ship any
+non-deterministic test behaviour.
+
+- **Never assume a re-run fixes a failure.** A test that fails then passes on
+  re-run is a defect to be root-caused immediately — inspect logs, error
+  messages, crash dumps, allocator diagnostics, whatever it takes. Do not
+  proceed until the cause is understood and eliminated.
+- **Debug immediately and empirically.** Reproduce in a loop, bisect the
+  trigger (isolate operations/tests, vary one factor at a time), and prove the
+  fix by hammering the previously-failing case many times (dozens of runs).
+- **Fix the trigger, don't mask it.** Removing the actual cause (see below) is a
+  fix; loosening an assertion or retrying is masking and is not acceptable.
+
+Native logging must never reach stdout (root-caused native bug, fixed at the
+binding boundary). The native library defaults to an **stdout log sink at INFO**.
+When stdout (fd 1) is redirected onto a file and juggled with `dup2` (exactly
+what pytest's `--capture=fd` does to its capture buffer), the sink's
+stale/aliased handle intermittently writes **log text into the PDF the library
+is saving**, clobbering the trailer — the file on disk is genuinely corrupt and
+the parser correctly rejects it (`PARSE_EXCEPTION`). It is not a parser race and
+not a PyMem/bindings issue. Isolated in pure C (no Python) in
+`repro/logging_fd_capture_parse_bug.c` (see `repro/README.md`).
+
+**Fix (in the bindings):** `PyInit__vanillapdf` calls `install_native_logging()`
+(`utils/logging.cpp`), which installs a `Logging_SetCallbackLogger` sink routing
+native logs into Python's `logging` under the `"vanillapdf"` logger — so spdlog
+never writes to stdout. This eliminates the corruption (verified: repro 0/300,
+full suite deterministic under `--capture=fd` with no test-side workaround). Do
+not remove this. The underlying stdout-sink default should also be fixed in the
+native library (don't emit to stdout implicitly).
+
+### Linting
+
+Ruff enforces style/quality (config in `pyproject.toml`, incl. `SIM117`
+multiple-with-statements). Run `ruff check .`; CI runs it in `lint.yml`.
 
 ## CI/CD
 
