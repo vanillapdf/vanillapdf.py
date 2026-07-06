@@ -83,7 +83,9 @@ PyObject* object_to_string(PyObject* self, PyObject* args) {
     }
 
     BufferHandle* buffer = nullptr;
-    error_type err = Object_ToString(object, &buffer);
+    error_type err = without_gil([object, &buffer] {
+        return Object_ToString(object, &buffer);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Object_ToString");
     }
@@ -103,7 +105,9 @@ PyObject* object_to_pdf(PyObject* self, PyObject* args) {
     }
 
     BufferHandle* buffer = nullptr;
-    error_type err = Object_ToPdf(object, &buffer);
+    error_type err = without_gil([object, &buffer] {
+        return Object_ToPdf(object, &buffer);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Object_ToPdf");
     }

@@ -102,7 +102,9 @@ PyObject* stream_object_get_body(PyObject* self, PyObject* args) {
     SCOPE_GUARD([stream] { StreamObject_Release(stream); });
 
     BufferHandle* buffer = nullptr;
-    error_type err = StreamObject_GetBody(stream, &buffer);
+    error_type err = without_gil([stream, &buffer] {
+        return StreamObject_GetBody(stream, &buffer);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "StreamObject_GetBody");
     }
@@ -124,7 +126,9 @@ PyObject* stream_object_get_body_raw(PyObject* self, PyObject* args) {
     SCOPE_GUARD([stream] { StreamObject_Release(stream); });
 
     BufferHandle* buffer = nullptr;
-    error_type err = StreamObject_GetBodyRaw(stream, &buffer);
+    error_type err = without_gil([stream, &buffer] {
+        return StreamObject_GetBodyRaw(stream, &buffer);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "StreamObject_GetBodyRaw");
     }

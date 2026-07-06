@@ -133,12 +133,20 @@ not a PyMem/bindings issue. Isolated in pure C (no Python) in
 `repro/logging_fd_capture_parse_bug.c` (see `repro/README.md`).
 
 **Fix (in the bindings):** `PyInit__vanillapdf` calls `install_native_logging()`
-(`utils/logging.cpp`), which installs a `Logging_SetCallbackLogger` sink routing
-native logs into Python's `logging` under the `"vanillapdf"` logger — so spdlog
-never writes to stdout. This eliminates the corruption (verified: repro 0/300,
-full suite deterministic under `--capture=fd` with no test-side workaround). Do
-not remove this. The underlying stdout-sink default should also be fixed in the
-native library (don't emit to stdout implicitly).
+(`utils/logging.cpp`), which replaces the default stdout sink with a
+**discarding** callback sink — so spdlog never writes to stdout. Do not restore
+a stdout sink.
+
+The sink is a no-op that never touches the Python C-API. Routing native logs
+into Python's `logging` (the earlier design) re-enters Python — needs the GIL —
+synchronously from inside the native log path, while the native logger holds its
+own mutex; once native calls release the GIL for parallelism (`without_gil` in
+`common.h`, #40) that dead-locks against a thread holding the GIL while blocked
+on that mutex. So native logs are **silent by default**; callers opt into a real
+destination with `Logging.set_rotating_file()` — the native rotating-file sink,
+streamed to disk (scales to heavy debug output) and entirely native (no GIL, no
+dead-lock). The underlying stdout-sink default should also be fixed in the native
+library (don't emit to stdout implicitly).
 
 ### Linting
 

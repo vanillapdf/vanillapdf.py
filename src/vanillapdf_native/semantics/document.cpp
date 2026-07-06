@@ -28,7 +28,9 @@ PyObject* document_open(PyObject* self, PyObject* args) {
     }
 
     DocumentHandle* handle = nullptr;
-    error_type err = Document_Open(filename, &handle);
+    error_type err = without_gil([filename, &handle] {
+        return Document_Open(filename, &handle);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_Open");
     }
@@ -63,7 +65,9 @@ PyObject* document_open_file(PyObject* self, PyObject* args) {
     }
 
     DocumentHandle* handle = nullptr;
-    error_type err = Document_OpenFile(file, &handle);
+    error_type err = without_gil([file, &handle] {
+        return Document_OpenFile(file, &handle);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_OpenFile");
     }
@@ -83,7 +87,9 @@ PyObject* document_save(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = Document_Save(handle, filename);
+    error_type err = without_gil([handle, filename] {
+        return Document_Save(handle, filename);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_Save");
     }
@@ -103,7 +109,9 @@ PyObject* document_save_incremental(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = Document_SaveIncremental(handle, filename);
+    error_type err = without_gil([handle, filename] {
+        return Document_SaveIncremental(handle, filename);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_SaveIncremental");
     }
@@ -171,7 +179,9 @@ PyObject* document_append_document(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = Document_AppendDocument(handle, source);
+    error_type err = without_gil([handle, source] {
+        return Document_AppendDocument(handle, source);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_AppendDocument");
     }
@@ -251,7 +261,9 @@ PyObject* document_sign(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = Document_Sign(handle, destination, settings);
+    error_type err = without_gil([handle, destination, settings] {
+        return Document_Sign(handle, destination, settings);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_Sign");
     }
