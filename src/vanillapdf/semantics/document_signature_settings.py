@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 from .. import _vanillapdf
 from ..handle import Handle
 from ..utils.signing_key import SigningKey
+
+if TYPE_CHECKING:
+    from .._vanillapdf import DocumentSignatureSettingsHandle
 
 
 class MessageDigestAlgorithm(IntEnum):
@@ -22,7 +28,7 @@ class MessageDigestAlgorithm(IntEnum):
     WHIRLPOOL = 12
 
 
-class DocumentSignatureSettings(Handle):
+class DocumentSignatureSettings(Handle["DocumentSignatureSettingsHandle"]):
     """Settings controlling how a document is signed.
 
     Set the signing key and digest algorithm, then pass the settings to
@@ -31,11 +37,11 @@ class DocumentSignatureSettings(Handle):
 
     _release = staticmethod(_vanillapdf.document_signature_settings_release)
 
-    def __init__(self, handle):
+    def __init__(self, handle: DocumentSignatureSettingsHandle) -> None:
         self._handle = handle
 
     @staticmethod
-    def create() -> "DocumentSignatureSettings":
+    def create() -> DocumentSignatureSettings:
         handle = _vanillapdf.document_signature_settings_create()
         return DocumentSignatureSettings(handle)
 
@@ -52,4 +58,5 @@ class DocumentSignatureSettings(Handle):
     def set_signing_key(self, signing_key: SigningKey) -> None:
         """Set the :class:`~vanillapdf.SigningKey` used to sign the document."""
         handle = self._require_handle()
-        _vanillapdf.document_signature_settings_set_signing_key(handle, signing_key._handle)
+        _vanillapdf.document_signature_settings_set_signing_key(
+            handle, self._handle_of(signing_key))

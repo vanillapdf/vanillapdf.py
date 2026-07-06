@@ -35,3 +35,23 @@ jobs:
 
       - name: Ruff check
         run: ruff check .
+
+  pyright:
+    name: Pyright (strict)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      # Strict type check of the Python layer against the committed
+      # _vanillapdf.pyi stub -- no native build required.
+      - name: Install Pyright
+        run: python -m pip install pyright
+
+      - name: Pyright check
+        run: pyright

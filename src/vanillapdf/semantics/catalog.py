@@ -1,19 +1,26 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from .. import _vanillapdf
 from ..handle import Handle
 from .interactive_form import InteractiveForm
 from .page_tree import PageTree
 
+if TYPE_CHECKING:
+    from .._vanillapdf import CatalogHandle
 
-class Catalog(Handle):
+
+class Catalog(Handle["CatalogHandle"]):
     """The document catalog (root of the PDF object hierarchy)."""
 
     _release = staticmethod(_vanillapdf.catalog_release)
 
-    def __init__(self, handle):
+    def __init__(self, handle: CatalogHandle) -> None:
         self._handle = handle
 
     @classmethod
-    def _from_handle(cls, handle) -> "Catalog":
+    def _from_handle(cls, handle: CatalogHandle) -> Catalog:
         return cls(handle)
 
     def get_pages(self) -> PageTree:
@@ -25,7 +32,7 @@ class Catalog(Handle):
     def pages(self) -> PageTree:
         return self.get_pages()
 
-    def get_acro_form(self):
+    def get_acro_form(self) -> InteractiveForm | None:
         """The document's interactive form (:class:`~vanillapdf.InteractiveForm`),
         or ``None`` if the document has no AcroForm."""
         handle = self._require_handle()

@@ -145,6 +145,22 @@ native library (don't emit to stdout implicitly).
 Ruff enforces style/quality (config in `pyproject.toml`, incl. `SIM117`
 multiple-with-statements). Run `ruff check .`; CI runs it in `lint.yml`.
 
+### Type checking
+
+The Python layer is checked under **pyright `strict`** (config in
+`pyproject.toml`; CI runs it in `lint.yml`). The native `_vanillapdf` extension
+is typed by a generated stub, `src/vanillapdf/_vanillapdf.pyi`, which gives each
+native handle a distinct marker type so a mismatched handle is a static error.
+**Do not hand-edit the stub** — after changing the native surface, regenerate it:
+
+```bash
+python scripts/generate_native_stub.py            # rewrite the stub
+python scripts/generate_native_stub.py --check     # verify it is in sync
+```
+
+See [`docs/STYLE.md`](docs/STYLE.md) for the `Handle[H]` / `_handle_of` typing
+conventions in the wrappers.
+
 ## CI/CD
 
 - **sanity-check.yml** - Runs on push/PR to main; builds and tests on Ubuntu, Windows, macOS

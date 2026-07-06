@@ -1,8 +1,16 @@
+from __future__ import annotations
+
+from collections.abc import Generator, Iterator
+from contextlib import contextmanager
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 from .. import _vanillapdf
 from ..handle import Handle
 from ..utils.buffer import Buffer
+
+if TYPE_CHECKING:
+    from .._vanillapdf import DictionaryObjectIteratorHandle, ObjectHandle
 
 
 class ObjectType(IntEnum):
@@ -27,7 +35,7 @@ class StringType(IntEnum):
     HEXADECIMAL = 2
 
 
-class Object(Handle):
+class Object(Handle["ObjectHandle"]):
     """Base class for a PDF syntax object.
 
     Instances own a native "VanillaPDF.Object" handle. Use :meth:`_wrap` to
@@ -36,7 +44,7 @@ class Object(Handle):
 
     _release = staticmethod(_vanillapdf.object_release)
 
-    def __init__(self, handle):
+    def __init__(self, handle: ObjectHandle) -> None:
         self._handle = handle
 
     @property
@@ -71,7 +79,7 @@ class Object(Handle):
         return _vanillapdf.object_type_name(object_type)
 
     @classmethod
-    def _wrap(cls, handle) -> "Object":
+    def _wrap(cls, handle: ObjectHandle) -> Object:
         """Wrap a raw object handle in the most specific subclass."""
         object_type = ObjectType(_vanillapdf.object_get_object_type(handle))
 
@@ -91,14 +99,14 @@ class Object(Handle):
 
 class NullObject(Object):
     @staticmethod
-    def create() -> "NullObject":
+    def create() -> NullObject:
         handle = _vanillapdf.null_object_create()
         return NullObject(handle)
 
 
 class BooleanObject(Object):
     @staticmethod
-    def create(value: bool) -> "BooleanObject":
+    def create(value: bool) -> BooleanObject:
         handle = _vanillapdf.boolean_object_create(value)
         return BooleanObject(handle)
 
@@ -115,7 +123,7 @@ class BooleanObject(Object):
 
 class IntegerObject(Object):
     @staticmethod
-    def create(value: int) -> "IntegerObject":
+    def create(value: int) -> IntegerObject:
         handle = _vanillapdf.integer_object_create(value)
         return IntegerObject(handle)
 
@@ -132,7 +140,7 @@ class IntegerObject(Object):
 
 class RealObject(Object):
     @staticmethod
-    def create(value: float, precision: int = 6) -> "RealObject":
+    def create(value: float, precision: int = 6) -> RealObject:
         handle = _vanillapdf.real_object_create(value, precision)
         return RealObject(handle)
 
@@ -149,7 +157,7 @@ class RealObject(Object):
 
 class NameObject(Object):
     @staticmethod
-    def create(value: str) -> "NameObject":
+    def create(value: str) -> NameObject:
         handle = _vanillapdf.name_object_create_from_decoded_string(value)
         return NameObject(handle)
 
@@ -181,7 +189,7 @@ class StringObject(Object):
     @value.setter
     def value(self, buffer: Buffer) -> None:
         handle = self._require_handle()
-        _vanillapdf.string_object_set_value(handle, buffer._handle)
+        _vanillapdf.string_object_set_value(handle, self._handle_of(buffer))
 
     def value_string(self, encoding: str = "utf-8") -> str:
         return self.value.decode(encoding)
@@ -189,21 +197,21 @@ class StringObject(Object):
 
 class LiteralStringObject(StringObject):
     @staticmethod
-    def create(value: str) -> "LiteralStringObject":
+    def create(value: str) -> LiteralStringObject:
         handle = _vanillapdf.literal_string_object_create_from_decoded_string(value)
         return LiteralStringObject(handle)
 
 
 class HexadecimalStringObject(StringObject):
     @staticmethod
-    def create(value: str) -> "HexadecimalStringObject":
+    def create(value: str) -> HexadecimalStringObject:
         handle = _vanillapdf.hexadecimal_string_object_create_from_decoded_string(value)
         return HexadecimalStringObject(handle)
 
 
 class ArrayObject(Object):
     @staticmethod
-    def create() -> "ArrayObject":
+    def create() -> ArrayObject:
         handle = _vanillapdf.array_object_create()
         return ArrayObject(handle)
 
@@ -228,34 +236,34 @@ class ArrayObject(Object):
     def __setitem__(self, index: int, value: Object) -> None:
         index = self._normalize_index(index)
         handle = self._require_handle()
-        _vanillapdf.array_object_set_value(handle, index, value._handle)
+        _vanillapdf.array_object_set_value(handle, index, self._handle_of(value))
 
     def __delitem__(self, index: int) -> None:
         index = self._normalize_index(index)
         handle = self._require_handle()
         _vanillapdf.array_object_remove(handle, index)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Object]:
         for i in range(len(self)):
             yield self[i]
 
     def append(self, value: Object) -> None:
         handle = self._require_handle()
-        _vanillapdf.array_object_append(handle, value._handle)
+        _vanillapdf.array_object_append(handle, self._handle_of(value))
 
     def insert(self, index: int, value: Object) -> None:
         handle = self._require_handle()
-        _vanillapdf.array_object_insert(handle, index, value._handle)
+        _vanillapdf.array_object_insert(handle, index, self._handle_of(value))
 
     def clear(self) -> None:
         handle = self._require_handle()
         _vanillapdf.array_object_clear(handle)
 
 
-class _DictionaryIterator(Handle):
+class _DictionaryIterator(Handle["DictionaryObjectIteratorHandle"]):
     _release = staticmethod(_vanillapdf.dictionary_iterator_release)
 
-    def __init__(self, handle):
+    def __init__(self, handle: DictionaryObjectIteratorHandle) -> None:
         self._handle = handle
 
     def is_valid(self) -> bool:
@@ -279,7 +287,7 @@ class _DictionaryIterator(Handle):
 
 class DictionaryObject(Object):
     @staticmethod
-    def create() -> "DictionaryObject":
+    def create() -> DictionaryObject:
         handle = _vanillapdf.dictionary_object_create()
         return DictionaryObject(handle)
 
@@ -288,60 +296,45 @@ class DictionaryObject(Object):
         return _vanillapdf.dictionary_object_get_size(handle)
 
     @staticmethod
-    def _as_name(key):
-        """Return (NameObject, owned) for a str or NameObject key. `owned` is
-        True when we created a temporary that the caller must close."""
-        if isinstance(key, NameObject):
-            return key, False
-        if isinstance(key, str):
-            return NameObject.create(key), True
-        raise TypeError(
-            f"dictionary key must be str or NameObject, not {type(key).__name__}")
+    @contextmanager
+    def _key_name(key: str) -> Generator[NameObject, None, None]:
+        """Yield a temporary NameObject for a str key, closed on exit.
 
-    def __contains__(self, key) -> bool:
-        name, owned = self._as_name(key)
-        try:
-            handle = self._require_handle()
-            return _vanillapdf.dictionary_object_contains(handle, name._handle)
-        finally:
-            if owned:
-                name.close()
+        Dictionary keys are PDF names; the native API takes a NameObject
+        handle, so we convert the str here for the duration of the call.
+        """
+        with NameObject.create(key) as name:
+            yield name
 
-    def get(self, key, default=None):
-        name, owned = self._as_name(key)
-        try:
+    def __contains__(self, key: str) -> bool:
+        with self._key_name(key) as name:
             handle = self._require_handle()
-            result = _vanillapdf.dictionary_object_try_find(handle, name._handle)
-        finally:
-            if owned:
-                name.close()
+            return _vanillapdf.dictionary_object_contains(handle, self._handle_of(name))
+
+    def get(self, key: str, default: Object | None = None) -> Object | None:
+        with self._key_name(key) as name:
+            handle = self._require_handle()
+            result = _vanillapdf.dictionary_object_try_find(handle, self._handle_of(name))
         if result is None:
             return default
         return Object._wrap(result)
 
-    def __getitem__(self, key) -> Object:
+    def __getitem__(self, key: str) -> Object:
         value = self.get(key)
         if value is None:
             raise KeyError(key)
         return value
 
-    def __setitem__(self, key, value: Object) -> None:
-        name, owned = self._as_name(key)
-        try:
+    def __setitem__(self, key: str, value: Object) -> None:
+        with self._key_name(key) as name:
             handle = self._require_handle()
-            _vanillapdf.dictionary_object_insert(handle, name._handle, value._handle, True)
-        finally:
-            if owned:
-                name.close()
+            _vanillapdf.dictionary_object_insert(
+                handle, self._handle_of(name), self._handle_of(value), True)
 
-    def __delitem__(self, key) -> None:
-        name, owned = self._as_name(key)
-        try:
+    def __delitem__(self, key: str) -> None:
+        with self._key_name(key) as name:
             handle = self._require_handle()
-            removed = _vanillapdf.dictionary_object_remove(handle, name._handle)
-        finally:
-            if owned:
-                name.close()
+            removed = _vanillapdf.dictionary_object_remove(handle, self._handle_of(name))
         if not removed:
             raise KeyError(key)
 
@@ -349,7 +342,7 @@ class DictionaryObject(Object):
         handle = self._require_handle()
         _vanillapdf.dictionary_object_clear(handle)
 
-    def items(self):
+    def items(self) -> Iterator[tuple[Object, Object]]:
         handle = self._require_handle()
         iterator_handle = _vanillapdf.dictionary_object_get_iterator(handle)
         iterator = _DictionaryIterator(iterator_handle)
@@ -360,33 +353,33 @@ class DictionaryObject(Object):
         finally:
             iterator.close()
 
-    def keys(self):
+    def keys(self) -> list[Object]:
         return [key for key, _ in self.items()]
 
-    def values(self):
+    def values(self) -> list[Object]:
         return [value for _, value in self.items()]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Object]:
         for key, _ in self.items():
             yield key
 
 
 class StreamObject(Object):
     @staticmethod
-    def create() -> "StreamObject":
+    def create() -> StreamObject:
         handle = _vanillapdf.stream_object_create()
         return StreamObject(handle)
 
     @property
-    def header(self) -> "DictionaryObject":
+    def header(self) -> DictionaryObject:
         handle = self._require_handle()
         header = _vanillapdf.stream_object_get_header(handle)
-        return Object._wrap(header)
+        return DictionaryObject(header)  # a stream's header is always a dictionary
 
     @header.setter
-    def header(self, value: "DictionaryObject") -> None:
+    def header(self, value: DictionaryObject) -> None:
         handle = self._require_handle()
-        _vanillapdf.stream_object_set_header(handle, value._handle)
+        _vanillapdf.stream_object_set_header(handle, self._handle_of(value))
 
     @property
     def body(self) -> bytes:
@@ -401,7 +394,7 @@ class StreamObject(Object):
         handle = self._require_handle()
         buffer = Buffer.create_from_data(data)
         try:
-            _vanillapdf.stream_object_set_body(handle, buffer._handle)
+            _vanillapdf.stream_object_set_body(handle, self._handle_of(buffer))
         finally:
             buffer.close()
 
@@ -416,7 +409,7 @@ class StreamObject(Object):
 
 class IndirectReferenceObject(Object):
     @staticmethod
-    def create() -> "IndirectReferenceObject":
+    def create() -> IndirectReferenceObject:
         handle = _vanillapdf.indirect_reference_object_create()
         return IndirectReferenceObject(handle)
 
@@ -449,10 +442,11 @@ class IndirectReferenceObject(Object):
     @referenced_object.setter
     def referenced_object(self, value: Object) -> None:
         handle = self._require_handle()
-        _vanillapdf.indirect_reference_object_set_referenced_object(handle, value._handle)
+        _vanillapdf.indirect_reference_object_set_referenced_object(
+            handle, self._handle_of(value))
 
 
-_OBJECT_TYPE_MAP = {
+_OBJECT_TYPE_MAP: dict[ObjectType, type[Object]] = {
     ObjectType.NULL: NullObject,
     ObjectType.BOOLEAN: BooleanObject,
     ObjectType.INTEGER: IntegerObject,
@@ -465,7 +459,7 @@ _OBJECT_TYPE_MAP = {
     ObjectType.INDIRECT_REFERENCE: IndirectReferenceObject,
 }
 
-_STRING_TYPE_MAP = {
+_STRING_TYPE_MAP: dict[StringType, type[StringObject]] = {
     StringType.LITERAL: LiteralStringObject,
     StringType.HEXADECIMAL: HexadecimalStringObject,
 }
