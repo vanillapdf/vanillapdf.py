@@ -1,9 +1,15 @@
+from __future__ import annotations
+
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 from .. import _vanillapdf
 from ..handle import Handle
 from ..utils.buffer import Buffer
 from .objects import Object
+
+if TYPE_CHECKING:
+    from .._vanillapdf import FileHandle
 
 
 class PDFVersion(IntEnum):
@@ -20,7 +26,7 @@ class PDFVersion(IntEnum):
     PDF_2_0 = 9
 
 
-class File(Handle):
+class File(Handle["FileHandle"]):
     """Low-level PDF file access.
 
     Provides access to PDF structure including version and encryption status.
@@ -29,17 +35,17 @@ class File(Handle):
 
     _release = staticmethod(_vanillapdf.file_release)
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str) -> None:
         self._handle = _vanillapdf.file_open(filename)
 
     @classmethod
-    def _from_handle(cls, handle) -> "File":
+    def _from_handle(cls, handle: FileHandle) -> File:
         file = cls.__new__(cls)
         file._handle = handle
         return file
 
     @staticmethod
-    def create(filename: str) -> "File":
+    def create(filename: str) -> File:
         """Create a new file for writing (e.g. a signing destination)."""
         handle = _vanillapdf.file_create(filename)
         return File._from_handle(handle)

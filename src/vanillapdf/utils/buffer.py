@@ -1,29 +1,34 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from .. import _vanillapdf
 from ..handle import Handle
 
+if TYPE_CHECKING:
+    from .._vanillapdf import BufferHandle
 
-class Buffer(Handle):
+
+class Buffer(Handle["BufferHandle"]):
     _release = staticmethod(_vanillapdf.buffer_release)
 
-    def __init__(self, handle) -> None:
-        if handle is None:
-            raise RuntimeError("Failed to create buffer")
+    def __init__(self, handle: BufferHandle) -> None:
         self._handle = handle
 
     @staticmethod
-    def create() -> "Buffer":
+    def create() -> Buffer:
         """Create an empty buffer."""
         handle = _vanillapdf.buffer_create()
         return Buffer(handle)
 
     @staticmethod
-    def create_from_data(data: bytes) -> "Buffer":
+    def create_from_data(data: bytes) -> Buffer:
         """Create a buffer from the provided bytes."""
         handle = _vanillapdf.buffer_create_from_data(data)
         return Buffer(handle)
 
     @classmethod
-    def _from_handle(cls, handle) -> "Buffer":
+    def _from_handle(cls, handle: BufferHandle) -> Buffer:
         """Create a Buffer from an existing handle (internal use)."""
         return cls(handle)
 

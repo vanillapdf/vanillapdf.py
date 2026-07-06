@@ -1,10 +1,17 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from .. import _vanillapdf
 from ..handle import Handle
 from .buffer import Buffer
 from .signing_key import SigningKey
 
+if TYPE_CHECKING:
+    from .._vanillapdf import PKCS12KeyHandle
 
-class PKCS12Key(Handle):
+
+class PKCS12Key(Handle["PKCS12KeyHandle"]):
     """A PKCS#12 (``.pfx`` / ``.p12``) private key and certificate.
 
     Load one from a file or buffer, then convert it to a
@@ -13,19 +20,20 @@ class PKCS12Key(Handle):
 
     _release = staticmethod(_vanillapdf.pkcs12_key_release)
 
-    def __init__(self, handle):
+    def __init__(self, handle: PKCS12KeyHandle) -> None:
         self._handle = handle
 
     @staticmethod
-    def create_from_file(path: str, password: str) -> "PKCS12Key":
+    def create_from_file(path: str, password: str) -> PKCS12Key:
         """Load a PKCS#12 key from a file on disk."""
         handle = _vanillapdf.pkcs12_key_create_from_file(path, password)
         return PKCS12Key(handle)
 
     @staticmethod
-    def create_from_buffer(buffer: Buffer, password: str) -> "PKCS12Key":
+    def create_from_buffer(buffer: Buffer, password: str) -> PKCS12Key:
         """Load a PKCS#12 key from an in-memory :class:`~vanillapdf.Buffer`."""
-        handle = _vanillapdf.pkcs12_key_create_from_buffer(buffer._handle, password)
+        handle = _vanillapdf.pkcs12_key_create_from_buffer(
+            PKCS12Key._handle_of(buffer), password)
         return PKCS12Key(handle)
 
     def to_signing_key(self) -> SigningKey:

@@ -1,8 +1,20 @@
+from __future__ import annotations
+
+from collections.abc import Callable
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 from .. import _vanillapdf
 from ..handle import Handle
 from .buffer import Buffer
+
+if TYPE_CHECKING:
+    from .._vanillapdf import (
+        BufferHandle,
+        SignatureVerificationResultHandle,
+        SignatureVerificationSettingsHandle,
+        TrustedCertificateStoreHandle,
+    )
 
 
 class SignatureVerificationStatus(IntEnum):
@@ -21,36 +33,38 @@ class SignatureVerificationStatus(IntEnum):
     UNKNOWN = 10
 
 
-def _as_bytes(data) -> bytes:
+def _as_bytes(data: bytes | str) -> bytes:
     if isinstance(data, str):
         return data.encode("utf-8")
     return bytes(data)
 
 
-class TrustedCertificateStore(Handle):
+class TrustedCertificateStore(Handle["TrustedCertificateStoreHandle"]):
     """A set of trusted CA certificates used for signature chain validation."""
 
     _release = staticmethod(_vanillapdf.trusted_certificate_store_release)
 
-    def __init__(self, handle):
+    def __init__(self, handle: TrustedCertificateStoreHandle) -> None:
         self._handle = handle
 
     @staticmethod
-    def create() -> "TrustedCertificateStore":
+    def create() -> TrustedCertificateStore:
         handle = _vanillapdf.trusted_certificate_store_create()
         return TrustedCertificateStore(handle)
 
-    def add_certificate_from_pem(self, data) -> None:
+    def add_certificate_from_pem(self, data: bytes | str) -> None:
         """Add a PEM-encoded certificate (``bytes`` or ``str``)."""
         handle = self._require_handle()
         with Buffer.create_from_data(_as_bytes(data)) as buffer:
-            _vanillapdf.trusted_certificate_store_add_certificate_from_pem(handle, buffer._handle)
+            _vanillapdf.trusted_certificate_store_add_certificate_from_pem(
+                handle, self._handle_of(buffer))
 
-    def add_certificate_from_der(self, data) -> None:
+    def add_certificate_from_der(self, data: bytes | str) -> None:
         """Add a DER-encoded certificate (``bytes``)."""
         handle = self._require_handle()
         with Buffer.create_from_data(_as_bytes(data)) as buffer:
-            _vanillapdf.trusted_certificate_store_add_certificate_from_der(handle, buffer._handle)
+            _vanillapdf.trusted_certificate_store_add_certificate_from_der(
+                handle, self._handle_of(buffer))
 
     def load_from_directory(self, path: str) -> None:
         """Load all certificates from a directory of PEM/DER files."""
@@ -63,7 +77,7 @@ class TrustedCertificateStore(Handle):
         _vanillapdf.trusted_certificate_store_load_system_defaults(handle)
 
 
-class SignatureVerificationSettings(Handle):
+class SignatureVerificationSettings(Handle["SignatureVerificationSettingsHandle"]):
     """Flags controlling how strictly a signature is verified.
 
     All flags default to ``False``. Set ``skip_certificate_validation`` to check
@@ -73,14 +87,14 @@ class SignatureVerificationSettings(Handle):
 
     _release = staticmethod(_vanillapdf.signature_verification_settings_release)
 
-    def __init__(self, handle):
+    def __init__(self, handle: SignatureVerificationSettingsHandle) -> None:
         self._handle = handle
         self._skip_certificate_validation = False
         self._allow_weak_algorithms = False
         self._check_signing_time = False
 
     @staticmethod
-    def create() -> "SignatureVerificationSettings":
+    def create() -> SignatureVerificationSettings:
         handle = _vanillapdf.signature_verification_settings_create()
         return SignatureVerificationSettings(handle)
 
@@ -116,16 +130,16 @@ class SignatureVerificationSettings(Handle):
         self._check_signing_time = bool(value)
 
 
-class SignatureVerificationResult(Handle):
+class SignatureVerificationResult(Handle["SignatureVerificationResultHandle"]):
     """The outcome of verifying a digital signature."""
 
     _release = staticmethod(_vanillapdf.signature_verification_result_release)
 
-    def __init__(self, handle):
+    def __init__(self, handle: SignatureVerificationResultHandle) -> None:
         self._handle = handle
 
     @classmethod
-    def _from_handle(cls, handle) -> "SignatureVerificationResult":
+    def _from_handle(cls, handle: SignatureVerificationResultHandle) -> SignatureVerificationResult:
         return cls(handle)
 
     @property
@@ -152,7 +166,10 @@ class SignatureVerificationResult(Handle):
         handle = self._require_handle()
         return _vanillapdf.signature_verification_result_is_certificate_trusted(handle)
 
-    def _text(self, native_getter):
+    def _text(
+        self,
+        native_getter: Callable[[SignatureVerificationResultHandle], BufferHandle | None],
+    ) -> str | None:
         handle = self._require_handle()
         result = native_getter(handle)
         if result is None:
@@ -162,11 +179,11 @@ class SignatureVerificationResult(Handle):
         return data.decode("utf-8", "replace") if data else None
 
     @property
-    def signer_common_name(self):
+    def signer_common_name(self) -> str | None:
         """The signer certificate's common name, or None."""
         return self._text(_vanillapdf.signature_verification_result_get_signer_common_name)
 
     @property
-    def message(self):
+    def message(self) -> str | None:
         """A human-readable verification message, or None."""
         return self._text(_vanillapdf.signature_verification_result_get_message)

@@ -77,6 +77,28 @@ VanillaPDF **C API** only.
   against a failed `__init__`.
 - Pull the handle into a local before a native call rather than nesting
   `self._require_handle()` as an argument.
+
+### Static typing (pyright strict)
+- The whole package is checked under **pyright `strict`** (config in
+  `pyproject.toml`; CI runs it in `lint.yml`). The native `_vanillapdf` module is
+  described by a generated stub, `src/vanillapdf/_vanillapdf.pyi` — **do not edit
+  it by hand**; after changing the native surface, regenerate with
+  `python scripts/generate_native_stub.py` (verify with `--check`).
+- Each native handle type is a distinct opaque marker class in the stub
+  (`BufferHandle`, `RectangleHandle`, …). Wrappers carry theirs via the generic
+  base: `class Buffer(Handle["BufferHandle"])`. The binding validates each
+  capsule's name at runtime, so a mismatched handle already raises
+  `TypeError`/`PdfError`; the marker types move that check to pyright, catching a
+  wrong handle in the editor/CI. All syntax objects share `Handle["ObjectHandle"]`.
+- Import handle markers **only under `TYPE_CHECKING`** from `.._vanillapdf` — they
+  are stub-only and don't exist at runtime. Add `from __future__ import
+  annotations` so method annotations stay unquoted; the class-base subscript
+  (`Handle["BufferHandle"]`) **must** be quoted, since base classes are evaluated
+  at import time.
+- To hand another wrapper's handle to a native call, use `self._handle_of(other)`
+  (returns the live, non-optional handle) — never reach into `other._handle`
+  (which is `… | None`). Public method signatures never mention a handle type;
+  callers only ever see real objects.
 - Manage handle lifetimes with `with`, not nested `try/finally`. When several
   handles are live at once, chain them in one parenthesized `with` (Python
   3.10+); later items may reference earlier ones, and they close in reverse

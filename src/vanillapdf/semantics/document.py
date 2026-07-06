@@ -1,16 +1,25 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from .. import _vanillapdf
 from ..handle import Handle
 from .catalog import Catalog
 from .document_encryption_settings import DocumentEncryptionSettings
 from .document_info import DocumentInfo
 
+if TYPE_CHECKING:
+    from .._vanillapdf import DocumentHandle
+    from ..syntax.file import File
+    from .document_signature_settings import DocumentSignatureSettings
 
-class Document(Handle):
+
+class Document(Handle["DocumentHandle"]):
     """A PDF document (the high-level, semantic view of a file)."""
 
     _release = staticmethod(_vanillapdf.document_release)
 
-    def __init__(self, filename: str = None):
+    def __init__(self, filename: str | None = None) -> None:
         if filename:
             self._handle = _vanillapdf.document_open(filename)
         else:
@@ -18,21 +27,21 @@ class Document(Handle):
                 "Use Document.create() or Document.open_file() to construct without a filename.")
 
     @classmethod
-    def _from_handle(cls, handle) -> "Document":
+    def _from_handle(cls, handle: DocumentHandle) -> Document:
         document = cls.__new__(cls)
         document._handle = handle
         return document
 
     @staticmethod
-    def create(filename: str) -> "Document":
+    def create(filename: str) -> Document:
         """Create a new, empty document backed by `filename`."""
         handle = _vanillapdf.document_create(filename)
         return Document._from_handle(handle)
 
     @staticmethod
-    def open_file(file) -> "Document":
+    def open_file(file: File) -> Document:
         """Open a document from an already-open :class:`~vanillapdf.File`."""
-        handle = _vanillapdf.document_open_file(file._handle)
+        handle = _vanillapdf.document_open_file(Document._handle_of(file))
         return Document._from_handle(handle)
 
     def save(self, filename: str) -> None:
@@ -48,7 +57,7 @@ class Document(Handle):
         catalog = _vanillapdf.document_get_catalog(handle)
         return Catalog._from_handle(catalog)
 
-    def get_document_info(self):
+    def get_document_info(self) -> DocumentInfo | None:
         """The document info dictionary, or None if the document has none."""
         handle = self._require_handle()
         result = _vanillapdf.document_get_document_info(handle)
@@ -56,21 +65,21 @@ class Document(Handle):
             return None
         return DocumentInfo._from_handle(result)
 
-    def append_document(self, source: "Document") -> None:
+    def append_document(self, source: Document) -> None:
         handle = self._require_handle()
-        _vanillapdf.document_append_document(handle, source._handle)
+        _vanillapdf.document_append_document(handle, self._handle_of(source))
 
     def add_encryption(self, settings: DocumentEncryptionSettings) -> None:
         """Encrypt the document using `settings`. Takes effect on the next save."""
         handle = self._require_handle()
-        _vanillapdf.document_add_encryption(handle, settings._handle)
+        _vanillapdf.document_add_encryption(handle, self._handle_of(settings))
 
     def remove_encryption(self) -> None:
         """Remove encryption from the document. Takes effect on the next save."""
         handle = self._require_handle()
         _vanillapdf.document_remove_encryption(handle)
 
-    def sign(self, destination, settings) -> None:
+    def sign(self, destination: File, settings: DocumentSignatureSettings) -> None:
         """Sign the document, writing the signed result to `destination`.
 
         `destination` is a writable :class:`~vanillapdf.File` (see
@@ -79,4 +88,5 @@ class Document(Handle):
         signing writes directly to the destination file.
         """
         handle = self._require_handle()
-        _vanillapdf.document_sign(handle, destination._handle, settings._handle)
+        _vanillapdf.document_sign(
+            handle, self._handle_of(destination), self._handle_of(settings))

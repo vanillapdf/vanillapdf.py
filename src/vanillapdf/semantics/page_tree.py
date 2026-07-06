@@ -1,9 +1,17 @@
+from __future__ import annotations
+
+from collections.abc import Iterator
+from typing import TYPE_CHECKING
+
 from .. import _vanillapdf
 from ..handle import Handle
 from .page_object import PageObject
 
+if TYPE_CHECKING:
+    from .._vanillapdf import PageTreeHandle
 
-class PageTree(Handle):
+
+class PageTree(Handle["PageTreeHandle"]):
     """The document's page tree.
 
     Indexing is 0-based and Pythonic (``pages[0]`` is the first page); the
@@ -12,11 +20,11 @@ class PageTree(Handle):
 
     _release = staticmethod(_vanillapdf.page_tree_release)
 
-    def __init__(self, handle):
+    def __init__(self, handle: PageTreeHandle) -> None:
         self._handle = handle
 
     @classmethod
-    def _from_handle(cls, handle) -> "PageTree":
+    def _from_handle(cls, handle: PageTreeHandle) -> PageTree:
         return cls(handle)
 
     def __len__(self) -> int:
@@ -44,15 +52,15 @@ class PageTree(Handle):
         handle = self._require_handle()
         _vanillapdf.page_tree_remove_page(handle, native_index)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[PageObject]:
         for i in range(len(self)):
             yield self[i]
 
     def append(self, page: PageObject) -> None:
         handle = self._require_handle()
-        _vanillapdf.page_tree_append_page(handle, page._handle)
+        _vanillapdf.page_tree_append_page(handle, self._handle_of(page))
 
     def insert(self, index: int, page: PageObject) -> None:
         """Insert `page` so it becomes the element at 0-based `index`."""
         handle = self._require_handle()
-        _vanillapdf.page_tree_insert_page(handle, index + 1, page._handle)
+        _vanillapdf.page_tree_insert_page(handle, index + 1, self._handle_of(page))

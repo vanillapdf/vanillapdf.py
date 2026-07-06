@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 from enum import IntEnum, IntFlag
+from typing import TYPE_CHECKING
 
 from .. import _vanillapdf
 from ..handle import Handle
 from ..utils.buffer import Buffer
+
+if TYPE_CHECKING:
+    from .._vanillapdf import DocumentEncryptionSettingsHandle
 
 
 class EncryptionAlgorithm(IntEnum):
@@ -30,13 +36,13 @@ class UserAccessPermission(IntFlag):
     PRINT_FAITHFUL = 2048
 
 
-def _as_bytes(password) -> bytes:
+def _as_bytes(password: bytes | str) -> bytes:
     if isinstance(password, str):
         return password.encode("utf-8")
     return bytes(password)
 
 
-class DocumentEncryptionSettings(Handle):
+class DocumentEncryptionSettings(Handle["DocumentEncryptionSettingsHandle"]):
     """Settings controlling how a document is encrypted.
 
     Configure the algorithm, key length, permissions, and passwords, then pass
@@ -46,11 +52,11 @@ class DocumentEncryptionSettings(Handle):
 
     _release = staticmethod(_vanillapdf.document_encryption_settings_release)
 
-    def __init__(self, handle):
+    def __init__(self, handle: DocumentEncryptionSettingsHandle) -> None:
         self._handle = handle
 
     @staticmethod
-    def create() -> "DocumentEncryptionSettings":
+    def create() -> DocumentEncryptionSettings:
         handle = _vanillapdf.document_encryption_settings_create()
         return DocumentEncryptionSettings(handle)
 
@@ -85,20 +91,22 @@ class DocumentEncryptionSettings(Handle):
         handle = self._require_handle()
         _vanillapdf.document_encryption_settings_set_user_access_permissions(handle, int(value))
 
-    def set_user_password(self, password) -> None:
+    def set_user_password(self, password: bytes | str) -> None:
         """Set the user password (``bytes`` or ``str``)."""
         handle = self._require_handle()
         buffer = Buffer.create_from_data(_as_bytes(password))
         try:
-            _vanillapdf.document_encryption_settings_set_user_password(handle, buffer._handle)
+            _vanillapdf.document_encryption_settings_set_user_password(
+                handle, self._handle_of(buffer))
         finally:
             buffer.close()
 
-    def set_owner_password(self, password) -> None:
+    def set_owner_password(self, password: bytes | str) -> None:
         """Set the owner password (``bytes`` or ``str``)."""
         handle = self._require_handle()
         buffer = Buffer.create_from_data(_as_bytes(password))
         try:
-            _vanillapdf.document_encryption_settings_set_owner_password(handle, buffer._handle)
+            _vanillapdf.document_encryption_settings_set_owner_password(
+                handle, self._handle_of(buffer))
         finally:
             buffer.close()
