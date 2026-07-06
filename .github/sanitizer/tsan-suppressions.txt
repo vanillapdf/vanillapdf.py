@@ -1,0 +1,27 @@
+# ThreadSanitizer suppressions for the vanillapdf Python bindings.
+#
+# Stock CPython is not TSan-instrumented and has benign, GIL-managed races in its
+# own internals. Suppress those so the TSan job only fails on real races in the
+# binding (src/vanillapdf_native) or the vanillapdf library exercised through it
+# -- which is what matters now that #40 releases the GIL around native calls.
+#
+# Grow these from CI output, and keep them scoped to interpreter/runtime
+# internals -- never suppress our own code (_vanillapdf / libvanillapdf).
+
+# Broad: races whose access originates inside the (uninstrumented) CPython
+# shared library. The exact soname varies (libpython3.13.so ...); the match is a
+# substring.
+called_from_lib:libpython
+
+# Interpreter object model / allocator internals (GIL-serialized).
+race:_Py_Dealloc
+race:_Py_DecRef
+race:_Py_IncRef
+race:_PyObject_Malloc
+race:_PyObject_Free
+race:_PyObject_Realloc
+race:_PyMem_Malloc
+race:_PyMem_Free
+race:gc_collect
+race:tstate_delete_common
+race:_PyRuntimeState

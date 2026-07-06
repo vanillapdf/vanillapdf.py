@@ -1,0 +1,97 @@
+name: Sanitizers
+
+# Instrumented builds are slow, so this does not run on every push. It runs when
+# the sanitizer setup or the native sources change (so we can iterate it to green),
+# weekly for ongoing verification, and on manual dispatch.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"  # weekly, Monday 03:00 UTC
+  push:
+    paths:
+      - ".github/workflows/sanitizers.yml"
+      - ".github/sanitizer/**"
+      - "src/vanillapdf_native/**"
+      - "CMakeLists.txt"
+      - "pyproject.toml"
+
+permissions:
+  contents: read
+
+env:
+  # System deps for the vcpkg + vanillapdf + extension build (Ubuntu/apt).
+  BUILD_DEPS: build-essential cmake ninja-build git curl zip unzip tar pkg-config perl
+
+jobs:
+  asan-ubsan:
+    name: ASan + UBSan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ env.BUILD_DEPS }}
+
+      - name: Build the extension with AddressSanitizer + UndefinedBehaviorSanitizer
+        # CXXFLAGS/CFLAGS/LDFLAGS seed CMAKE_*_FLAGS on first configure, so both
+        # the extension and the FetchContent'd vanillapdf library are instrumented.
+        # (vcpkg deps use their own toolchain and stay uninstrumented -- fine.)
+        env:
+          CFLAGS: "-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -g -O1"
+          CXXFLAGS: "-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -g -O1"
+          LDFLAGS: "-fsanitize=address,undefined"
+        run: pip install -e .[test] -v
+
+      - name: Run the suite under ASan + UBSan
+        # Python itself is not instrumented, so the sanitizer runtimes are
+        # LD_PRELOADed. detect_leaks=0 for now: catch use-after-free / overflow /
+        # UB (the dangerous bugs) without the CPython leak-suppression rabbit hole.
+        env:
+          PYTHONMALLOC: malloc
+          ASAN_OPTIONS: "detect_leaks=0:verify_asan_link_order=0:halt_on_error=1:abort_on_error=1"
+          UBSAN_OPTIONS: "print_stacktrace=1:halt_on_error=1"
+        run: |
+          preload="$(gcc -print-file-name=libasan.so) $(gcc -print-file-name=libubsan.so)"
+          LD_PRELOAD="$preload" python -m pytest tests -q
+
+  tsan:
+    name: TSan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ env.BUILD_DEPS }}
+
+      - name: Build the extension with ThreadSanitizer
+        env:
+          CFLAGS: "-fsanitize=thread -fno-omit-frame-pointer -g -O1"
+          CXXFLAGS: "-fsanitize=thread -fno-omit-frame-pointer -g -O1"
+          LDFLAGS: "-fsanitize=thread"
+        run: pip install -e .[test] -v
+
+      - name: Run the threading tests under TSan
+        # CPython internals are not TSan-clean; the suppressions file scopes out
+        # benign interpreter races so only races in the binding / library (now
+        # that #40 releases the GIL) fail the run.
+        env:
+          PYTHONMALLOC: malloc
+          TSAN_OPTIONS: "halt_on_error=1:second_deadlock_stack=1:suppressions=${{ github.workspace }}/.github/sanitizer/tsan-suppressions.txt"
+        run: |
+          LD_PRELOAD="$(gcc -print-file-name=libtsan.so)" python -m pytest tests/test_threading.py -q
