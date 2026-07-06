@@ -1,0 +1,66 @@
+name: Sanitizers
+
+# Instrumented builds are slow, so this doesn't run on every push. It runs as a
+# PR check only when the sanitizer setup or the native sources change (so a memory
+# regression in the C extension is caught before merge), weekly for ongoing
+# verification, and on manual dispatch. Python-only PRs skip it.
+#
+# ASan + UBSan only. ThreadSanitizer is deliberately not run: stock CPython is not
+# built with -fsanitize=thread, so TSan cannot see the GIL/interpreter locks and
+# floods false positives -- making it a fragile suppressions treadmill for little
+# gain (the vanillapdf library is TSan-tested upstream, and tests/test_threading.py
+# already exercises the concurrency the GIL release exposes). A real TSan job would
+# need a TSan-instrumented CPython build; revisit separately if warranted.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"  # weekly, Monday 03:00 UTC
+  pull_request:
+    paths:
+      - ".github/workflows/sanitizers.yml"
+      - "src/vanillapdf_native/**"
+      - "CMakeLists.txt"
+      - "pyproject.toml"
+
+permissions:
+  contents: read
+
+jobs:
+  asan-ubsan:
+    name: ASan + UBSan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build git curl zip unzip tar pkg-config perl
+
+      - name: Build the extension with AddressSanitizer + UndefinedBehaviorSanitizer
+        # CXXFLAGS/CFLAGS/LDFLAGS seed CMAKE_*_FLAGS on first configure, so both
+        # the extension and the FetchContent'd vanillapdf library are instrumented.
+        # (vcpkg deps use their own toolchain and stay uninstrumented -- fine.)
+        env:
+          CFLAGS: "-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -g -O1"
+          CXXFLAGS: "-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer -g -O1"
+          LDFLAGS: "-fsanitize=address,undefined"
+        run: pip install -e .[test] -v
+
+      - name: Run the suite under ASan + UBSan
+        # Python itself is not instrumented, so the sanitizer runtimes are
+        # LD_PRELOADed. detect_leaks=0 for now: catch use-after-free / overflow /
+        # UB (the dangerous bugs) without the CPython leak-suppression rabbit hole.
+        env:
+          PYTHONMALLOC: malloc
+          ASAN_OPTIONS: "detect_leaks=0:verify_asan_link_order=0:halt_on_error=1:abort_on_error=1"
+          UBSAN_OPTIONS: "print_stacktrace=1:halt_on_error=1"
+        run: |
+          preload="$(gcc -print-file-name=libasan.so) $(gcc -print-file-name=libubsan.so)"
+          LD_PRELOAD="$preload" python -m pytest tests -q
