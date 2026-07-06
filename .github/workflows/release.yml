@@ -82,9 +82,11 @@ jobs:
           # installed package; assets resolve from {project}/assets via conftest.
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/tests
-          CIBW_ENVIRONMENT_LINUX: "VCPKG_BINARY_SOURCES=clear;files,/project/.vcpkg-cache,readwrite"
-          CIBW_ENVIRONMENT_MACOS: "MACOSX_DEPLOYMENT_TARGET=11.0 VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
-          CIBW_ENVIRONMENT_WINDOWS: "VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
+          # Single-quote the value: cibuildwheel parses CIBW_ENVIRONMENT shell-style,
+          # so the ';' in VCPKG_BINARY_SOURCES must be quoted or it's "malformed".
+          CIBW_ENVIRONMENT_LINUX: "VCPKG_BINARY_SOURCES='clear;files,/project/.vcpkg-cache,readwrite'"
+          CIBW_ENVIRONMENT_MACOS: "MACOSX_DEPLOYMENT_TARGET=11.0 VCPKG_BINARY_SOURCES='clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite'"
+          CIBW_ENVIRONMENT_WINDOWS: "VCPKG_BINARY_SOURCES='clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite'"
           CIBW_BEFORE_ALL_MACOS: |
             brew install ninja
           CIBW_BEFORE_ALL_LINUX: |
