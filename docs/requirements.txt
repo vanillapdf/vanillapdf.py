@@ -1,5 +1,5 @@
 sphinx>=7.4,<8
-sphinx-rtd-theme>=3.0,<4
+sphinx-rtd-theme>=3.1.0,<4
 sphinx-copybutton>=0.5,<1
 sphinxext-opengraph>=0.9,<1
 # Used by conf.py to derive the version from git tags when the package is not
