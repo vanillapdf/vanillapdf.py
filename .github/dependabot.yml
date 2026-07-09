@@ -9,8 +9,20 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    groups:
+      # Roll all GitHub Actions bumps into a single PR
+      github-actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: "pip"
     directory: "/" # pyproject.toml
     schedule:
       interval: "weekly"
+    groups:
+      # Roll the Sphinx docs toolchain (docs/requirements.txt) into one PR
+      sphinx:
+        patterns:
+          - "sphinx"
+          - "sphinx-*"
+          - "sphinxext-*"
