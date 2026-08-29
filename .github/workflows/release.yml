@@ -1,24 +1,153 @@
 name: Build and Publish
 
+# Release model (mirrors the native vanillapdf repository):
+#
+#   dispatch (tag + dry_run) -> prepare -> verify -> build wheels
+#     dry_run:true  -> dry-run report, nothing published, no tag created
+#     dry_run:false -> TestPyPI (staging) -> draft GitHub release -> production
+#                      gate -> publish draft (THIS creates the tag) -> PyPI
+#
+# Tags are never created by hand. The tag does not exist while the wheels are
+# built and tested, so a failed build can simply be re-run without having to
+# delete a dangling tag. setuptools-scm is fed the version through
+# SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VANILLAPDF instead of reading it from a tag.
+#
+# NOTE: PyPI Trusted Publishing is bound to (repository, workflow filename,
+# environment name). Do not rename this file or the `pypi` / `testpypi`
+# environments without updating the publisher configuration on PyPI first.
+
 on:
   workflow_dispatch:
     inputs:
-      publish_target:
-        description: "Select target pypi environment"
+      tag:
+        description: "Tag name to create (e.g. v2.3.0-rc.2)"
         required: true
-        default: "testpypi"
-        type: choice
-        options:
-          - testpypi
-          - pypi
+        type: string
+      dry_run:
+        description: "Dry run - build and validate without publishing or tagging"
+        required: false
+        type: boolean
+        default: true
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
+  prepare:
+    name: Prepare release metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.parse.outputs.tag }}
+      version: ${{ steps.parse.outputs.version }}
+      prerelease: ${{ steps.parse.outputs.prerelease }}
+      is_latest: ${{ steps.parse.outputs.is_latest }}
+      dry_run: ${{ steps.parse.outputs.dry_run }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Parse tag
+        id: parse
+        env:
+          TAG: ${{ inputs.tag }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet packaging
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
+
+          # Normalise the tag into the PEP 440 version setuptools-scm would have
+          # derived from it (v2.3.0-rc.2 -> 2.3.0rc2), and classify it.
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import os, subprocess
+          from packaging.version import Version, InvalidVersion
+
+          tag = os.environ["TAG"]
+          if not tag.startswith("v"):
+              raise SystemExit(f"::error::Tag must start with 'v': {tag}")
+          try:
+              version = Version(tag[1:])
+          except InvalidVersion as exc:
+              raise SystemExit(f"::error::Tag is not a valid PEP 440 version: {exc}")
+
+          print(f"version={version}")
+          print(f"prerelease={str(version.is_prerelease).lower()}")
+
+          # "latest" drives the GitHub release flag. A prerelease is never latest;
+          # a stable release is latest only if it outranks every existing tag.
+          if version.is_prerelease:
+              print("is_latest=false")
+          else:
+              out = subprocess.run(["git", "tag", "-l", "v*"],
+                                   capture_output=True, text=True, check=True).stdout
+              existing = []
+              for line in out.split():
+                  try:
+                      existing.append(Version(line[1:]))
+                  except InvalidVersion:
+                      continue
+              highest = max(existing, default=None)
+              print(f"is_latest={str(highest is None or version >= highest).lower()}")
+          PY
+
+      - name: Summary
+        run: |
+          echo "Tag:        ${{ steps.parse.outputs.tag }}"
+          echo "Version:    ${{ steps.parse.outputs.version }}"
+          echo "Prerelease: ${{ steps.parse.outputs.prerelease }}"
+          echo "Latest:     ${{ steps.parse.outputs.is_latest }}"
+          echo "Dry run:    ${{ steps.parse.outputs.dry_run }}"
+
+  verify:
+    name: Verify release preconditions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    needs: prepare
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Tag must not already exist
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # Publishing the draft release is what creates the tag. If it already
+          # exists the release would bind to an untagged-* placeholder instead.
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Tag $TAG already exists. Pick a new version."
+            exit 1
+          fi
+          echo "Tag $TAG is free."
+
+      - name: CHANGELOG must document this version
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+          SECTION="## [${TAG#v}]"
+          if ! grep -qF "$SECTION" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '$SECTION' section."
+            exit 1
+          fi
+          echo "Found $SECTION in CHANGELOG.md."
+
   build-wheels:
     name: Build wheels on ${{ matrix.os }} (${{ matrix.arch }})
+    needs: [prepare, verify]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    permissions:
+      contents: read
 
     strategy:
       fail-fast: false
@@ -44,7 +173,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0  # setuptools-scm needs tags to derive the release version
+          fetch-depth: 0  # setuptools-scm inspects git even when a version is pretended
 
       - name: Cache vcpkg binaries
         uses: actions/cache@v6
@@ -82,15 +211,52 @@ jobs:
           # installed package; assets resolve from {project}/assets via conftest.
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/tests
+          # The tag does not exist yet (it is created when the draft release is
+          # published), so setuptools-scm cannot derive the version from git.
+          # Feed it the version explicitly instead; without this every wheel
+          # would be stamped with a guessed .devN version.
+          #
           # Single-quote the value: cibuildwheel parses CIBW_ENVIRONMENT shell-style,
           # so the ';' in VCPKG_BINARY_SOURCES must be quoted or it's "malformed".
-          CIBW_ENVIRONMENT_LINUX: "VCPKG_BINARY_SOURCES='clear;files,/project/.vcpkg-cache,readwrite'"
-          CIBW_ENVIRONMENT_MACOS: "MACOSX_DEPLOYMENT_TARGET=11.0 VCPKG_BINARY_SOURCES='clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite'"
-          CIBW_ENVIRONMENT_WINDOWS: "VCPKG_BINARY_SOURCES='clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite'"
+          CIBW_ENVIRONMENT_LINUX: >-
+            SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VANILLAPDF=${{ needs.prepare.outputs.version }}
+            VCPKG_BINARY_SOURCES='clear;files,/project/.vcpkg-cache,readwrite'
+          CIBW_ENVIRONMENT_MACOS: >-
+            SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VANILLAPDF=${{ needs.prepare.outputs.version }}
+            MACOSX_DEPLOYMENT_TARGET=11.0
+            VCPKG_BINARY_SOURCES='clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite'
+          CIBW_ENVIRONMENT_WINDOWS: >-
+            SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VANILLAPDF=${{ needs.prepare.outputs.version }}
+            VCPKG_BINARY_SOURCES='clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite'
           CIBW_BEFORE_ALL_MACOS: |
             brew install ninja
           CIBW_BEFORE_ALL_LINUX: |
             yum install -y zip unzip gcc gcc-c++ make tar curl perl perl-IPC-Cmd ninja-build
+
+      - name: Verify wheel versions match the tag
+        shell: bash
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          # A wheel stamped with anything else means the pretend-version did not
+          # reach the build; publishing it would burn the wrong version on PyPI.
+          shopt -s nullglob
+          FOUND=0
+          for whl in dist/*.whl; do
+            FOUND=1
+            name="$(basename "$whl")"
+            got="$(echo "$name" | cut -d- -f2)"
+            if [ "$got" != "$VERSION" ]; then
+              echo "::error::$name is version '$got', expected '$VERSION'"
+              exit 1
+            fi
+          done
+          if [ "$FOUND" -eq 0 ]; then
+            echo "::error::No wheels were produced"
+            exit 1
+          fi
+          echo "All wheels are version $VERSION."
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v7
@@ -104,17 +270,42 @@ jobs:
   # would likely fail anyway, a worse experience than pip's clean "no matching
   # distribution". Source builds remain available via `pip install git+<repo>`.
 
-  publish:
-    name: Publish to Python Package Index
-    needs: build-wheels
+  dry-run-report:
+    name: Dry run summary
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions: {}
+    needs: [prepare, build-wheels]
+    if: always() && needs.prepare.outputs.dry_run == 'true'
+    steps:
+      - name: Report
+        run: |
+          echo "=== Dry Run Summary ==="
+          echo "Tag:        ${{ needs.prepare.outputs.tag }}"
+          echo "Version:    ${{ needs.prepare.outputs.version }}"
+          echo "Prerelease: ${{ needs.prepare.outputs.prerelease }}"
+          echo "Latest:     ${{ needs.prepare.outputs.is_latest }}"
+          echo ""
+          echo "Wheel build: ${{ needs.build-wheels.result }}"
+          echo ""
+          if [ "${{ needs.build-wheels.result }}" != "success" ]; then
+            echo "::error::Dry-run validation failed"
+            exit 1
+          fi
+          echo "Nothing was published and no tag was created."
+          echo "=== All dry-run validations passed ==="
+
+  testpypi:
+    name: Publish to TestPyPI (staging)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [prepare, build-wheels]
+    if: needs.prepare.outputs.dry_run == 'false'
     environment:
-      name: ${{ github.event.inputs.publish_target }}
+      name: testpypi
       url: ${{ vars.PYPI_PROJECT_URL }}
-
     permissions:
-      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
-
+      id-token: write  # Mandatory for trusted publishing
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -122,7 +313,98 @@ jobs:
           pattern: vanillapdf-wheels-*
           merge-multiple: true
 
-      - name: Publish to ${{ github.event.inputs.publish_target }} (Trusted Publisher)
+      - name: Publish to TestPyPI (Trusted Publisher)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
+          print-hash: true
+          verbose: true
+          # Staging is re-runnable: a re-dispatch of the same version must not
+          # fail on files TestPyPI already has.
+          skip-existing: true
+
+  create-draft-release:
+    name: Create draft release
+    needs: [prepare, testpypi]
+    if: needs.prepare.outputs.dry_run == 'false'
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    uses: ./.github/workflows/github-release.yml
+    with:
+      tag: ${{ needs.prepare.outputs.tag }}
+      prerelease: ${{ fromJSON(needs.prepare.outputs.prerelease) }}
+      latest: ${{ fromJSON(needs.prepare.outputs.is_latest) }}
+      target: ${{ github.sha }}
+    secrets: inherit
+
+  production-gate:
+    name: Production gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 4320  # allow a long human review window
+    permissions: {}
+    needs: [prepare, create-draft-release]
+    environment: production
+    outputs:
+      tag: ${{ needs.prepare.outputs.tag }}
+      is_latest: ${{ needs.prepare.outputs.is_latest }}
+      prerelease: ${{ needs.prepare.outputs.prerelease }}
+    steps:
+      - run: |
+          echo "Draft release ${{ needs.prepare.outputs.tag }} created, wheels attached,"
+          echo "and staged on TestPyPI."
+          echo "Review and edit the release body in the UI, then approve to publish."
+
+  publish-release:
+    name: Publish release (creates the tag)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    needs: production-gate
+    outputs:
+      tag: ${{ needs.production-gate.outputs.tag }}
+      is_latest: ${{ needs.production-gate.outputs.is_latest }}
+      prerelease: ${{ needs.production-gate.outputs.prerelease }}
+    steps:
+      - name: Publish draft release
+        # Flipping the draft to published is what creates the tag, at the
+        # draft's target commit. BOT_TOKEN is preferred so the tag can be
+        # created under any tag protection rulesets; GITHUB_TOKEN is the
+        # fallback when no bot token is configured.
+        env:
+          TAG: ${{ needs.production-gate.outputs.tag }}
+          IS_LATEST: ${{ needs.production-gate.outputs.is_latest }}
+          GH_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          LATEST_FLAG=""
+          if [ "$IS_LATEST" = "false" ]; then
+            LATEST_FLAG="--latest=false"
+          fi
+          gh release edit "$TAG" --draft=false $LATEST_FLAG
+          echo "Published $TAG; the tag now exists."
+
+  publish-pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: publish-release
+    environment:
+      name: pypi
+      url: ${{ vars.PYPI_PROJECT_URL }}
+    permissions:
+      id-token: write  # Mandatory for trusted publishing
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          pattern: vanillapdf-wheels-*
+          merge-multiple: true
+
+      - name: Publish to PyPI (Trusted Publisher)
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
