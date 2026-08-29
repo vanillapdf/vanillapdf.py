@@ -1,15 +1,37 @@
 # Changelog
 
 All notable changes to this project are documented here. The format is based on
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project aims to
-follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) for its public
-API (the names exported from the top-level `vanillapdf` package) once it reaches
-`1.0.0`. While in `0.x`, minor versions may include breaking changes.
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## Versioning
+
+These bindings **mirror the version of the underlying
+[Vanilla.PDF](https://github.com/vanillapdf/vanillapdf) C++ library they wrap**,
+matching the convention used by
+[vanillapdf.net](https://github.com/vanillapdf/vanillapdf.net). Version `2.3.0`
+of this package wraps version `2.3.0` of the native library, so the two are
+always readable together. The pinned native tag lives in `CMakeLists.txt`
+(`VANILLAPDF_GIT_TAG`).
+
+Binding-only changes — a fix in the Python or extension layer with no
+corresponding native release — get a fourth component: `2.3.0.1`, `2.3.0.2`, and
+so on. This is a normal PEP 440 release segment and sorts as expected. Note that
+PEP 440 post-releases (`2.3.0.post1`) are deliberately *not* used, as the spec
+reserves those for metadata corrections rather than bug fixes.
 
 ## [Unreleased]
 
-The bindings grew from a thin wrapper into a broadly usable, typed, thread-safe
-PDF library. Highlights since `0.0.1`:
+## [2.3.0-rc.2]
+
+First release under the mirrored versioning scheme described above; the jump
+from `0.0.1` reflects the change in scheme, not a sudden change in the code. The
+bindings grew from a thin wrapper into a broadly usable, typed, thread-safe PDF
+library. Highlights since `0.0.1`:
+
+### Native library
+- Wraps Vanilla.PDF `v2.3.0-rc.2` (previously pinned to `v2.3.0-rc.1`), which
+  carries the fix for the object-registry race that made concurrent
+  `Document.create` calls flaky.
 
 ### Added
 - **Syntax object model** — `Object` plus every concrete type (`Null`, `Boolean`,
@@ -59,5 +81,6 @@ PDF library. Highlights since `0.0.1`:
 - Initial release: a thin wrapper exposing `Document` (open/save), `Buffer`,
   `File`, `LibraryInfo`, and `Logging`.
 
-[Unreleased]: https://github.com/vanillapdf/vanillapdf.py/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/vanillapdf/vanillapdf.py/compare/v2.3.0-rc.2...HEAD
+[2.3.0-rc.2]: https://github.com/vanillapdf/vanillapdf.py/compare/v0.0.1...v2.3.0-rc.2
 [0.0.1]: https://github.com/vanillapdf/vanillapdf.py/releases/tag/v0.0.1
