@@ -17,7 +17,7 @@ endif()
 # Set up vcpkg toolchain before project() call
 # VCPKG_GIT_TAG can be overridden (e.g. -DVCPKG_GIT_TAG=master) to build against
 # vcpkg's rolling registry, as bleeding-edge.yml does
-set(VCPKG_GIT_TAG "2025.12.12" CACHE STRING "vcpkg git tag, branch, or commit to fetch")
+set(VCPKG_GIT_TAG "2026.07.29" CACHE STRING "vcpkg git tag, branch, or commit to fetch")
 
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     include(FetchContent)
@@ -41,7 +41,7 @@ project(vanillapdf.py C CXX)
 # Fetch VanillaPDF library
 # VANILLAPDF_GIT_TAG can be overridden (e.g. -DVANILLAPDF_GIT_TAG=main) to build
 # against the upstream library's development branch, as bleeding-edge.yml does
-set(VANILLAPDF_GIT_TAG "v2.3.0-rc.2" CACHE STRING "vanillapdf git tag, branch, or commit to fetch")
+set(VANILLAPDF_GIT_TAG "v2.3.0" CACHE STRING "vanillapdf git tag, branch, or commit to fetch")
 
 include(FetchContent)
 FetchContent_Declare(vanillapdf
