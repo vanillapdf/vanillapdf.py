@@ -21,6 +21,20 @@ reserves those for metadata corrections rather than bug fixes.
 
 ## [Unreleased]
 
+### Native library
+- Wraps Vanilla.PDF `v2.3.0` (previously pinned to `v2.3.0-rc.2`) — the final
+  release, which adds AES-256 encryption creation and carries several encryption
+  correctness fixes (AES-128 no longer silently written as RC4, array-filter
+  streams no longer written in the clear) plus further thread-safety work
+  (`File::GetByteRange` seek+read locking, a liveness-aware document-registry
+  create guard, and a `Document` catalog lazy-initialization race).
+
+### Changed
+- vcpkg baseline moved from `2025.12.12` to `2026.07.29`, updating the bundled
+  C++ dependencies: OpenSSL 3.6.0 → 3.6.3, zlib 1.3.1 → 1.3.2, libjpeg-turbo
+  3.1.2 → 3.2.0, spdlog 1.16.0 → 1.17.0, fmt 12.1.0 → 12.2.0.
+- Docs are built with Sphinx 9 (`sphinx>=9.1,<10`).
+
 ## [2.3.0-rc.2]
 
 First release under the mirrored versioning scheme described above; the jump
