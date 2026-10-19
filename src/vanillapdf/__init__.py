@@ -51,6 +51,7 @@ from .utils.signature_verifier import (
     TrustedCertificateStore,
 )
 from .utils.signing_key import SigningKey
+from .utils.text_string_encoding import TextStringEncoding, TextStringEncodingType
 
 # Read the installed distribution metadata rather than importing the generated
 # _version.py (which is absent from a source checkout). This is setuptools-scm's
@@ -72,6 +73,8 @@ __all__ = [
     "Errors",
     "LicenseInfo",
     "MiscUtils",
+    "TextStringEncoding",
+    "TextStringEncodingType",
     "SigningKey",
     "PKCS12Key",
     "TrustedCertificateStore",

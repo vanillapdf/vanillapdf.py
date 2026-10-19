@@ -11,6 +11,7 @@
 #include "utils/errors.h"
 #include "utils/license_info.h"
 #include "utils/misc_utils.h"
+#include "utils/text_string_encoding.h"
 #include "utils/signing_key.h"
 #include "utils/pkcs12_key.h"
 #include "utils/signature_verifier.h"
@@ -94,6 +95,9 @@ static PyMethodDef VanillapdfMethods[] = {
     /* MiscUtils methods */
     {"misc_utils_initialize_openssl", misc_utils_initialize_openssl, METH_NOARGS, "Initialize OpenSSL"},
     {"misc_utils_cleanup_openssl", misc_utils_cleanup_openssl, METH_NOARGS, "Cleanup OpenSSL"},
+    /* TextStringEncoding */
+    {"text_string_encoding_detect", text_string_encoding_detect, METH_VARARGS, "Detect the encoding of a PDF text string"},
+    {"text_string_encoding_pdf_doc_encoding_byte_to_unicode", text_string_encoding_pdf_doc_encoding_byte_to_unicode, METH_VARARGS, "Map a PDFDocEncoding byte to its Unicode code point"},
     /* PKCS12 key + signing key */
     {"pkcs12_key_create_from_file", pkcs12_key_create_from_file, METH_VARARGS, "Load a PKCS#12 key from a file"},
     {"pkcs12_key_create_from_buffer", pkcs12_key_create_from_buffer, METH_VARARGS, "Load a PKCS#12 key from a buffer"},

@@ -29,6 +29,14 @@ reserves those for metadata corrections rather than bug fixes.
   (`File::GetByteRange` seek+read locking, a liveness-aware document-registry
   create guard, and a `Document` catalog lazy-initialization race).
 
+### Added
+- `TextStringEncoding` / `TextStringEncodingType`, wrapping the native
+  text-string encoding utilities (mirrors .NET's `PdfTextStringEncoding`):
+  `detect(data: bytes)` reports a text string's encoding from its byte order
+  mark (PDFDocEncoding, UTF-16BE or UTF-8), and
+  `pdf_doc_encoding_byte_to_unicode(value)` maps a PDFDocEncoding byte to its
+  Unicode code point.
+
 ### Changed
 - vcpkg baseline moved from `2025.12.12` to `2026.07.29`, updating the bundled
   C++ dependencies: OpenSSL 3.6.0 → 3.6.3, zlib 1.3.1 → 1.3.2, libjpeg-turbo

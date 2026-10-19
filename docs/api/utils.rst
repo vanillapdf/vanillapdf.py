@@ -69,6 +69,16 @@ Signature verification
    :members:
    :undoc-members:
 
+Text string encoding
+--------------------
+
+.. autoclass:: vanillapdf.TextStringEncoding
+   :members:
+
+.. autoclass:: vanillapdf.TextStringEncodingType
+   :members:
+   :undoc-members:
+
 Miscellaneous
 -------------
 

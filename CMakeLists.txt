@@ -80,6 +80,8 @@ add_library(_vanillapdf MODULE
     src/vanillapdf_native/utils/license_info.h
     src/vanillapdf_native/utils/misc_utils.cpp
     src/vanillapdf_native/utils/misc_utils.h
+    src/vanillapdf_native/utils/text_string_encoding.cpp
+    src/vanillapdf_native/utils/text_string_encoding.h
     src/vanillapdf_native/utils/signing_key.cpp
     src/vanillapdf_native/utils/signing_key.h
     src/vanillapdf_native/utils/pkcs12_key.cpp
