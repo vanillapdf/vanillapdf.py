@@ -14,7 +14,7 @@ Open and read a document
        # Document information (each entry may be None if absent).
        info = doc.get_document_info()
        if info is not None and info.title is not None:
-           print("Title:", info.title.value_string())
+           print("Title:", info.title.text)
 
        # Traverse pages (the page tree is a 0-based Python sequence).
        pages = doc.get_catalog().get_pages()

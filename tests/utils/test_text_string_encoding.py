@@ -31,3 +31,25 @@ def test_pdf_doc_encoding_euro_sign():
 def test_pdf_doc_encoding_rejects_non_byte(value):
     with pytest.raises(OverflowError):
         TextStringEncoding.pdf_doc_encoding_byte_to_unicode(value)
+
+
+def test_decode_utf16be_drops_bom():
+    assert TextStringEncoding.decode(b"\xfe\xff\x00H\x00i") == "Hi"
+
+
+def test_decode_utf8_drops_bom():
+    assert TextStringEncoding.decode("\ufeffHéllo".encode("utf-8")) == "Héllo"
+
+
+def test_decode_without_bom_uses_pdf_doc_encoding():
+    # 0xA0 is the euro sign in PDFDocEncoding (Latin-1 would give U+00A0)
+    assert TextStringEncoding.decode(b"Price \xa0") == "Price \u20ac"
+
+
+def test_decode_empty():
+    assert TextStringEncoding.decode(b"") == ""
+
+
+def test_decode_malformed_utf16_replaces_instead_of_raising():
+    # Odd byte count after the BOM: the dangling byte becomes U+FFFD.
+    assert TextStringEncoding.decode(b"\xfe\xff\x00H\x00") == "H\ufffd"

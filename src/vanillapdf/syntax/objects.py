@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from .. import _vanillapdf
 from ..handle import Handle
 from ..utils.buffer import Buffer
+from ..utils.text_string_encoding import TextStringEncoding
 
 if TYPE_CHECKING:
     from .._vanillapdf import DictionaryObjectIteratorHandle, ObjectHandle
@@ -192,8 +193,10 @@ class StringObject(Object):
         with Buffer.create_from_data(data) as buffer:
             _vanillapdf.string_object_set_value(handle, self._handle_of(buffer))
 
-    def value_string(self, encoding: str = "utf-8") -> str:
-        return self.value.decode(encoding)
+    @property
+    def text(self) -> str:
+        """The value decoded as a PDF text string (see :meth:`TextStringEncoding.decode`)."""
+        return TextStringEncoding.decode(self.value)
 
 
 class LiteralStringObject(StringObject):

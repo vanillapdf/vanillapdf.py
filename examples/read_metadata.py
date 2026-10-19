@@ -25,8 +25,8 @@ def read_metadata(path: str) -> None:
             entry = getattr(info, name)
             if entry is None:
                 continue
-            # Each entry is a StringObject; value_string() decodes its bytes.
-            print(f"{name.capitalize():10}: {entry.value_string()}")
+            # Each entry is a StringObject; .text decodes it as a PDF text string.
+            print(f"{name.capitalize():10}: {entry.text}")
 
 
 if __name__ == "__main__":

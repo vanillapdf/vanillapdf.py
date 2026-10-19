@@ -11,7 +11,7 @@ documents.
 
    with vanillapdf.Document("input.pdf") as doc:
        info = doc.get_document_info()
-       print(info.title.value_string())
+       print(info.title.text)
 
        for page in doc.get_catalog().get_pages():
            box = page.media_box

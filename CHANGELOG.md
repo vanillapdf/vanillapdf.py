@@ -36,6 +36,10 @@ reserves those for metadata corrections rather than bug fixes.
   mark (PDFDocEncoding, UTF-16BE or UTF-8), and
   `pdf_doc_encoding_byte_to_unicode(value)` maps a PDFDocEncoding byte to its
   Unicode code point.
+- `TextStringEncoding.decode(data: bytes)` decodes a PDF text string using the
+  encoding it declares (UTF-16BE / UTF-8 byte order mark, dropped; otherwise
+  PDFDocEncoding), the same decoding as .NET's `PdfTextStringUtils.Decode`.
+- `StringObject.text`: the string's value decoded with `TextStringEncoding.decode`.
 
 ### Changed
 - vcpkg baseline moved from `2025.12.12` to `2026.07.29`, updating the bundled
@@ -58,6 +62,10 @@ reserves those for metadata corrections rather than bug fixes.
     `LicenseInfo.set_license_data(data: bytes)`.
   - `File.get_filename()` returns the filename as a `str`;
     `File.get_filename_string()` is removed.
+- **Breaking:** `StringObject.value_string()` is removed; use `.text`. It
+  decoded every string as UTF-8, which fails on PDFDocEncoding strings and
+  raised on UTF-16BE ones (most non-ASCII document titles).
+  `NameObject.value_string()` is unchanged (names are UTF-8).
 
 ### Fixed
 - Temporary native buffers returned by `Object.to_string` / `to_pdf`,
