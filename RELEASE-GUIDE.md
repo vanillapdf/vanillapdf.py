@@ -72,25 +72,28 @@ apply. If the release branch is protected, the cherry-pick needs its own PR.
 Tags are **not** created manually with `git tag` / `git push`. The `release.yml`
 workflow owns tag creation end-to-end.
 
-**Before dispatching**, land a PR on `main` that:
-
-1. Sets `VANILLAPDF_GIT_TAG` in `CMakeLists.txt` to the native tag being wrapped.
-2. Adds a `## [x.y.z]` section to `CHANGELOG.md` for the version being released.
-   The `verify` job fails the run if this section is missing.
+**Before dispatching**, land a PR on `main` that sets `VANILLAPDF_GIT_TAG` in
+`CMakeLists.txt` to the native tag being wrapped. These bindings mirror the
+native version, so the release tag must equal that pin (`v2.3.0`,
+`v2.3.0-rc.2`), or — for a binding-only release of a stable pin — add a fourth
+component (`v2.3.0.1`). The `verify` job fails the run on any other tag.
 
 Then:
 
 1. **Dry run.** Dispatch `release.yml` with the tag and `dry_run: true` (Actions
    tab, or `gh workflow run release.yml -f tag=v2.3.0-rc.2 -f dry_run=true`).
-   This validates the tag, checks the CHANGELOG, and builds and tests the full
-   wheel matrix — publishing nothing and creating no tag.
+   This validates the tag against the pinned native version, and builds and
+   tests the full wheel matrix — publishing nothing and creating no tag.
 2. **Real run.** Re-dispatch with `dry_run: false`. Wheels are rebuilt, pushed to
    **TestPyPI** as staging, and a GitHub release is created as a **draft** —
    still without creating the tag.
-3. **Review.** The `production` environment gate pauses the workflow. Check the
-   staged wheels on TestPyPI, edit the draft release body in the UI, then approve.
+3. **Review.** The `pypi` environment gate pauses the workflow (required
+   reviewer plus wait timer). Check the staged wheels on TestPyPI, edit the
+   draft release body in the UI, then approve.
 4. **Publish.** Approving publishes the draft, and *that* is what **creates the
-   tag**, at the commit the draft targets. The wheels then go to **PyPI**.
+   tag**, at the commit the draft targets. The PyPI upload runs in the same
+   `pypi` environment, so it asks for approval once more, then the wheels go to
+   **PyPI**.
 
 Whether a tag counts as a prerelease is derived automatically from its suffix —
 see the `prepare` job in `release.yml`.
@@ -99,13 +102,16 @@ see the `prepare` job in `release.yml`.
 
 If the tag were created first and the build then failed, the tag would have to be
 deleted and a fresh version chosen before retrying. Because the tag is created
-only after every wheel has built, installed, and passed its tests, a failed run
-is simply re-dispatched with the same tag. This matters more here than in a pure
-Python project: the matrix is five platforms × five Python versions, each doing a
-full C++ build via vcpkg.
+only after every wheel has built, installed, and passed its tests, a failed
+*build* is simply re-dispatched with the same tag. This matters more here than in
+a pure Python project: the matrix is five platforms × five Python versions, each
+doing a full C++ build via vcpkg.
 
 The same reasoning is why the draft release exists before the gate — it can be
-reviewed, and abandoned, without leaving anything permanent behind.
+reviewed, and abandoned, without leaving anything permanent behind. A
+re-dispatch reuses an existing draft for the tag instead of creating a second
+one, but the asset upload does not yet replace files already attached to it:
+if a run got as far as attaching wheels, delete that draft before re-dispatching.
 
 ---
 
@@ -131,6 +137,7 @@ still derives versions from git as usual — no environment variable is involved
 | Workflow             | Trigger                          | Publishes?                          |
 | -------------------- | -------------------------------- | ----------------------------------- |
 | `release.yml`        | `workflow_dispatch` (tag input)  | ✅ Yes, unless `dry_run: true`      |
+| `release.yml`        | PR touching the release workflows | ❌ No (always a dry run)           |
 | `github-release.yml` | Called by `release.yml`          | Creates the **draft** release       |
 | `sanity-check.yml`   | Push / PR to `main`              | ❌ No                               |
 | `nightly-check.yml`  | Schedule                         | ❌ No                               |
@@ -146,10 +153,12 @@ These must exist for a release to complete:
 
 | Kind        | Name                    | Purpose                                                    |
 | ----------- | ----------------------- | ---------------------------------------------------------- |
-| Environment | `testpypi`              | Staging publish; holds `PYPI_REPOSITORY_URL` / `PYPI_PROJECT_URL` |
-| Environment | `pypi`                  | Production publish; same variables, pointing at PyPI        |
-| Environment | `production`            | **Human gate.** Configure required reviewers on it — this is what pauses the run before the tag is created |
-| Secret      | `BOT_TOKEN` (optional)  | Used to publish the draft so the tag can be created under tag protection rulesets; falls back to `GITHUB_TOKEN` |
+| Environment | `testpypi`              | Staging (the native repo's `staging`); holds `PYPI_REPOSITORY_URL` / `PYPI_PROJECT_URL` |
+| Environment | `pypi`                  | Production (the native repo's `production`): the PyPI publish *and* the **human gate** before the tag is created. Required reviewers, a wait timer, and deployment rules for `main`, `release/*` and `v*.*.*`; same variables, pointing at PyPI |
+| Ruleset     | Protect release tags    | `refs/tags/v*.*.*`: restricts deletion, non-fast-forward and update — **not creation**, since publishing the draft with `GITHUB_TOKEN` is what creates the tag |
+
+No bot token is needed: the draft is created and published with `GITHUB_TOKEN`,
+as in the native repository.
 
 ⚠️ **PyPI Trusted Publishing is bound to the repository, the workflow filename,
 and the environment name.** Renaming `release.yml`, `pypi`, or `testpypi`
@@ -166,6 +175,7 @@ fail with an OIDC error.
   botched *publish* always needs a new version number.
 - The `0.0.0` release on TestPyPI dates from 2025-05-17, before `fetch-depth: 0`
   was added to the release checkout. It predates this process and can be ignored.
-- Unlike the native repository, `release.yml` here is **not** validated on
-  pull requests. Building the full wheel matrix takes hours of CI, which is
-  disproportionate for a workflow edit — use a `dry_run: true` dispatch instead.
+- As in the native repository, a PR that touches `release.yml` or
+  `github-release.yml` runs `release.yml` as a dry run, with the tag derived from
+  the pinned `VANILLAPDF_GIT_TAG`. That builds the full wheel matrix (hours of
+  CI), but only for PRs that change the release workflows.

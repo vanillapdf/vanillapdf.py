@@ -5,7 +5,10 @@ name: Build and Publish
 #   dispatch (tag + dry_run) -> prepare -> verify -> build wheels
 #     dry_run:true  -> dry-run report, nothing published, no tag created
 #     dry_run:false -> TestPyPI (staging) -> draft GitHub release -> production
-#                      gate -> publish draft (THIS creates the tag) -> PyPI
+#                      gate (`pypi` environment) -> publish draft (THIS creates
+#                      the tag) -> PyPI
+#   pull_request touching the release workflows -> always a dry run, with the
+#                      tag derived from the pinned VANILLAPDF_GIT_TAG
 #
 # Tags are never created by hand. The tag does not exist while the wheels are
 # built and tested, so a failed build can simply be re-run without having to
@@ -17,6 +20,10 @@ name: Build and Publish
 # environments without updating the publisher configuration on PyPI first.
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/release.yml'
+      - '.github/workflows/github-release.yml'
   workflow_dispatch:
     inputs:
       tag:
@@ -46,18 +53,30 @@ jobs:
       dry_run: ${{ steps.parse.outputs.dry_run }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Parse tag
         id: parse
         env:
-          TAG: ${{ inputs.tag }}
-          DRY_RUN: ${{ inputs.dry_run }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
           python3 -m pip install --quiet packaging
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            # Validate the release workflow itself: derive a synthetic tag from the
+            # pinned native version (these bindings mirror it) and never publish.
+            TAG=$(sed -n 's/^set(VANILLAPDF_GIT_TAG "\([^"]*\)".*/\1/p' CMakeLists.txt)
+            DRY_RUN=true
+          else
+            TAG="$INPUT_TAG"
+            DRY_RUN="$INPUT_DRY_RUN"
+          fi
+          export TAG
 
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
@@ -80,7 +99,9 @@ jobs:
           print(f"prerelease={str(version.is_prerelease).lower()}")
 
           # "latest" drives the GitHub release flag. A prerelease is never latest;
-          # a stable release is latest only if it outranks every existing tag.
+          # a stable release is latest only if it outranks every existing *stable*
+          # tag (a higher prerelease tag must not steal "latest" from it). The tag
+          # being released does not exist yet, so it is never in this list.
           if version.is_prerelease:
               print("is_latest=false")
           else:
@@ -89,9 +110,11 @@ jobs:
               existing = []
               for line in out.split():
                   try:
-                      existing.append(Version(line[1:]))
+                      candidate = Version(line[1:])
                   except InvalidVersion:
                       continue
+                  if not candidate.is_prerelease and not candidate.is_devrelease:
+                      existing.append(candidate)
               highest = max(existing, default=None)
               print(f"is_latest={str(highest is None or version >= highest).lower()}")
           PY
@@ -112,11 +135,14 @@ jobs:
       contents: read
     needs: prepare
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Tag must not already exist
+        # Skipped on pull_request: the synthetic tag mirrors the native pin and may
+        # name a version that was already released.
+        if: github.event_name != 'pull_request'
         env:
           TAG: ${{ needs.prepare.outputs.tag }}
         run: |
@@ -129,17 +155,30 @@ jobs:
           fi
           echo "Tag $TAG is free."
 
-      - name: CHANGELOG must document this version
+      - name: Verify tag matches the pinned native version
+        # These bindings mirror the native library's version: the tag must equal
+        # VANILLAPDF_GIT_TAG (e.g. v2.3.0, v2.3.0-rc.2), or - for a binding-only
+        # release of a stable pin - add a fourth component (v2.3.0.1).
         env:
           TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           set -euo pipefail
-          SECTION="## [${TAG#v}]"
-          if ! grep -qF "$SECTION" CHANGELOG.md; then
-            echo "::error::CHANGELOG.md has no '$SECTION' section."
+          PIN=$(sed -n 's/^set(VANILLAPDF_GIT_TAG "\([^"]*\)".*/\1/p' CMakeLists.txt)
+          if [ -z "$PIN" ]; then
+            echo "::error::Could not read VANILLAPDF_GIT_TAG from CMakeLists.txt"
             exit 1
           fi
-          echo "Found $SECTION in CHANGELOG.md."
+          if [ "$TAG" = "$PIN" ]; then
+            echo "Tag $TAG matches the pinned native version."
+            exit 0
+          fi
+          STABLE='^v[0-9]+\.[0-9]+\.[0-9]+$'
+          if [[ "$PIN" =~ $STABLE && "${TAG%.*}" = "$PIN" && "${TAG##*.}" =~ ^[0-9]+$ ]]; then
+            echo "Tag $TAG is a binding-only release of native $PIN."
+            exit 0
+          fi
+          echo "::error::Tag $TAG does not match the pinned native version $PIN (expected $PIN, or $PIN.N for a binding-only release of a stable pin)."
+          exit 1
 
   build-wheels:
     name: Build wheels on ${{ matrix.os }} (${{ matrix.arch }})
@@ -171,12 +210,12 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0  # setuptools-scm inspects git even when a version is pretended
 
       - name: Cache vcpkg binaries
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
           path: .vcpkg-cache
           key: vcpkg-release-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json') }}
@@ -184,7 +223,7 @@ jobs:
             vcpkg-release-${{ runner.os }}-${{ matrix.arch }}-
 
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.14"
 
@@ -259,7 +298,7 @@ jobs:
           echo "All wheels are version $VERSION."
 
       - name: Upload built wheels
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: vanillapdf-wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: dist
@@ -307,14 +346,14 @@ jobs:
     permissions:
       id-token: write  # Mandatory for trusted publishing
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
           path: dist
           pattern: vanillapdf-wheels-*
           merge-multiple: true
 
       - name: Publish to TestPyPI (Trusted Publisher)
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2
         with:
           repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
           print-hash: true
@@ -342,14 +381,17 @@ jobs:
   production-gate:
     name: Production gate
     runs-on: ubuntu-latest
-    timeout-minutes: 4320  # allow a long human review window
+    timeout-minutes: 90
     permissions: {}
     needs: [prepare, create-draft-release]
-    environment: production
+    # `pypi` is this repo's production environment (the native repo's
+    # `production`): its required reviewers are the human gate before the tag.
+    environment: pypi
     outputs:
       tag: ${{ needs.prepare.outputs.tag }}
       is_latest: ${{ needs.prepare.outputs.is_latest }}
       prerelease: ${{ needs.prepare.outputs.prerelease }}
+      release_id: ${{ needs.create-draft-release.outputs.release_id }}
     steps:
       - run: |
           echo "Draft release ${{ needs.prepare.outputs.tag }} created, wheels attached,"
@@ -368,23 +410,39 @@ jobs:
       is_latest: ${{ needs.production-gate.outputs.is_latest }}
       prerelease: ${{ needs.production-gate.outputs.prerelease }}
     steps:
+      # Flip the reviewed draft to a published release. Publishing creates the tag
+      # at the draft's target commit and binds the release to it. This uses
+      # GITHUB_TOKEN, the same token that created the draft: the job has
+      # contents: write so it can always see and publish its own draft, and the
+      # "Protect release tags" ruleset (refs/tags/v*.*.*) restricts only deletion,
+      # non_fast_forward and update - never creation - with no bypass actors, so
+      # no bot identity is needed. A token without push access cannot even see a
+      # draft release (GitHub answers 404, not 403), so a bot PAT here would only
+      # add a failure mode, not remove one.
+      #
+      # The draft is addressed by its numeric id, never by tag: the tag does not
+      # exist as a ref until this step, and an API edit to the draft body that
+      # omits tag_name resets it, so tag-based lookup can fail with "release not
+      # found". Re-asserting tag_name in the same PATCH that flips draft=false
+      # makes the publish immune to that quirk, however the body was edited
+      # during the gate.
       - name: Publish draft release
-        # Flipping the draft to published is what creates the tag, at the
-        # draft's target commit. BOT_TOKEN is preferred so the tag can be
-        # created under any tag protection rulesets; GITHUB_TOKEN is the
-        # fallback when no bot token is configured.
         env:
+          RELEASE_ID: ${{ needs.production-gate.outputs.release_id }}
           TAG: ${{ needs.production-gate.outputs.tag }}
           IS_LATEST: ${{ needs.production-gate.outputs.is_latest }}
-          GH_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          LATEST_FLAG=""
-          if [ "$IS_LATEST" = "false" ]; then
-            LATEST_FLAG="--latest=false"
+          MAKE_LATEST=false
+          if [ "$IS_LATEST" = "true" ]; then
+            MAKE_LATEST=true
           fi
-          gh release edit "$TAG" --draft=false $LATEST_FLAG
+          gh api --method PATCH "repos/${GH_REPO}/releases/${RELEASE_ID}" \
+            -f tag_name="$TAG" \
+            -F draft=false \
+            -f make_latest="$MAKE_LATEST"
           echo "Published $TAG; the tag now exists."
 
   publish-pypi:
@@ -398,14 +456,14 @@ jobs:
     permissions:
       id-token: write  # Mandatory for trusted publishing
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
           path: dist
           pattern: vanillapdf-wheels-*
           merge-multiple: true
 
       - name: Publish to PyPI (Trusted Publisher)
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2
         with:
           repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
           print-hash: true
