@@ -14,31 +14,34 @@ Python bindings for [Vanilla.PDF](https://github.com/vanillapdf/vanillapdf), a h
 pip install vanillapdf
 ```
 
-Requires Python 3.8 or later. Pre-built wheels are available for Windows, Linux, and macOS.
+Requires Python 3.10 or later. Pre-built wheels are available for Windows, Linux, and macOS.
 
 ## Quick Start
 
 ```python
 import vanillapdf
 
-# Open and save a document
+# Open a document, read its title, and save a copy
 with vanillapdf.Document("input.pdf") as doc:
-    doc.save("output.pdf")
+    info = doc.get_document_info()
+    if info is not None and info.title is not None:
+        print("Title:", info.title.text)
 
-# Work with in-memory buffers
-with vanillapdf.Buffer.create() as buf:
-    buf.set_data(b"binary data")
-    data = buf.get_data()
+    doc.save("output.pdf")
 ```
+
+More runnable scripts — creating, encrypting, signing, and verifying documents — are in [`examples/`](examples/).
 
 ## Features
 
 | Available Now | Coming Soon |
 |---------------|-------------|
-| Open and save PDF documents | Create new PDF documents |
-| In-memory buffer operations | Digital signatures |
-| Context manager support | Encryption and decryption |
-| Cross-platform (Windows, Linux, macOS) | JPEG2000 and ICC profile support |
+| Open, create, and save PDF documents | JPEG2000 and ICC profile support |
+| Document metadata, pages, and low-level object traversal | |
+| Encryption and decryption | |
+| Digital signatures (signing and verification) | |
+| Context manager support | |
+| Cross-platform (Windows, Linux, macOS) | |
 
 The Python bindings expose functionality from the [Vanilla.PDF C++ library](https://github.com/vanillapdf/vanillapdf), with more features being added progressively.
 
