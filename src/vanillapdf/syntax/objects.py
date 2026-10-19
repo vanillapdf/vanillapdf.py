@@ -187,9 +187,10 @@ class StringObject(Object):
             return buffer.data
 
     @value.setter
-    def value(self, buffer: Buffer) -> None:
+    def value(self, data: bytes) -> None:
         handle = self._require_handle()
-        _vanillapdf.string_object_set_value(handle, self._handle_of(buffer))
+        with Buffer.create_from_data(data) as buffer:
+            _vanillapdf.string_object_set_value(handle, self._handle_of(buffer))
 
     def value_string(self, encoding: str = "utf-8") -> str:
         return self.value.decode(encoding)

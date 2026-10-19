@@ -31,7 +31,7 @@ def test_file_open_and_version(test_pdf):
 
 def test_file_get_filename(test_pdf):
     with vanillapdf.File(test_pdf) as f:
-        assert f.get_filename_string() == "pdf-test.pdf"
+        assert f.get_filename() == "pdf-test.pdf"
 
 
 def test_file_is_encrypted(test_pdf):
@@ -50,4 +50,4 @@ def test_file_unicode_filename(assets_dir):
         f.initialize()
         version = f.get_version()
         assert isinstance(version, vanillapdf.PDFVersion)
-        assert f.get_filename_string() == "chinese_names_中文的名字-2.pdf"
+        assert f.get_filename() == "chinese_names_中文的名字-2.pdf"

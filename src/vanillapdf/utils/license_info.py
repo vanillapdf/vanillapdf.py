@@ -17,9 +17,10 @@ class LicenseInfo:
         _vanillapdf.license_info_set_license_file(filename)
 
     @staticmethod
-    def set_license_buffer(buffer: Buffer) -> None:
-        """Load the license from an in-memory :class:`~vanillapdf.buffer.Buffer`."""
-        _vanillapdf.license_info_set_license_buffer(Handle._handle_of(buffer))
+    def set_license_data(data: bytes) -> None:
+        """Load the license from its file contents (``bytes``)."""
+        with Buffer.create_from_data(data) as buffer:
+            _vanillapdf.license_info_set_license_buffer(Handle._handle_of(buffer))
 
     @staticmethod
     def is_valid() -> bool:

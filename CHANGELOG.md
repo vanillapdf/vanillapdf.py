@@ -41,6 +41,15 @@ reserves those for metadata corrections rather than bug fixes.
   `add_certificate_from_der` take `bytes` only (the file contents, e.g.
   `open(path, "rb").read()`). Passing a `str` to the DER variant previously
   UTF-8-encoded it, corrupting any non-ASCII byte.
+- **Breaking:** public signatures no longer take or return a `Buffer`; the
+  wrappers create and release it internally:
+  - `StringObject.value` setter takes `bytes` (matching the getter).
+  - `PKCS12Key.create_from_buffer(buffer, password)` is now
+    `PKCS12Key.create_from_data(data: bytes, password)`.
+  - `LicenseInfo.set_license_buffer(buffer)` is now
+    `LicenseInfo.set_license_data(data: bytes)`.
+  - `File.get_filename()` returns the filename as a `str`;
+    `File.get_filename_string()` is removed.
 
 ### Fixed
 - Temporary native buffers returned by `Object.to_string` / `to_pdf`,
