@@ -15,24 +15,22 @@ USER_PASSWORD = "user-secret"
 
 def _encrypt(source: str, destination: str) -> None:
     """Encrypt `source` with AES-128 and write it to `destination`."""
-    with Document(source) as doc:
-        settings = DocumentEncryptionSettings.create()
-        try:
-            settings.algorithm = EncryptionAlgorithm.AES
-            settings.key_length = 128
-            settings.user_access_permissions = UserAccessPermission.NONE
-            settings.set_owner_password(OWNER_PASSWORD)
-            settings.set_user_password(USER_PASSWORD)
-            doc.add_encryption(settings)
-            doc.save(destination)
-        finally:
-            settings.close()
+    with (
+        DocumentEncryptionSettings.create() as settings,
+        Document(source) as doc,
+    ):
+        settings.algorithm = EncryptionAlgorithm.AES
+        settings.key_length = 128
+        settings.user_access_permissions = UserAccessPermission.NONE
+        settings.set_owner_password(OWNER_PASSWORD)
+        settings.set_user_password(USER_PASSWORD)
+        doc.add_encryption(settings)
+        doc.save(destination)
 
 
 def test_settings_round_trip():
     """The settings object stores what we set."""
-    settings = DocumentEncryptionSettings.create()
-    try:
+    with DocumentEncryptionSettings.create() as settings:
         settings.algorithm = EncryptionAlgorithm.AES
         settings.key_length = 128
         settings.user_access_permissions = (
@@ -41,8 +39,6 @@ def test_settings_round_trip():
         assert settings.algorithm == EncryptionAlgorithm.AES
         assert settings.key_length == 128
         assert UserAccessPermission.EXTRACT_TEXT in settings.user_access_permissions
-    finally:
-        settings.close()
 
 
 def test_encrypt_document(plain_pdf, tmp_path):
@@ -66,12 +62,9 @@ def test_decrypt_round_trip(plain_pdf, tmp_path):
     with File(encrypted) as f:
         f.initialize()
         f.set_encryption_password(OWNER_PASSWORD)
-        doc = Document.open_file(f)
-        try:
+        with Document.open_file(f) as doc:
             doc.remove_encryption()
             doc.save(decrypted)
-        finally:
-            doc.close()
 
     with File(decrypted) as f:
         f.initialize()

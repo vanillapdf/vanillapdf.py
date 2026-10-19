@@ -23,6 +23,12 @@ pip install build
 python -m build --wheel
 ```
 
+After bumping `VCPKG_GIT_TAG`, a reused local `build/` can fail to configure
+with `document schema version N is not supported by this version of vcpkg`:
+vcpkg only bootstraps its executable when it is missing, so the old binary
+stays next to the new scripts. Delete `build/vcpkg/vcpkg[.exe]` (or `build/`)
+and rebuild. CI is unaffected (fresh checkout every run).
+
 ### Platform-Specific Setup
 
 **Windows:**

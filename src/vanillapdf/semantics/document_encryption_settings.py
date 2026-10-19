@@ -36,11 +36,6 @@ class UserAccessPermission(IntFlag):
     PRINT_FAITHFUL = 2048
 
 
-def _as_bytes(password: bytes | str) -> bytes:
-    if isinstance(password, str):
-        return password.encode("utf-8")
-    return bytes(password)
-
 
 class DocumentEncryptionSettings(Handle["DocumentEncryptionSettingsHandle"]):
     """Settings controlling how a document is encrypted.
@@ -91,22 +86,18 @@ class DocumentEncryptionSettings(Handle["DocumentEncryptionSettingsHandle"]):
         handle = self._require_handle()
         _vanillapdf.document_encryption_settings_set_user_access_permissions(handle, int(value))
 
-    def set_user_password(self, password: bytes | str) -> None:
-        """Set the user password (``bytes`` or ``str``)."""
+    def set_user_password(self, password: str) -> None:
+        """Set the user password."""
         handle = self._require_handle()
-        buffer = Buffer.create_from_data(_as_bytes(password))
-        try:
+        password_bytes = password.encode("utf-8")
+        with Buffer.create_from_data(password_bytes) as buffer:
             _vanillapdf.document_encryption_settings_set_user_password(
                 handle, self._handle_of(buffer))
-        finally:
-            buffer.close()
 
-    def set_owner_password(self, password: bytes | str) -> None:
-        """Set the owner password (``bytes`` or ``str``)."""
+    def set_owner_password(self, password: str) -> None:
+        """Set the owner password."""
         handle = self._require_handle()
-        buffer = Buffer.create_from_data(_as_bytes(password))
-        try:
+        password_bytes = password.encode("utf-8")
+        with Buffer.create_from_data(password_bytes) as buffer:
             _vanillapdf.document_encryption_settings_set_owner_password(
                 handle, self._handle_of(buffer))
-        finally:
-            buffer.close()

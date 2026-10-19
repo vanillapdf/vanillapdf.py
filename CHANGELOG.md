@@ -34,6 +34,19 @@ reserves those for metadata corrections rather than bug fixes.
   C++ dependencies: OpenSSL 3.6.0 → 3.6.3, zlib 1.3.1 → 1.3.2, libjpeg-turbo
   3.1.2 → 3.2.0, spdlog 1.16.0 → 1.17.0, fmt 12.1.0 → 12.2.0.
 - Docs are built with Sphinx 9 (`sphinx>=9.1,<10`).
+- **Breaking:** `DocumentEncryptionSettings.set_owner_password` /
+  `set_user_password` take a `str` only (encoded as UTF-8, matching
+  `File.set_encryption_password`); `bytes` is no longer accepted.
+- **Breaking:** `TrustedCertificateStore.add_certificate_from_pem` and
+  `add_certificate_from_der` take `bytes` only (the file contents, e.g.
+  `open(path, "rb").read()`). Passing a `str` to the DER variant previously
+  UTF-8-encoded it, corrupting any non-ASCII byte.
+
+### Fixed
+- Temporary native buffers returned by `Object.to_string` / `to_pdf`,
+  `NameObject.value`, `StringObject.value`, `StreamObject.body` / `body_raw` and
+  the `SignatureVerificationResult` text fields are now released immediately
+  instead of waiting for garbage collection.
 
 ## [2.3.0-rc.2]
 

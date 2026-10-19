@@ -6,8 +6,7 @@ def test_document_create_add_page_and_save(tmp_path):
     box, append it, save, and reopen."""
     target = str(tmp_path / "created.pdf")
 
-    doc = Document.create(target)
-    try:
+    with Document.create(target) as doc:
         page = PageObject.create_from_document(doc)
 
         rect = Rectangle.create()
@@ -23,8 +22,6 @@ def test_document_create_add_page_and_save(tmp_path):
         assert len(pages) == before + 1
 
         doc.save(target)
-    finally:
-        doc.close()
 
     assert (tmp_path / "created.pdf").stat().st_size > 0
 
