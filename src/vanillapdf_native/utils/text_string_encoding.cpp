@@ -20,7 +20,7 @@ PyObject* text_string_encoding_detect(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    TextStringEncodingType result;
+    TextStringEncodingType result = TextStringEncodingType_Undefined;
     error_type err = TextStringEncoding_Detect(data, data_size, &result);
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "TextStringEncoding_Detect");
