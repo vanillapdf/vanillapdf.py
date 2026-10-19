@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from .. import _vanillapdf
 from ..handle import Handle
 from ..utils.buffer import Buffer
+from ..utils.text_string_encoding import TextStringEncoding
 
 if TYPE_CHECKING:
     from .._vanillapdf import DictionaryObjectIteratorHandle, ObjectHandle
@@ -63,15 +64,15 @@ class Object(Handle["ObjectHandle"]):
         """A human-readable representation of the object."""
         handle = self._require_handle()
         buffer_handle = _vanillapdf.object_to_string(handle)
-        buffer = Buffer._from_handle(buffer_handle)
-        return buffer.data
+        with Buffer._from_handle(buffer_handle) as buffer:
+            return buffer.data
 
     def to_pdf(self) -> bytes:
         """The object serialized as it would appear in a PDF file."""
         handle = self._require_handle()
         buffer_handle = _vanillapdf.object_to_pdf(handle)
-        buffer = Buffer._from_handle(buffer_handle)
-        return buffer.data
+        with Buffer._from_handle(buffer_handle) as buffer:
+            return buffer.data
 
     @staticmethod
     def type_name(object_type: ObjectType) -> str:
@@ -165,8 +166,8 @@ class NameObject(Object):
     def value(self) -> bytes:
         handle = self._require_handle()
         buffer_handle = _vanillapdf.name_object_get_value(handle)
-        buffer = Buffer._from_handle(buffer_handle)
-        return buffer.data
+        with Buffer._from_handle(buffer_handle) as buffer:
+            return buffer.data
 
     def value_string(self, encoding: str = "utf-8") -> str:
         return self.value.decode(encoding)
@@ -183,16 +184,19 @@ class StringObject(Object):
     def value(self) -> bytes:
         handle = self._require_handle()
         buffer_handle = _vanillapdf.string_object_get_value(handle)
-        buffer = Buffer._from_handle(buffer_handle)
-        return buffer.data
+        with Buffer._from_handle(buffer_handle) as buffer:
+            return buffer.data
 
     @value.setter
-    def value(self, buffer: Buffer) -> None:
+    def value(self, data: bytes) -> None:
         handle = self._require_handle()
-        _vanillapdf.string_object_set_value(handle, self._handle_of(buffer))
+        with Buffer.create_from_data(data) as buffer:
+            _vanillapdf.string_object_set_value(handle, self._handle_of(buffer))
 
-    def value_string(self, encoding: str = "utf-8") -> str:
-        return self.value.decode(encoding)
+    @property
+    def text(self) -> str:
+        """The value decoded as a PDF text string (see :meth:`TextStringEncoding.decode`)."""
+        return TextStringEncoding.decode(self.value)
 
 
 class LiteralStringObject(StringObject):
@@ -345,13 +349,10 @@ class DictionaryObject(Object):
     def items(self) -> Iterator[tuple[Object, Object]]:
         handle = self._require_handle()
         iterator_handle = _vanillapdf.dictionary_object_get_iterator(handle)
-        iterator = _DictionaryIterator(iterator_handle)
-        try:
+        with _DictionaryIterator(iterator_handle) as iterator:
             while iterator.is_valid():
                 yield iterator.key(), iterator.value()
                 iterator.advance()
-        finally:
-            iterator.close()
 
     def keys(self) -> list[Object]:
         return [key for key, _ in self.items()]
@@ -386,25 +387,22 @@ class StreamObject(Object):
         """The decoded (filters applied) stream body."""
         handle = self._require_handle()
         buffer_handle = _vanillapdf.stream_object_get_body(handle)
-        buffer = Buffer._from_handle(buffer_handle)
-        return buffer.data
+        with Buffer._from_handle(buffer_handle) as buffer:
+            return buffer.data
 
     @body.setter
     def body(self, data: bytes) -> None:
         handle = self._require_handle()
-        buffer = Buffer.create_from_data(data)
-        try:
+        with Buffer.create_from_data(data) as buffer:
             _vanillapdf.stream_object_set_body(handle, self._handle_of(buffer))
-        finally:
-            buffer.close()
 
     @property
     def body_raw(self) -> bytes:
         """The raw (undecoded) stream body."""
         handle = self._require_handle()
         buffer_handle = _vanillapdf.stream_object_get_body_raw(handle)
-        buffer = Buffer._from_handle(buffer_handle)
-        return buffer.data
+        with Buffer._from_handle(buffer_handle) as buffer:
+            return buffer.data
 
 
 class IndirectReferenceObject(Object):

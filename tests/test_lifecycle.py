@@ -40,22 +40,16 @@ def test_garbage_collection_without_close():
 def test_wrong_capsule_type_raises_type_error():
     """Passing a Buffer capsule where an Object is expected is rejected by the
     capsule name check, not crashed."""
-    buf = Buffer.create_from_data(b"x")
-    try:
-        with pytest.raises(TypeError):
-            _vanillapdf.object_get_object_type(buf._handle)
-    finally:
-        buf.close()
+    with Buffer.create_from_data(b"x") as buf, pytest.raises(TypeError):
+        _vanillapdf.object_get_object_type(buf._handle)
 
 
 def test_child_object_outlives_parent(test_pdf):
     """An indirect object holds its own reference, so it stays usable after the
     File it came from is closed."""
-    f = vanillapdf.File(test_pdf)
-    f.initialize()
-    obj = f.get_indirect_object(2, 0)
-    f.close()
-    try:
+    with vanillapdf.File(test_pdf) as f:
+        f.initialize()
+        obj = f.get_indirect_object(2, 0)
+    # The File is closed here; the object must still be usable.
+    with obj:
         assert obj.object_type == ObjectType.DICTIONARY
-    finally:
-        obj.close()

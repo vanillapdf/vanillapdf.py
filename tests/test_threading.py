@@ -119,10 +119,9 @@ def test_error_state_is_thread_local():
         barrier.wait()
         for i in range(ITERATIONS):
             try:
-                obj = IntegerObject.create(i)
-                if obj.value != i:
-                    failures.append(f"value mismatch: {obj.value} != {i}")
-                obj.close()
+                with IntegerObject.create(i) as obj:
+                    if obj.value != i:
+                        failures.append(f"value mismatch: {obj.value} != {i}")
             except PdfError as exc:  # must never happen on the success path
                 failures.append(f"unexpected PdfError {exc.error_code}")
 

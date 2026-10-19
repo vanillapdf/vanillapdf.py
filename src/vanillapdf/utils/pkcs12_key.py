@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class PKCS12Key(Handle["PKCS12KeyHandle"]):
     """A PKCS#12 (``.pfx`` / ``.p12``) private key and certificate.
 
-    Load one from a file or buffer, then convert it to a
+    Load one from a file or its contents in memory, then convert it to a
     :class:`~vanillapdf.SigningKey` for document signing.
     """
 
@@ -30,10 +30,11 @@ class PKCS12Key(Handle["PKCS12KeyHandle"]):
         return PKCS12Key(handle)
 
     @staticmethod
-    def create_from_buffer(buffer: Buffer, password: str) -> PKCS12Key:
-        """Load a PKCS#12 key from an in-memory :class:`~vanillapdf.Buffer`."""
-        handle = _vanillapdf.pkcs12_key_create_from_buffer(
-            PKCS12Key._handle_of(buffer), password)
+    def create_from_data(data: bytes, password: str) -> PKCS12Key:
+        """Load a PKCS#12 key from its file contents (``bytes``)."""
+        with Buffer.create_from_data(data) as buffer:
+            handle = _vanillapdf.pkcs12_key_create_from_buffer(
+                PKCS12Key._handle_of(buffer), password)
         return PKCS12Key(handle)
 
     def to_signing_key(self) -> SigningKey:

@@ -33,11 +33,6 @@ class SignatureVerificationStatus(IntEnum):
     UNKNOWN = 10
 
 
-def _as_bytes(data: bytes | str) -> bytes:
-    if isinstance(data, str):
-        return data.encode("utf-8")
-    return bytes(data)
-
 
 class TrustedCertificateStore(Handle["TrustedCertificateStoreHandle"]):
     """A set of trusted CA certificates used for signature chain validation."""
@@ -52,17 +47,17 @@ class TrustedCertificateStore(Handle["TrustedCertificateStoreHandle"]):
         handle = _vanillapdf.trusted_certificate_store_create()
         return TrustedCertificateStore(handle)
 
-    def add_certificate_from_pem(self, data: bytes | str) -> None:
-        """Add a PEM-encoded certificate (``bytes`` or ``str``)."""
+    def add_certificate_from_pem(self, data: bytes) -> None:
+        """Add a PEM-encoded certificate (``bytes``, as read from a file)."""
         handle = self._require_handle()
-        with Buffer.create_from_data(_as_bytes(data)) as buffer:
+        with Buffer.create_from_data(data) as buffer:
             _vanillapdf.trusted_certificate_store_add_certificate_from_pem(
                 handle, self._handle_of(buffer))
 
-    def add_certificate_from_der(self, data: bytes | str) -> None:
-        """Add a DER-encoded certificate (``bytes``)."""
+    def add_certificate_from_der(self, data: bytes) -> None:
+        """Add a DER-encoded certificate (``bytes``, as read from a file)."""
         handle = self._require_handle()
-        with Buffer.create_from_data(_as_bytes(data)) as buffer:
+        with Buffer.create_from_data(data) as buffer:
             _vanillapdf.trusted_certificate_store_add_certificate_from_der(
                 handle, self._handle_of(buffer))
 
@@ -174,8 +169,8 @@ class SignatureVerificationResult(Handle["SignatureVerificationResultHandle"]):
         result = native_getter(handle)
         if result is None:
             return None
-        buffer = Buffer._from_handle(result)
-        data = buffer.data
+        with Buffer._from_handle(result) as buffer:
+            data = buffer.data
         return data.decode("utf-8", "replace") if data else None
 
     @property

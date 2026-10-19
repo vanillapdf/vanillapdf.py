@@ -18,20 +18,19 @@ from vanillapdf import (
 def encrypt(source: str, destination: str, user_pw: str, owner_pw: str) -> None:
     # The source must not already be encrypted; add_encryption refuses to
     # double-encrypt (remove_encryption first if needed).
-    with Document(source) as doc:
-        settings = DocumentEncryptionSettings.create()
-        try:
-            settings.algorithm = EncryptionAlgorithm.AES
-            settings.key_length = 128
-            # Deny extra permissions to anyone opening with the user password.
-            settings.user_access_permissions = UserAccessPermission.NONE
-            settings.set_owner_password(owner_pw)
-            settings.set_user_password(user_pw)
+    with (
+        DocumentEncryptionSettings.create() as settings,
+        Document(source) as doc,
+    ):
+        settings.algorithm = EncryptionAlgorithm.AES
+        settings.key_length = 128
+        # Deny extra permissions to anyone opening with the user password.
+        settings.user_access_permissions = UserAccessPermission.NONE
+        settings.set_owner_password(owner_pw)
+        settings.set_user_password(user_pw)
 
-            doc.add_encryption(settings)
-            doc.save(destination)  # encryption is applied on save
-        finally:
-            settings.close()
+        doc.add_encryption(settings)
+        doc.save(destination)  # encryption is applied on save
 
     print(f"Wrote encrypted document to {destination}")
 

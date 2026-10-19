@@ -39,6 +39,23 @@ def test_pkcs12_wrong_password_raises(signing_key_path):
         PKCS12Key.create_from_file(signing_key_path, "not-the-password")
 
 
+def test_pkcs12_key_loads_from_data(signing_key_path):
+    with open(signing_key_path, "rb") as f:
+        data = f.read()
+    with (
+        PKCS12Key.create_from_data(data, KEY_PASSWORD) as key,
+        key.to_signing_key() as signing_key,
+    ):
+        assert isinstance(signing_key, SigningKey)
+
+
+def test_pkcs12_from_data_wrong_password_raises(signing_key_path):
+    with open(signing_key_path, "rb") as f:
+        data = f.read()
+    with pytest.raises(PdfError):
+        PKCS12Key.create_from_data(data, "not-the-password")
+
+
 def test_sign_document(plain_pdf, signing_key_path, tmp_path):
     """Sign a document and confirm the signed output is a valid, larger PDF."""
     signed = str(tmp_path / "signed.pdf")

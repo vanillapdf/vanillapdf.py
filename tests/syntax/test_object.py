@@ -27,21 +27,17 @@ def test_wrap_dispatches_to_subclass():
     obj = IntegerObject.create(5)
     wrapped = Object._wrap(obj._handle)
     obj._handle = None  # detach so we don't double-release the shared handle
-    try:
+    with wrapped:
         assert isinstance(wrapped, IntegerObject)
         assert wrapped.value == 5
-    finally:
-        wrapped.close()
 
 
 def test_wrap_string_dispatches_to_hex():
     obj = HexadecimalStringObject.create("Hi")
     wrapped = Object._wrap(obj._handle)
     obj._handle = None
-    try:
+    with wrapped:
         assert isinstance(wrapped, HexadecimalStringObject)
-    finally:
-        wrapped.close()
 
 
 @pytest.mark.parametrize("factory, expected_cls", [
@@ -58,10 +54,8 @@ def test_wrap_dispatch_all(factory, expected_cls):
     obj = factory()
     wrapped = Object._wrap(obj._handle)
     obj._handle = None  # transfer ownership of the shared handle to `wrapped`
-    try:
+    with wrapped:
         assert isinstance(wrapped, expected_cls)
-    finally:
-        wrapped.close()
 
 
 def test_to_pdf():

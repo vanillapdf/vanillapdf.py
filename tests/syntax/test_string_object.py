@@ -1,7 +1,6 @@
 import pytest
 
 from vanillapdf import (
-    Buffer,
     HexadecimalStringObject,
     LiteralStringObject,
     ObjectType,
@@ -31,10 +30,10 @@ def test_hexadecimal_string_object():
         assert obj.value == b"Hi"
 
 
-def test_value_setter_via_buffer():
-    """The value setter routes a Buffer handle through Handle._handle_of."""
-    with LiteralStringObject.create("orig") as text, Buffer.create_from_data(b"updated") as buf:
-        text.value = buf
+def test_value_setter_round_trips_bytes():
+    """The value setter takes the same bytes the getter returns."""
+    with LiteralStringObject.create("orig") as text:
+        text.value = b"updated"
         assert text.value == b"updated"
 
 

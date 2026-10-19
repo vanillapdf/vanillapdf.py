@@ -29,11 +29,49 @@ reserves those for metadata corrections rather than bug fixes.
   (`File::GetByteRange` seek+read locking, a liveness-aware document-registry
   create guard, and a `Document` catalog lazy-initialization race).
 
+### Added
+- `TextStringEncoding` / `TextStringEncodingType`, wrapping the native
+  text-string encoding utilities (mirrors .NET's `PdfTextStringEncoding`):
+  `detect(data: bytes)` reports a text string's encoding from its byte order
+  mark (PDFDocEncoding, UTF-16BE or UTF-8), and
+  `pdf_doc_encoding_byte_to_unicode(value)` maps a PDFDocEncoding byte to its
+  Unicode code point.
+- `TextStringEncoding.decode(data: bytes)` decodes a PDF text string using the
+  encoding it declares (UTF-16BE / UTF-8 byte order mark, dropped; otherwise
+  PDFDocEncoding), the same decoding as .NET's `PdfTextStringUtils.Decode`.
+- `StringObject.text`: the string's value decoded with `TextStringEncoding.decode`.
+
 ### Changed
 - vcpkg baseline moved from `2025.12.12` to `2026.07.29`, updating the bundled
   C++ dependencies: OpenSSL 3.6.0 → 3.6.3, zlib 1.3.1 → 1.3.2, libjpeg-turbo
   3.1.2 → 3.2.0, spdlog 1.16.0 → 1.17.0, fmt 12.1.0 → 12.2.0.
 - Docs are built with Sphinx 9 (`sphinx>=9.1,<10`).
+- **Breaking:** `DocumentEncryptionSettings.set_owner_password` /
+  `set_user_password` take a `str` only (encoded as UTF-8, matching
+  `File.set_encryption_password`); `bytes` is no longer accepted.
+- **Breaking:** `TrustedCertificateStore.add_certificate_from_pem` and
+  `add_certificate_from_der` take `bytes` only (the file contents, e.g.
+  `open(path, "rb").read()`). Passing a `str` to the DER variant previously
+  UTF-8-encoded it, corrupting any non-ASCII byte.
+- **Breaking:** public signatures no longer take or return a `Buffer`; the
+  wrappers create and release it internally:
+  - `StringObject.value` setter takes `bytes` (matching the getter).
+  - `PKCS12Key.create_from_buffer(buffer, password)` is now
+    `PKCS12Key.create_from_data(data: bytes, password)`.
+  - `LicenseInfo.set_license_buffer(buffer)` is now
+    `LicenseInfo.set_license_data(data: bytes)`.
+  - `File.get_filename()` returns the filename as a `str`;
+    `File.get_filename_string()` is removed.
+- **Breaking:** `StringObject.value_string()` is removed; use `.text`. It
+  decoded every string as UTF-8, which fails on PDFDocEncoding strings and
+  raised on UTF-16BE ones (most non-ASCII document titles).
+  `NameObject.value_string()` is unchanged (names are UTF-8).
+
+### Fixed
+- Temporary native buffers returned by `Object.to_string` / `to_pdf`,
+  `NameObject.value`, `StringObject.value`, `StreamObject.body` / `body_raw` and
+  the `SignatureVerificationResult` text fields are now released immediately
+  instead of waiting for garbage collection.
 
 ## [2.3.0-rc.2]
 

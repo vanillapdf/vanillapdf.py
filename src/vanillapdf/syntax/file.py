@@ -77,23 +77,13 @@ class File(Handle["FileHandle"]):
         }
         return version_map.get(version, "unknown")
 
-    def get_filename(self) -> Buffer:
-        """Get the filename as a Buffer."""
+    def get_filename(self) -> str:
+        """Get the filename the file was opened or created with."""
         handle = self._require_handle()
         buffer_handle = _vanillapdf.file_get_filename(handle)
-        return Buffer._from_handle(buffer_handle)
-
-    def get_filename_string(self, encoding: str = 'utf-8') -> str:
-        """Get the filename as a string.
-
-        Args:
-            encoding: The encoding to use for decoding (default: utf-8).
-
-        Returns:
-            The filename as a decoded string.
-        """
-        buffer = self.get_filename()
-        return buffer.data.decode(encoding)
+        with Buffer._from_handle(buffer_handle) as buffer:
+            filename_bytes = buffer.data
+        return filename_bytes.decode("utf-8")
 
     @property
     def is_encrypted(self) -> bool:

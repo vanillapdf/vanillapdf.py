@@ -43,10 +43,8 @@ def test_wrap_returns_array():
     arr = ArrayObject.create()
     wrapped = Object._wrap(arr._handle)
     arr._handle = None
-    try:
+    with wrapped:
         assert isinstance(wrapped, ArrayObject)
-    finally:
-        wrapped.close()
 
 
 def test_use_after_close_raises():
