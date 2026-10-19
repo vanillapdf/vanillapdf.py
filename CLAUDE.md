@@ -121,6 +121,18 @@ non-deterministic test behaviour.
   fix by hammering the previously-failing case many times (dozens of runs).
 - **Fix the trigger, don't mask it.** Removing the actual cause (see below) is a
   fix; loosening an assertion or retrying is masking and is not acceptable.
+- **A test that cannot decide the question does not belong in the suite.** If a
+  property has no reliable observation, leave it to code review rather than
+  encode a guess. Timing as synchronisation — `sleep` and then sample, or a
+  spinner thread expected to advance — is weak design: it measures how the OS
+  scheduled threads in one window, so it fails on a loaded runner and can pass
+  while the property is broken. A GIL-release test built that way was removed
+  for exactly that: it false-failed on a `macos-15-intel` nightly, and measured
+  locally it also passes when the GIL is held for the entire call (CPython
+  forces a handoff at the first bytecode boundary after the call, worth hundreds
+  of thousands of iterations to the other thread). GIL release itself is
+  unconditional (`GilRelease` in `common.h`); what can regress is a blocking
+  call site forgetting `without_gil`, which review catches.
 
 Native logging must never reach stdout (root-caused native bug, fixed at the
 binding boundary). The native library defaults to an **stdout log sink at INFO**.

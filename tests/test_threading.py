@@ -1,9 +1,7 @@
 import threading
-import time
 
 import vanillapdf
 from vanillapdf import (
-    ArrayObject,
     Document,
     Errors,
     IntegerObject,
@@ -71,41 +69,6 @@ def test_concurrent_reads_from_shared_document(test_pdf):
         _run(worker)
 
     assert failures == []
-
-
-def test_blocking_call_releases_gil():
-    """A blocking native call must release the GIL so other Python threads run.
-
-    A background thread spins a pure-Python counter. While a single ~30 ms native
-    serialization runs, the counter can only advance if the GIL was released for
-    that call -- if it were held, a C call (not a bytecode boundary) would block
-    the spinner entirely. The floor is generous; the real gap is held≈0 vs
-    released≈tens of thousands."""
-    arr = ArrayObject.create()
-    for i in range(100_000):
-        arr.append(IntegerObject.create(i))
-
-    counter = 0
-    running = True
-
-    def spin():
-        nonlocal counter
-        while running:
-            counter += 1
-
-    spinner = threading.Thread(target=spin)
-    spinner.start()
-    try:
-        time.sleep(0.02)  # let the spinner get going
-        before = counter
-        arr.to_pdf()      # one blocking native call; GIL released -> spinner runs
-        during = counter - before
-    finally:
-        running = False
-        spinner.join()
-        arr.close()
-
-    assert during > 1000, f"spinner advanced only {during} during the native call"
 
 
 def test_parallel_create_save_reopen(tmp_path):
