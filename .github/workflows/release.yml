@@ -24,7 +24,6 @@ on:
     paths:
       - '.github/workflows/release.yml'
       - '.github/workflows/github-release.yml'
-      - '.github/scripts/check_release_tag.py'
   workflow_dispatch:
     inputs:
       tag:
@@ -58,24 +57,39 @@ jobs:
       version: ${{ steps.parse.outputs.version }}
       prerelease: ${{ steps.parse.outputs.prerelease }}
       is_latest: ${{ steps.parse.outputs.is_latest }}
-      dry_run: ${{ steps.parse.outputs.dry_run }}
+      # A pull_request run validates the release workflow itself: always a dry run.
+      dry_run: ${{ github.event_name == 'pull_request' || inputs.dry_run }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          fetch-depth: 0
 
       - name: Check release tag
-        # Validates the tag (PEP 440, not yet released, matches the pinned native
-        # version) and derives the release metadata; see the script's docstring.
         id: parse
         env:
-          EVENT_NAME: ${{ github.event_name }}
           TAG: ${{ inputs.tag }}
-          DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          python3 -m pip install --quiet packaging
-          python3 .github/scripts/check_release_tag.py >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          if ! PIN=$(grep -oP 'set\(VANILLAPDF_GIT_TAG "\K[^"]+' CMakeLists.txt); then
+            echo "::error::No VANILLAPDF_GIT_TAG in CMakeLists.txt"
+            exit 1
+          fi
+          TAG=${TAG:-$PIN}  # pull_request has no tag: use the pin
+
+          # The tag must be the pinned native version, or pin.N for a
+          # binding-only release of a stable pin (v2.3.0.1).
+          if [ "$TAG" != "$PIN" ] && ! [[ "$PIN" != *-* && "${TAG%.*}" = "$PIN" && "${TAG##*.}" =~ ^[0-9]+$ ]]; then
+            echo "::error::Tag $TAG does not match the pinned native version $PIN"
+            exit 1
+          fi
+
+          # PEP 440 form for the wheels: v2.3.0-rc.2 -> 2.3.0rc2
+          VERSION=$(sed -E 's/^v//; s/-alpha\./a/; s/-beta\./b/; s/-rc\./rc/' <<< "$TAG")
+          PRERELEASE=false; [[ "$TAG" == *-* ]] && PRERELEASE=true
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "is_latest=$([ "$PRERELEASE" = true ] && echo false || echo true)" >> "$GITHUB_OUTPUT"
 
   build-wheels:
     name: Build wheels on ${{ matrix.os }} (${{ matrix.arch }})

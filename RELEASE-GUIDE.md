@@ -76,7 +76,7 @@ workflow owns tag creation end-to-end.
 `CMakeLists.txt` to the native tag being wrapped. These bindings mirror the
 native version, so the release tag must equal that pin (`v2.3.0`,
 `v2.3.0-rc.2`), or — for a binding-only release of a stable pin — add a fourth
-component (`v2.3.0.1`). The `verify` job fails the run on any other tag.
+component (`v2.3.0.1`). The `prepare` job fails the run on any other tag.
 
 Then:
 
