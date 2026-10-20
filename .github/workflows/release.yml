@@ -36,6 +36,13 @@ on:
         type: boolean
         default: true
 
+# One run per tag at a time: a second dispatch of the same tag waits for the
+# first instead of racing it on the draft, the uploads and the publish. Releases
+# are never cancelled; PR dry runs (grouped by the PR's ref) are, on a new push.
+concurrency:
+  group: release-${{ inputs.tag || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions: {}
 
 jobs:
