@@ -109,9 +109,7 @@ doing a full C++ build via vcpkg.
 
 The same reasoning is why the draft release exists before the gate — it can be
 reviewed, and abandoned, without leaving anything permanent behind. A
-re-dispatch reuses an existing draft for the tag instead of creating a second
-one, but the asset upload does not yet replace files already attached to it:
-if a run got as far as attaching wheels, delete that draft before re-dispatching.
+re-dispatch reuses an existing draft for the tag and replaces its assets.
 
 ---
 

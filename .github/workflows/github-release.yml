@@ -132,57 +132,43 @@ jobs:
           pattern: vanillapdf-wheels-*
           merge-multiple: true
 
-      - name: Upload wheels to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ inputs.tag }}
-        run: |
-          shopt -s nullglob
-          WHEELS=(dist/*.whl)
-          if [ ${#WHEELS[@]} -eq 0 ]; then
-            echo "::error::No wheels found to attach to the release"
-            exit 1
-          fi
-          echo "Uploading ${#WHEELS[@]} wheels"
-          gh release upload "$TAG" "${WHEELS[@]}"
-
       - name: Attest wheel provenance
         id: attest-wheels
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
         with:
           subject-path: dist/*.whl
 
-      - name: Upload provenance to release
-        # Attach the signed provenance bundle as a release asset. The attestation
-        # also lives in GitHub's attestation store, but OpenSSF Scorecard's
-        # Signed-Releases check only inspects release assets and credits a
-        # *.intoto.jsonl provenance file.
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BUNDLE_PATH: ${{ steps.attest-wheels.outputs.bundle-path }}
-          TAG: ${{ inputs.tag }}
-        run: |
-          PROVENANCE="vanillapdf.py-${TAG}.intoto.jsonl"
-          cp "$BUNDLE_PATH" "$PROVENANCE"
-          gh release upload "$TAG" "$PROVENANCE"
-
       - name: Generate SBOM
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ inputs.tag }}
-        run: |
-          gh api "repos/${GITHUB_REPOSITORY}/dependency-graph/sbom" \
-            | jq '.sbom' > "vanillapdf.py-${TAG}-sbom.spdx.json"
-
-      - name: Upload SBOM to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ inputs.tag }}
-        run: |
-          gh release upload "$TAG" "vanillapdf.py-${TAG}-sbom.spdx.json"
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c  # v0.24.3
+        with:
+          path: dist
+          format: spdx-json
+          output-file: vanillapdf.py-${{ inputs.tag }}-sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
 
       - name: Attest SBOM
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6  # v4.2.2
         with:
           subject-path: vanillapdf.py-${{ inputs.tag }}-sbom.spdx.json
           sbom-path: vanillapdf.py-${{ inputs.tag }}-sbom.spdx.json
+
+      # OpenSSF Scorecard's Signed-Releases check credits a *.intoto.jsonl release asset.
+      - name: Name provenance bundle
+        env:
+          BUNDLE_PATH: ${{ steps.attest-wheels.outputs.bundle-path }}
+          TAG: ${{ inputs.tag }}
+        run: cp "$BUNDLE_PATH" "vanillapdf.py-${TAG}.intoto.jsonl"
+
+      # draft: true is required - without it the action publishes the draft,
+      # which would create the tag before the production gate.
+      - name: Upload release assets
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64  # v3.0.3
+        with:
+          tag_name: ${{ inputs.tag }}
+          draft: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/*.whl
+            vanillapdf.py-${{ inputs.tag }}.intoto.jsonl
+            vanillapdf.py-${{ inputs.tag }}-sbom.spdx.json
