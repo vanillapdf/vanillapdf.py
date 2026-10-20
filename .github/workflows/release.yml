@@ -188,31 +188,21 @@ jobs:
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
         run: |
-          set -euo pipefail
           # A wheel stamped with anything else means the pretend-version did not
           # reach the build; publishing it would burn the wrong version on PyPI.
-          shopt -s nullglob
-          FOUND=0
           for whl in dist/*.whl; do
-            FOUND=1
-            name="$(basename "$whl")"
-            got="$(echo "$name" | cut -d- -f2)"
-            if [ "$got" != "$VERSION" ]; then
-              echo "::error::$name is version '$got', expected '$VERSION'"
+            if [[ "$(basename "$whl")" != "vanillapdf-$VERSION-"* ]]; then
+              echo "::error::$whl is not version $VERSION"
               exit 1
             fi
           done
-          if [ "$FOUND" -eq 0 ]; then
-            echo "::error::No wheels were produced"
-            exit 1
-          fi
-          echo "All wheels are version $VERSION."
 
       - name: Upload built wheels
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: vanillapdf-wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: dist
+          if-no-files-found: error
 
   # No sdist is published: building from source bootstraps vcpkg and FetchContents
   # the C++ library from git at install time (toolchain + network required), so an
