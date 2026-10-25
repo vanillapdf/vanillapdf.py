@@ -18,7 +18,7 @@ endif()
 # Set up vcpkg toolchain before project() call
 # VCPKG_GIT_TAG can be overridden (e.g. -DVCPKG_GIT_TAG=master) to build against
 # vcpkg's rolling registry, as bleeding-edge.yml does
-set(VCPKG_GIT_TAG "2026.07.29" CACHE STRING "vcpkg git tag, branch, or commit to fetch")
+set(VCPKG_GIT_TAG "2026.10.16" CACHE STRING "vcpkg git tag, branch, or commit to fetch")
 
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     include(FetchContent)
