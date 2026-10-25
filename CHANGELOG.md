@@ -40,12 +40,20 @@ reserves those for metadata corrections rather than bug fixes.
   encoding it declares (UTF-16BE / UTF-8 byte order mark, dropped; otherwise
   PDFDocEncoding), the same decoding as .NET's `PdfTextStringUtils.Decode`.
 - `StringObject.text`: the string's value decoded with `TextStringEncoding.decode`.
+- Python 3.15 support.
 
 ### Changed
 - vcpkg baseline moved from `2025.12.12` to `2026.07.29`, updating the bundled
   C++ dependencies: OpenSSL 3.6.0 → 3.6.3, zlib 1.3.1 → 1.3.2, libjpeg-turbo
   3.1.2 → 3.2.0, spdlog 1.16.0 → 1.17.0, fmt 12.1.0 → 12.2.0.
 - Docs are built with Sphinx 9 (`sphinx>=9.1,<10`).
+- **Breaking:** Python 3.11 or later is required; Python 3.10 (end of life in
+  October 2026) is no longer supported.
+- Wheels are built against the stable ABI: one `cp311-abi3` wheel per platform
+  installs on CPython 3.11 and every later version (including future ones),
+  replacing the per-version `cp310` … `cp314` wheels. Free-threaded CPython
+  (`3.15t`) is not covered by abi3 and has no wheel yet.
+- Building from source requires CMake 3.26 or later (previously 3.20).
 - **Breaking:** `DocumentEncryptionSettings.set_owner_password` /
   `set_user_password` take a `str` only (encoded as UTF-8, matching
   `File.set_encryption_password`); `bytes` is no longer accepted.
@@ -68,6 +76,10 @@ reserves those for metadata corrections rather than bug fixes.
   `NameObject.value_string()` is unchanged (names are UTF-8).
 
 ### Fixed
+- `IndirectReferenceObject.object_number`, `File.get_indirect_object` and
+  `Errors.get_printable_error_text` raise `OverflowError` for negative or
+  too-large values instead of silently wrapping them (`object_number = -1`
+  stored `2**64 - 1`). Python 3.15 deprecates the wrapping behaviour.
 - Temporary native buffers returned by `Object.to_string` / `to_pdf`,
   `NameObject.value`, `StringObject.value`, `StreamObject.body` / `body_raw` and
   the `SignatureVerificationResult` text fields are now released immediately

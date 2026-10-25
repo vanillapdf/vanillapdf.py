@@ -136,17 +136,25 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
-          python-version: "3.14"
+          python-version: "3.15"
 
       - name: Install build tools
         run: |
           python -m pip install --upgrade pip
-          python -m pip install cibuildwheel
+          # Pinned in pyproject.toml [dependency-groups]
+          python -m pip install --group release
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir dist
         env:
-          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
+          # The extension is built once per platform as a cp311-abi3 wheel
+          # (wheel.py-api in pyproject.toml). cibuildwheel builds it on cp311 --
+          # the oldest headers, which an abi3 build must use -- and, for each
+          # later version listed, reuses that wheel and only runs the test suite
+          # on it -- so this list is the set of versions it is tested on.
+          # cibuildwheel also audits the abi3 wheel itself (abi3audit --strict),
+          # failing the build on any symbol outside the 3.11 limited API.
+          CIBW_BUILD: "cp311-* cp312-* cp313-* cp314-* cp315-*"
           CIBW_BUILD_VERBOSITY: 1
           # musllinux (Alpine) is intentionally not built: the vendored C++ deps
           # do not build cleanly against musl. Supported: manylinux glibc x86_64

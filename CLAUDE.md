@@ -190,4 +190,4 @@ conventions in the wrappers.
 ## CI/CD
 
 - **sanity-check.yml** - Runs on push/PR to main; builds and tests on Ubuntu, Windows, macOS
-- **release.yml** - Manual dispatch; builds wheels for Python 3.10-3.14 and publishes to PyPI
+- **release.yml** - Manual dispatch; builds one stable-ABI (`cp311-abi3`) wheel per platform, tests it on Python 3.11-3.15, and publishes to PyPI

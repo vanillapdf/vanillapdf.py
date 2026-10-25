@@ -10,7 +10,7 @@ Pre-built wheels are published for Windows, Linux, and macOS:
 
    pip install vanillapdf
 
-Requires Python 3.10 or later. If a wheel is available for your platform and
+Requires Python 3.11 or later. If a wheel is available for your platform and
 interpreter, no C++ toolchain is needed.
 
 From source

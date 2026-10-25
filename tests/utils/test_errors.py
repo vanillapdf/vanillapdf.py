@@ -32,3 +32,11 @@ def test_errors_thread_local_helpers():
 
     message = vanillapdf.Errors.get_last_error_message()
     assert isinstance(message, str)
+
+
+@pytest.mark.parametrize("value", [-1, 2**32, 2**64])
+def test_get_printable_error_text_rejects_out_of_range(value):
+    # error_type is uint32_t: out-of-range codes must raise, not wrap into a
+    # different, valid-looking code (on Windows 2**32 used to wrap to 0).
+    with pytest.raises(OverflowError):
+        vanillapdf.Errors.get_printable_error_text(value)

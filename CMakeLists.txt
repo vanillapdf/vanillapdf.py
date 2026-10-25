@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.20)
+# 3.26: Python3::SABIModule / Python3_add_library(USE_SABI) for abi3 wheels
+cmake_minimum_required(VERSION 3.26)
 
 # Static/dynamic linking configuration
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static ones" OFF)
@@ -56,11 +57,22 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON CACHE BOOL "Build with -fPIC" FORCE)
 
 FetchContent_MakeAvailable(vanillapdf)
 
-# Find python, which is required for Python.h
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
+# Find python, which is required for Python.h. Under scikit-build-core with
+# wheel.py-api = "cp311" (pyproject.toml), SKBUILD_SABI_COMPONENT is
+# Development.SABIModule and SKBUILD_SABI_VERSION is 3.11: the extension is
+# built against the stable ABI (Py_LIMITED_API) into a single cp311-abi3 wheel
+# that loads on every later CPython. Outside scikit-build-core, and on
+# free-threaded interpreters (which have no abi3), both are empty and this is a
+# regular version-specific build.
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT})
 
-# Build the Python extension module
-add_library(_vanillapdf MODULE
+if(SKBUILD_SABI_VERSION)
+    set(VANILLAPDF_PY_SABI_ARGS USE_SABI ${SKBUILD_SABI_VERSION})
+endif()
+
+# Build the Python extension module. Python3_add_library links Python3::Module
+# (or Python3::SABIModule and defines Py_LIMITED_API under USE_SABI).
+Python3_add_library(_vanillapdf MODULE ${VANILLAPDF_PY_SABI_ARGS}
     src/vanillapdf_native/vanillapdfmodule.cpp
     src/vanillapdf_native/vanillapdfmodule.h
     src/vanillapdf_native/common.cpp
@@ -150,7 +162,6 @@ target_compile_features(_vanillapdf PRIVATE cxx_std_17)
 
 target_link_libraries(_vanillapdf PRIVATE
     vanillapdf::vanillapdf
-    Python3::Module
 )
 
 # Specify target suffix based on the current platform

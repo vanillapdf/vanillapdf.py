@@ -19,14 +19,14 @@ PyObject* errors_get_last_error(PyObject* self, PyObject* args) {
 }
 
 PyObject* errors_get_printable_error_text(PyObject* self, PyObject* args) {
-    unsigned long code_value;
-    if (!PyArg_ParseTuple(args, "k", &code_value)) {
+    long long code_value;
+    if (!PyArg_ParseTuple(args, "L", &code_value)) {
         return nullptr;
     }
 
-    /* 'k' yields unsigned long (64-bit on LP64) while error_type is uint32_t;
-     * narrow_unsigned rejects out-of-range values instead of truncating them
-     * into a different, valid-looking error code. */
+    /* Parse signed and range-check into error_type (uint32_t): the unsigned
+     * 'k' format silently wraps negative and oversized values into a
+     * different, valid-looking error code. */
     error_type value = 0;
     if (safe_convert(code_value, &value) < 0) {
         return nullptr;
