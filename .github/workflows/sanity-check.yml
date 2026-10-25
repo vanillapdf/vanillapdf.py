@@ -53,15 +53,27 @@ jobs:
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ matrix.arch }}-
 
-      - name: Set up Python
+      # The wheel is abi3 (one build for all versions). Build it with the oldest
+      # supported Python: newer headers can emit calls that only behave on newer
+      # runtimes (3.13+ headers drop the PY_SSIZE_T_CLEAN mapping, so a 3.15-built
+      # wheel raises SystemError for '#' formats on 3.11). Then test it on both
+      # ends of the supported range. The last setup-python step is the default.
+      - name: Set up Python 3.15 (newest supported)
+        id: py-newest
         uses: actions/setup-python@v7
         with:
-          python-version: "3.14"
+          python-version: "3.15"
+
+      - name: Set up Python 3.11 (oldest supported, builds the wheel)
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
 
       - name: Install build tools
         run: |
           python -m pip install --upgrade pip
           pip install build pytest setuptools-scm
+          pip install --group abi3-audit
 
       - name: Build wheel
         run: python -m build --wheel --outdir dist/
@@ -71,6 +83,18 @@ jobs:
         run: |
           pip install dist/*.whl
 
+      - name: Audit the stable ABI
+        shell: bash
+        run: abi3audit --strict --report dist/*.whl
+
       - name: Run test scenarios
         run: |
           pytest tests
+
+      - name: Run test scenarios on Python 3.15
+        shell: bash
+        env:
+          PYTHON_NEWEST: ${{ steps.py-newest.outputs.python-path }}
+        run: |
+          "$PYTHON_NEWEST" -m pip install pytest dist/*.whl
+          "$PYTHON_NEWEST" -m pytest tests
