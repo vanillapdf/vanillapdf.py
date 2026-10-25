@@ -43,9 +43,13 @@ reserves those for metadata corrections rather than bug fixes.
 - Python 3.15 support.
 
 ### Changed
-- vcpkg baseline moved from `2025.12.12` to `2026.07.29`, updating the bundled
-  C++ dependencies: OpenSSL 3.6.0 → 3.6.3, zlib 1.3.1 → 1.3.2, libjpeg-turbo
-  3.1.2 → 3.2.0, spdlog 1.16.0 → 1.17.0, fmt 12.1.0 → 12.2.0.
+- vcpkg baseline moved from `2025.12.12` to `2026.10.16`, updating the bundled
+  C++ dependencies: OpenSSL 3.6.0 → 3.6.5, zlib 1.3.1 → 1.3.2, libjpeg-turbo
+  3.1.2 → 3.2.0, spdlog 1.16.0 → 1.17.0, fmt 12.1.0 → 12.2.0. OpenSSL 3.6.4 and
+  3.6.5 are security releases (most severe: High); fixes relevant to PDF
+  signing and verification include a heap overflow in CMS key unwrapping,
+  excessive memory use in relative CRL distribution point processing, and
+  timing side-channels in EC scalar multiplication.
 - Docs are built with Sphinx 9 (`sphinx>=9.1,<10`).
 - **Breaking:** Python 3.11 or later is required; Python 3.10 (end of life in
   October 2026) is no longer supported.
@@ -53,7 +57,9 @@ reserves those for metadata corrections rather than bug fixes.
   installs on CPython 3.11 and every later version (including future ones),
   replacing the per-version `cp310` … `cp314` wheels. Free-threaded CPython
   (`3.15t`) is not covered by abi3 and has no wheel yet.
-- Building from source requires CMake 3.26 or later (previously 3.20).
+- Building from source requires CMake 3.26 or later (previously 3.20) and
+  scikit-build-core 1.0 or later; the version provider moved to the standard
+  `[[tool.dynamic-metadata]]` table.
 - **Breaking:** `DocumentEncryptionSettings.set_owner_password` /
   `set_user_password` take a `str` only (encoded as UTF-8, matching
   `File.set_encryption_password`); `bytes` is no longer accepted.
