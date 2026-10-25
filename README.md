@@ -61,7 +61,7 @@ python -m build
 
 ## Contributing
 
-Contributions are welcome. Please read the [contributing guidelines](https://github.com/vanillapdf/vanillapdf/blob/main/CONTRIBUTING.md) before submitting a pull request.
+Contributions are welcome. Please read the [contributing guidelines](https://github.com/vanillapdf/vanillapdf.py/blob/main/CONTRIBUTING.md) before submitting a pull request.
 
 ## License
 
