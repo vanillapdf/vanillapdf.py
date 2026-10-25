@@ -25,3 +25,13 @@ def test_use_after_close_raises():
     obj.close()
     with pytest.raises(ValueError):
         _ = obj.object_number
+
+
+@pytest.mark.parametrize("value", [-1, 2**64 + 5])
+def test_object_number_rejects_out_of_range(value):
+    # Must raise, not wrap: -1 used to become 2**64 - 1 and 2**64 + 5 became 5.
+    with IndirectReferenceObject.create() as ref:
+        ref.object_number = 12
+        with pytest.raises(OverflowError):
+            ref.object_number = value
+        assert ref.object_number == 12

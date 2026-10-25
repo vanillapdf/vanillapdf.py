@@ -51,3 +51,12 @@ def test_file_unicode_filename(assets_dir):
         version = f.get_version()
         assert isinstance(version, vanillapdf.PDFVersion)
         assert f.get_filename() == "chinese_names_中文的名字-2.pdf"
+
+
+@pytest.mark.parametrize("value", [-1, 2**64 + 2])
+def test_file_get_indirect_object_rejects_out_of_range(test_pdf, value):
+    # Must raise, not wrap into a different (possibly existing) object number.
+    with vanillapdf.File(test_pdf) as f:
+        f.initialize()
+        with pytest.raises(OverflowError):
+            f.get_indirect_object(value, 0)

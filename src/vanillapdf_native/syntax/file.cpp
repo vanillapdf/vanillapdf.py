@@ -156,9 +156,16 @@ PyObject* file_set_encryption_password(PyObject* self, PyObject* args) {
 
 PyObject* file_get_indirect_object(PyObject* self, PyObject* args) {
     PyObject* capsule;
-    unsigned long long object_number;
+    long long object_value;
     int generation_value;
-    if (!PyArg_ParseTuple(args, "OKi", &capsule, &object_number, &generation_value)) {
+    if (!PyArg_ParseTuple(args, "OLi", &capsule, &object_value, &generation_value)) {
+        return nullptr;
+    }
+
+    /* Parse signed and range-check: the unsigned 'K' format silently wraps
+     * negative and oversized values into a different object number. */
+    biguint_type object_number = 0;
+    if (safe_convert(object_value, &object_number) < 0) {
         return nullptr;
     }
 

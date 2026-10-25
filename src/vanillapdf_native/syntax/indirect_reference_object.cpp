@@ -97,8 +97,15 @@ PyObject* indirect_reference_object_get_referenced_object(PyObject* self, PyObje
 
 PyObject* indirect_reference_object_set_object_number(PyObject* self, PyObject* args) {
     PyObject* capsule;
-    unsigned long long number;
-    if (!PyArg_ParseTuple(args, "OK", &capsule, &number)) {
+    long long number_value;
+    if (!PyArg_ParseTuple(args, "OL", &capsule, &number_value)) {
+        return nullptr;
+    }
+
+    /* Parse signed and range-check: the unsigned 'K' format silently wraps
+     * negative and oversized values into a different object number. */
+    biguint_type number = 0;
+    if (safe_convert(number_value, &number) < 0) {
         return nullptr;
     }
 
