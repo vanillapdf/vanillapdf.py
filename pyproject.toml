@@ -81,7 +81,8 @@ typecheck = ["pyright"]
 [dependency-groups]
 # abi3info is abi3audit's symbol database: it decides the verdict, so pin it too.
 abi3-audit = ["abi3audit==0.0.26", "abi3info==2026.9.25"]
-release = ["cibuildwheel==4.3.4", {include-group = "abi3-audit"}]
+# cibuildwheel runs its own (version-pinned) abi3audit on abi3 wheels.
+release = ["cibuildwheel==4.3.4"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

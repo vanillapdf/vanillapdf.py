@@ -152,6 +152,8 @@ jobs:
           # the oldest headers, which an abi3 build must use -- and, for each
           # later version listed, reuses that wheel and only runs the test suite
           # on it -- so this list is the set of versions it is tested on.
+          # cibuildwheel also audits the abi3 wheel itself (abi3audit --strict),
+          # failing the build on any symbol outside the 3.11 limited API.
           CIBW_BUILD: "cp311-* cp312-* cp313-* cp314-* cp315-*"
           CIBW_BUILD_VERBOSITY: 1
           # musllinux (Alpine) is intentionally not built: the vendored C++ deps
@@ -202,12 +204,6 @@ jobs:
               exit 1
             fi
           done
-
-      - name: Audit the stable ABI
-        shell: bash
-        # Fails if the extension uses any symbol outside the 3.11 limited API, so
-        # a wheel tagged abi3 can never break on a newer CPython.
-        run: abi3audit --strict --report dist/*.whl
 
       - name: Upload built wheels
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
