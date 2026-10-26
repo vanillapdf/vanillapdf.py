@@ -192,7 +192,9 @@ PyObject* document_get_catalog(PyObject* self, PyObject* args) {
     }
 
     CatalogHandle* catalog = nullptr;
-    error_type err = Document_GetCatalog(handle, &catalog);
+    error_type err = without_gil([handle, &catalog] {
+        return Document_GetCatalog(handle, &catalog);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_GetCatalog");
     }
@@ -212,7 +214,9 @@ PyObject* document_get_document_info(PyObject* self, PyObject* args) {
     }
 
     DocumentInfoHandle* info = nullptr;
-    error_type err = Document_GetDocumentInfo(handle, &info);
+    error_type err = without_gil([handle, &info] {
+        return Document_GetDocumentInfo(handle, &info);
+    });
     if (is_missing_error(err)) {
         Py_RETURN_NONE;
     }
@@ -269,7 +273,9 @@ PyObject* document_add_encryption(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = Document_AddEncryption(handle, settings);
+    error_type err = without_gil([handle, settings] {
+        return Document_AddEncryption(handle, settings);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_AddEncryption");
     }
@@ -288,7 +294,9 @@ PyObject* document_remove_encryption(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = Document_RemoveEncryption(handle);
+    error_type err = without_gil([handle] {
+        return Document_RemoveEncryption(handle);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_RemoveEncryption");
     }

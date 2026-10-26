@@ -18,14 +18,18 @@ PyObject* real_object_create(PyObject* self, PyObject* args) {
     }
 
     RealObjectHandle* real = nullptr;
-    error_type create_err = RealObject_CreateFromData(value, precision, &real);
+    error_type create_err = without_gil([value, precision, &real] {
+        return RealObject_CreateFromData(value, precision, &real);
+    });
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "RealObject_CreateFromData");
     }
-    SCOPE_GUARD([real] { RealObject_Release(real); });
+    SCOPE_GUARD([real] { release_without_gil(RealObject_Release, real); });
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = RealObject_ToObject(real, &object);
+    error_type to_object_err = without_gil([real, &object] {
+        return RealObject_ToObject(real, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "RealObject_ToObject");
     }
@@ -44,10 +48,12 @@ PyObject* real_object_get_value(PyObject* self, PyObject* args) {
     if (real == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([real] { RealObject_Release(real); });
+    SCOPE_GUARD([real] { release_without_gil(RealObject_Release, real); });
 
     real_type value = 0.0;
-    error_type err = RealObject_GetValue(real, &value);
+    error_type err = without_gil([real, &value] {
+        return RealObject_GetValue(real, &value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "RealObject_GetValue");
     }
@@ -67,9 +73,11 @@ PyObject* real_object_set_value(PyObject* self, PyObject* args) {
     if (real == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([real] { RealObject_Release(real); });
+    SCOPE_GUARD([real] { release_without_gil(RealObject_Release, real); });
 
-    error_type err = RealObject_SetValue(real, value);
+    error_type err = without_gil([real, value] {
+        return RealObject_SetValue(real, value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "RealObject_SetValue");
     }

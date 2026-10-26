@@ -28,7 +28,9 @@ PyObject* page_tree_get_page_count(PyObject* self, PyObject* args) {
     }
 
     size_type count = 0;
-    error_type err = PageTree_GetPageCount(page_tree, &count);
+    error_type err = without_gil([page_tree, &count] {
+        return PageTree_GetPageCount(page_tree, &count);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "PageTree_GetPageCount");
     }

@@ -30,7 +30,9 @@ static PyObject* get_coordinate(
     }
 
     bigint_type value = 0;
-    error_type err = getter(rectangle, &value);
+    error_type err = without_gil([getter, rectangle, &value] {
+        return getter(rectangle, &value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, operation);
     }
@@ -53,7 +55,11 @@ static PyObject* set_coordinate(
         return nullptr;
     }
 
-    error_type err = setter(rectangle, value);
+    error_type err = without_gil([setter, rectangle, value] {
+
+        return setter(rectangle, value);
+
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, operation);
     }
@@ -63,7 +69,9 @@ static PyObject* set_coordinate(
 
 PyObject* rectangle_create(PyObject* self, PyObject* args) {
     RectangleHandle* rectangle = nullptr;
-    error_type err = Rectangle_Create(&rectangle);
+    error_type err = without_gil([&rectangle] {
+        return Rectangle_Create(&rectangle);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Rectangle_Create");
     }

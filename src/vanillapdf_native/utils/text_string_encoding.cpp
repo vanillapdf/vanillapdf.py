@@ -21,7 +21,9 @@ PyObject* text_string_encoding_detect(PyObject* self, PyObject* args) {
     }
 
     TextStringEncodingType result = TextStringEncodingType_Undefined;
-    error_type err = TextStringEncoding_Detect(data, data_size, &result);
+    error_type err = without_gil([data, data_size, &result] {
+        return TextStringEncoding_Detect(data, data_size, &result);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "TextStringEncoding_Detect");
     }
@@ -41,7 +43,9 @@ PyObject* text_string_encoding_pdf_doc_encoding_byte_to_unicode(PyObject* self, 
     }
 
     uint32_t codepoint = 0;
-    error_type err = TextStringEncoding_PDFDocEncodingByteToUnicode(byte, &codepoint);
+    error_type err = without_gil([byte, &codepoint] {
+        return TextStringEncoding_PDFDocEncodingByteToUnicode(byte, &codepoint);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "TextStringEncoding_PDFDocEncodingByteToUnicode");
     }

@@ -22,7 +22,9 @@ static const char* const RESULT_CAPSULE = "VanillaPDF.SignatureVerificationResul
 
 PyObject* trusted_certificate_store_create(PyObject* self, PyObject* args) {
     TrustedCertificateStoreHandle* store = nullptr;
-    error_type err = TrustedCertificateStore_Create(&store);
+    error_type err = without_gil([&store] {
+        return TrustedCertificateStore_Create(&store);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "TrustedCertificateStore_Create");
     }
@@ -130,7 +132,9 @@ PyObject* trusted_certificate_store_release(PyObject* self, PyObject* args) {
 
 PyObject* signature_verification_settings_create(PyObject* self, PyObject* args) {
     SignatureVerificationSettingsHandle* settings = nullptr;
-    error_type err = SignatureVerificationSettings_Create(&settings);
+    error_type err = without_gil([&settings] {
+        return SignatureVerificationSettings_Create(&settings);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "SignatureVerificationSettings_Create");
     }
@@ -156,7 +160,9 @@ static PyObject* set_flag(
     }
 
     boolean_type value = flag ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE;
-    error_type err = setter(settings, value);
+    error_type err = without_gil([setter, settings, value] {
+        return setter(settings, value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, operation);
     }
@@ -259,7 +265,9 @@ PyObject* signature_verification_result_get_status(PyObject* self, PyObject* arg
     }
 
     SignatureVerificationStatusType status = SignatureStatus_Undefined;
-    error_type err = SignatureVerificationResult_GetStatus(result, &status);
+    error_type err = without_gil([result, &status] {
+        return SignatureVerificationResult_GetStatus(result, &status);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "SignatureVerificationResult_GetStatus");
     }
@@ -284,7 +292,9 @@ static PyObject* result_boolean(
     }
 
     boolean_type value = VANILLAPDF_RV_FALSE;
-    error_type err = getter(result, &value);
+    error_type err = without_gil([getter, result, &value] {
+        return getter(result, &value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, operation);
     }
@@ -328,7 +338,9 @@ static PyObject* result_buffer(
     }
 
     BufferHandle* buffer = nullptr;
-    error_type err = getter(result, &buffer);
+    error_type err = without_gil([getter, result, &buffer] {
+        return getter(result, &buffer);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, operation);
     }

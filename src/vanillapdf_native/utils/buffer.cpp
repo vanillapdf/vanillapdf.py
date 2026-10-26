@@ -16,7 +16,9 @@ PyObject* buffer_capsule_from_handle(BufferHandle* handle) {
 
 PyObject* buffer_create(PyObject* self, PyObject* args) {
     BufferHandle* handle = nullptr;
-    error_type err = Buffer_Create(&handle);
+    error_type err = without_gil([&handle] {
+        return Buffer_Create(&handle);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Buffer_Create");
     }
@@ -37,7 +39,9 @@ PyObject* buffer_create_from_data(PyObject* self, PyObject* args) {
     }
 
     BufferHandle* handle = nullptr;
-    error_type err = Buffer_CreateFromData(data, data_size, &handle);
+    error_type err = without_gil([data, data_size, &handle] {
+        return Buffer_CreateFromData(data, data_size, &handle);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Buffer_CreateFromData");
     }
@@ -63,7 +67,9 @@ PyObject* buffer_set_data(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = Buffer_SetData(handle, data, data_size);
+    error_type err = without_gil([handle, data, data_size] {
+        return Buffer_SetData(handle, data, data_size);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Buffer_SetData");
     }
@@ -84,7 +90,9 @@ PyObject* buffer_get_data(PyObject* self, PyObject* args) {
 
     string_type data = nullptr;
     size_type size = 0;
-    error_type err = Buffer_GetData(handle, &data, &size);
+    error_type err = without_gil([handle, &data, &size] {
+        return Buffer_GetData(handle, &data, &size);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Buffer_GetData");
     }

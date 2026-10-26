@@ -17,19 +17,26 @@ PyObject* boolean_object_create(PyObject* self, PyObject* args) {
     }
 
     BooleanObjectHandle* boolean = nullptr;
-    error_type create_err = BooleanObject_Create(&boolean);
+    error_type create_err = without_gil([&boolean] {
+        return BooleanObject_Create(&boolean);
+    });
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "BooleanObject_Create");
     }
-    SCOPE_GUARD([boolean] { BooleanObject_Release(boolean); });
+    SCOPE_GUARD([boolean] { release_without_gil(BooleanObject_Release, boolean); });
 
-    error_type set_err = BooleanObject_SetValue(boolean, value ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE);
+    boolean_type native_value = value ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE;
+    error_type set_err = without_gil([boolean, native_value] {
+        return BooleanObject_SetValue(boolean, native_value);
+    });
     if (set_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(set_err, "BooleanObject_SetValue");
     }
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = BooleanObject_ToObject(boolean, &object);
+    error_type to_object_err = without_gil([boolean, &object] {
+        return BooleanObject_ToObject(boolean, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "BooleanObject_ToObject");
     }
@@ -48,10 +55,12 @@ PyObject* boolean_object_get_value(PyObject* self, PyObject* args) {
     if (boolean == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([boolean] { BooleanObject_Release(boolean); });
+    SCOPE_GUARD([boolean] { release_without_gil(BooleanObject_Release, boolean); });
 
     boolean_type value = VANILLAPDF_RV_FALSE;
-    error_type err = BooleanObject_GetValue(boolean, &value);
+    error_type err = without_gil([boolean, &value] {
+        return BooleanObject_GetValue(boolean, &value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "BooleanObject_GetValue");
     }
@@ -74,9 +83,12 @@ PyObject* boolean_object_set_value(PyObject* self, PyObject* args) {
     if (boolean == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([boolean] { BooleanObject_Release(boolean); });
+    SCOPE_GUARD([boolean] { release_without_gil(BooleanObject_Release, boolean); });
 
-    error_type err = BooleanObject_SetValue(boolean, value ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE);
+    boolean_type native_value = value ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE;
+    error_type err = without_gil([boolean, native_value] {
+        return BooleanObject_SetValue(boolean, native_value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "BooleanObject_SetValue");
     }

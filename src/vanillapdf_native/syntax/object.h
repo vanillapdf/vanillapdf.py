@@ -55,7 +55,9 @@ H* object_cast(PyObject* capsule,
     }
 
     H* typed = nullptr;
-    error_type err = from_object(object, &typed);
+    error_type err = without_gil([from_object, object, &typed] {
+        return from_object(object, &typed);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         raise_last_error(err, operation);
         return nullptr;

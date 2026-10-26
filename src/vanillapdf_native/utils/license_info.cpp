@@ -15,7 +15,9 @@ PyObject* license_info_set_license_file(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = LicenseInfo_SetLicenseFile(filename);
+    error_type err = without_gil([filename] {
+        return LicenseInfo_SetLicenseFile(filename);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LicenseInfo_SetLicenseFile");
     }
@@ -34,7 +36,9 @@ PyObject* license_info_set_license_buffer(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = LicenseInfo_SetLicenseBuffer(buffer);
+    error_type err = without_gil([buffer] {
+        return LicenseInfo_SetLicenseBuffer(buffer);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LicenseInfo_SetLicenseBuffer");
     }
@@ -44,7 +48,9 @@ PyObject* license_info_set_license_buffer(PyObject* self, PyObject* args) {
 
 PyObject* license_info_is_valid(PyObject* self, PyObject* args) {
     boolean_type is_valid = VANILLAPDF_RV_FALSE;
-    error_type err = LicenseInfo_IsValid(&is_valid);
+    error_type err = without_gil([&is_valid] {
+        return LicenseInfo_IsValid(&is_valid);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LicenseInfo_IsValid");
     }
@@ -57,7 +63,9 @@ PyObject* license_info_is_valid(PyObject* self, PyObject* args) {
 
 PyObject* license_info_is_temporary(PyObject* self, PyObject* args) {
     boolean_type is_temporary = VANILLAPDF_RV_FALSE;
-    error_type err = LicenseInfo_IsTemporary(&is_temporary);
+    error_type err = without_gil([&is_temporary] {
+        return LicenseInfo_IsTemporary(&is_temporary);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LicenseInfo_IsTemporary");
     }

@@ -29,7 +29,9 @@ PyObject* catalog_get_pages(PyObject* self, PyObject* args) {
     }
 
     PageTreeHandle* pages = nullptr;
-    error_type err = Catalog_GetPages(catalog, &pages);
+    error_type err = without_gil([catalog, &pages] {
+        return Catalog_GetPages(catalog, &pages);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Catalog_GetPages");
     }
@@ -49,7 +51,9 @@ PyObject* catalog_get_acro_form(PyObject* self, PyObject* args) {
     }
 
     InteractiveFormHandle* form = nullptr;
-    error_type err = Catalog_GetAcroForm(catalog, &form);
+    error_type err = without_gil([catalog, &form] {
+        return Catalog_GetAcroForm(catalog, &form);
+    });
     if (is_missing_error(err)) {
         Py_RETURN_NONE;
     }

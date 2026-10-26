@@ -9,7 +9,9 @@
 #include "common.h"
 
 PyObject* misc_utils_initialize_openssl(PyObject* self, PyObject* args) {
-    error_type err = MiscUtils_InitializeOpenSSL();
+    error_type err = without_gil([] {
+        return MiscUtils_InitializeOpenSSL();
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "MiscUtils_InitializeOpenSSL");
     }
@@ -18,7 +20,9 @@ PyObject* misc_utils_initialize_openssl(PyObject* self, PyObject* args) {
 }
 
 PyObject* misc_utils_cleanup_openssl(PyObject* self, PyObject* args) {
-    error_type err = MiscUtils_CleanupOpenSSL();
+    error_type err = without_gil([] {
+        return MiscUtils_CleanupOpenSSL();
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "MiscUtils_CleanupOpenSSL");
     }

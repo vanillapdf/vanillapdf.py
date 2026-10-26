@@ -17,14 +17,18 @@ PyObject* integer_object_create(PyObject* self, PyObject* args) {
     }
 
     IntegerObjectHandle* integer = nullptr;
-    error_type create_err = IntegerObject_CreateFromIntegerValue(value, &integer);
+    error_type create_err = without_gil([value, &integer] {
+        return IntegerObject_CreateFromIntegerValue(value, &integer);
+    });
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "IntegerObject_CreateFromIntegerValue");
     }
-    SCOPE_GUARD([integer] { IntegerObject_Release(integer); });
+    SCOPE_GUARD([integer] { release_without_gil(IntegerObject_Release, integer); });
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = IntegerObject_ToObject(integer, &object);
+    error_type to_object_err = without_gil([integer, &object] {
+        return IntegerObject_ToObject(integer, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "IntegerObject_ToObject");
     }
@@ -43,10 +47,12 @@ PyObject* integer_object_get_value(PyObject* self, PyObject* args) {
     if (integer == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([integer] { IntegerObject_Release(integer); });
+    SCOPE_GUARD([integer] { release_without_gil(IntegerObject_Release, integer); });
 
     bigint_type value = 0;
-    error_type err = IntegerObject_GetIntegerValue(integer, &value);
+    error_type err = without_gil([integer, &value] {
+        return IntegerObject_GetIntegerValue(integer, &value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "IntegerObject_GetIntegerValue");
     }
@@ -66,9 +72,11 @@ PyObject* integer_object_set_value(PyObject* self, PyObject* args) {
     if (integer == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([integer] { IntegerObject_Release(integer); });
+    SCOPE_GUARD([integer] { release_without_gil(IntegerObject_Release, integer); });
 
-    error_type err = IntegerObject_SetIntegerValue(integer, value);
+    error_type err = without_gil([integer, value] {
+        return IntegerObject_SetIntegerValue(integer, value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "IntegerObject_SetIntegerValue");
     }
