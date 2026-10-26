@@ -24,7 +24,7 @@ def sign(source: str, destination: str, key_path: str, key_password: str) -> Non
         PKCS12Key.create_from_file(key_path, key_password) as key,
         key.to_signing_key() as signing_key,
         DocumentSignatureSettings.create() as settings,
-        Document(source) as doc,
+        Document.open(source) as doc,
         File.create(destination) as dest,  # signing writes here, not via doc.save()
     ):
         settings.digest = MessageDigestAlgorithm.SHA256

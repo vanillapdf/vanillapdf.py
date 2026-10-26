@@ -31,7 +31,7 @@ def test_concurrent_reads_from_shared_file(test_pdf):
     results (shared native handle access, mirroring the upstream threaded test)."""
     failures = []
 
-    with vanillapdf.File(test_pdf) as shared:
+    with vanillapdf.File.open(test_pdf) as shared:
         shared.initialize()
 
         def worker(barrier):
@@ -54,7 +54,7 @@ def test_concurrent_reads_from_shared_document(test_pdf):
     tree) concurrently must read consistent page data."""
     failures = []
 
-    with vanillapdf.Document(test_pdf) as doc:
+    with vanillapdf.Document.open(test_pdf) as doc:
         pages = doc.get_catalog().get_pages()
 
         def worker(barrier):
@@ -89,7 +89,7 @@ def test_parallel_create_save_reopen(tmp_path):
                     page.media_box = rect
                     doc.get_catalog().get_pages().append(page)
                     doc.save(path)
-                with Document(path) as reopened:
+                with Document.open(path) as reopened:
                     assert len(reopened.get_catalog().get_pages()) >= 1
         except Exception as exc:  # noqa: BLE001
             failures.append(repr(exc))
@@ -105,6 +105,31 @@ def test_parallel_create_save_reopen(tmp_path):
         t.start()
     for t in threads:
         t.join()
+
+    assert failures == []
+
+
+def test_parallel_in_memory_round_trips(plain_pdf):
+    """Many threads each open their OWN document from bytes, save it back to
+    bytes, and reopen the result, exercising the memory-stream paths."""
+    with open(plain_pdf, "rb") as f:
+        data = f.read()
+    with Document.open_bytes(data) as doc:
+        expected = len(doc.get_catalog().get_pages())
+    failures = []
+
+    def worker(barrier):
+        barrier.wait()
+        try:
+            for _ in range(20):
+                with Document.open_bytes(data) as doc:
+                    saved = doc.save_bytes()
+                with Document.open_bytes(saved) as reopened:
+                    assert len(reopened.get_catalog().get_pages()) == expected
+        except Exception as exc:  # noqa: BLE001
+            failures.append(repr(exc))
+
+    _run(worker)
 
     assert failures == []
 

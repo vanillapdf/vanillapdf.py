@@ -9,6 +9,12 @@ Buffer
 .. autoclass:: vanillapdf.Buffer
    :members:
 
+InputOutputStream
+-----------------
+
+.. autoclass:: vanillapdf.InputOutputStream
+   :members:
+
 Errors
 ------
 

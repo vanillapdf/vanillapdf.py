@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 import vanillapdf
@@ -6,13 +8,13 @@ import vanillapdf
 def test_file_open_nonexistent_raises_pdf_error():
     """Opening a missing file surfaces the library's real error as PdfError."""
     with pytest.raises(vanillapdf.PdfError) as exc:
-        vanillapdf.File("this-file-does-not-exist-Ω.pdf")
+        vanillapdf.File.open("this-file-does-not-exist-Ω.pdf")
     assert isinstance(exc.value.error_code, int)
     assert "File_Open" in str(exc.value)
 
 
 def test_file_use_after_close_raises(test_pdf):
-    f = vanillapdf.File(test_pdf)
+    f = vanillapdf.File.open(test_pdf)
     f.close()
     with pytest.raises(ValueError):
         f.get_version()
@@ -21,7 +23,7 @@ def test_file_use_after_close_raises(test_pdf):
 
 
 def test_file_open_and_version(test_pdf):
-    with vanillapdf.File(test_pdf) as f:
+    with vanillapdf.File.open(test_pdf) as f:
         f.initialize()
         version = f.get_version()
         assert isinstance(version, vanillapdf.PDFVersion)
@@ -30,12 +32,12 @@ def test_file_open_and_version(test_pdf):
 
 
 def test_file_get_filename(test_pdf):
-    with vanillapdf.File(test_pdf) as f:
+    with vanillapdf.File.open(test_pdf) as f:
         assert f.get_filename() == "pdf-test.pdf"
 
 
 def test_file_is_encrypted(test_pdf):
-    with vanillapdf.File(test_pdf) as f:
+    with vanillapdf.File.open(test_pdf) as f:
         f.initialize()
         # Our test file is encrypted
         assert f.is_encrypted is True
@@ -46,7 +48,7 @@ def test_file_unicode_filename(assets_dir):
     test_input = assets_dir / "chinese_names_中文的名字-2.pdf"
     assert test_input.exists(), f"{test_input} not found"
 
-    with vanillapdf.File(str(test_input)) as f:
+    with vanillapdf.File.open(str(test_input)) as f:
         f.initialize()
         version = f.get_version()
         assert isinstance(version, vanillapdf.PDFVersion)
@@ -56,7 +58,17 @@ def test_file_unicode_filename(assets_dir):
 @pytest.mark.parametrize("value", [-1, 2**64 + 2])
 def test_file_get_indirect_object_rejects_out_of_range(test_pdf, value):
     # Must raise, not wrap into a different (possibly existing) object number.
-    with vanillapdf.File(test_pdf) as f:
+    with vanillapdf.File.open(test_pdf) as f:
         f.initialize()
         with pytest.raises(OverflowError):
             f.get_indirect_object(value, 0)
+
+
+@pytest.mark.parametrize("strategy", [
+    vanillapdf.IOStrategyType.FILE_STREAM,
+    vanillapdf.IOStrategyType.MEMORY,
+])
+def test_file_open_with_strategy(test_pdf, strategy):
+    with vanillapdf.File.open(Path(test_pdf), strategy) as f:
+        f.initialize()
+        assert isinstance(f.get_version(), vanillapdf.PDFVersion)

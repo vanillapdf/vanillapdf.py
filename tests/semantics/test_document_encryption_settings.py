@@ -17,7 +17,7 @@ def _encrypt(source: str, destination: str) -> None:
     """Encrypt `source` with AES-128 and write it to `destination`."""
     with (
         DocumentEncryptionSettings.create() as settings,
-        Document(source) as doc,
+        Document.open(source) as doc,
     ):
         settings.algorithm = EncryptionAlgorithm.AES
         settings.key_length = 128
@@ -46,7 +46,7 @@ def test_encrypt_document(plain_pdf, tmp_path):
     encrypted = str(tmp_path / "encrypted.pdf")
     _encrypt(plain_pdf, encrypted)
 
-    with File(encrypted) as f:
+    with File.open(encrypted) as f:
         f.initialize()
         f.set_encryption_password(OWNER_PASSWORD)
         assert f.is_encrypted is True
@@ -59,14 +59,14 @@ def test_decrypt_round_trip(plain_pdf, tmp_path):
     decrypted = str(tmp_path / "decrypted.pdf")
     _encrypt(plain_pdf, encrypted)
 
-    with File(encrypted) as f:
+    with File.open(encrypted) as f:
         f.initialize()
         f.set_encryption_password(OWNER_PASSWORD)
         with Document.open_file(f) as doc:
             doc.remove_encryption()
             doc.save(decrypted)
 
-    with File(decrypted) as f:
+    with File.open(decrypted) as f:
         f.initialize()
         assert f.is_encrypted is False
 
@@ -77,7 +77,7 @@ def test_wrong_password_raises(plain_pdf, tmp_path):
     encrypted = str(tmp_path / "encrypted.pdf")
     _encrypt(plain_pdf, encrypted)
 
-    with File(encrypted) as f:
+    with File.open(encrypted) as f:
         f.initialize()
         with pytest.raises(PdfError):
             f.set_encryption_password("wrong-password")

@@ -4,7 +4,7 @@ from vanillapdf import DictionaryObject, NameObject, StreamObject
 
 def test_get_indirect_object_dictionary(test_pdf):
     """Object 2 in the test asset is a dictionary; _wrap should return one."""
-    with vanillapdf.File(test_pdf) as f:
+    with vanillapdf.File.open(test_pdf) as f:
         f.initialize()
         with f.get_indirect_object(2, 0) as obj:
             assert isinstance(obj, DictionaryObject)
@@ -16,7 +16,7 @@ def test_get_indirect_object_dictionary(test_pdf):
 def test_get_indirect_object_stream(test_pdf):
     """Object 1 is a stream; header traversal and body decoding work through
     the binding (the asset is encrypted, so this also exercises decryption)."""
-    with vanillapdf.File(test_pdf) as f:
+    with vanillapdf.File.open(test_pdf) as f:
         f.initialize()
         with f.get_indirect_object(1, 0) as stream:
             assert isinstance(stream, StreamObject)

@@ -11,7 +11,7 @@ from vanillapdf import Document
 
 
 def inspect_pages(path: str) -> None:
-    with Document(path) as doc:
+    with Document.open(path) as doc:
         pages = doc.get_catalog().get_pages()
         print(f"{path}: {len(pages)} page(s)")
 

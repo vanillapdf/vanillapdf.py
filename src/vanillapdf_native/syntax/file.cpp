@@ -5,6 +5,8 @@
 #include <vanillapdf/c_values.h>
 #include <vanillapdf/syntax/c_file.h>
 #include <vanillapdf/syntax/c_object.h>
+#include <vanillapdf/utils/c_input_output_stream.h>
+#include <vanillapdf/utils/c_io_strategy.h>
 #include <vanillapdf/utils/c_pdf_version.h>
 
 #include "syntax/file.h"
@@ -16,16 +18,18 @@ static const char* const FILE_CAPSULE = "VanillaPDF.File";
 
 PyObject* file_open(PyObject* self, PyObject* args) {
     const char* filename;
-    if (!PyArg_ParseTuple(args, "s", &filename)) {
+    int strategy;
+    if (!PyArg_ParseTuple(args, "si", &filename, &strategy)) {
         return nullptr;
     }
 
+    IOStrategyType strategy_value = static_cast<IOStrategyType>(strategy);
     FileHandle* handle = nullptr;
-    error_type err = without_gil([filename, &handle] {
-        return File_Open(filename, &handle);
+    error_type err = without_gil([filename, strategy_value, &handle] {
+        return File_OpenWithStrategy(filename, strategy_value, &handle);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
-        return raise_last_error(err, "File_Open");
+        return raise_last_error(err, "File_OpenWithStrategy");
     }
 
     return capsule_new(handle, FILE_CAPSULE, RELEASE_FN(File_Release));
@@ -33,16 +37,66 @@ PyObject* file_open(PyObject* self, PyObject* args) {
 
 PyObject* file_create(PyObject* self, PyObject* args) {
     const char* filename;
-    if (!PyArg_ParseTuple(args, "s", &filename)) {
+    int strategy;
+    if (!PyArg_ParseTuple(args, "si", &filename, &strategy)) {
+        return nullptr;
+    }
+
+    IOStrategyType strategy_value = static_cast<IOStrategyType>(strategy);
+    FileHandle* handle = nullptr;
+    error_type err = without_gil([filename, strategy_value, &handle] {
+        return File_CreateWithStrategy(filename, strategy_value, &handle);
+    });
+    if (err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(err, "File_CreateWithStrategy");
+    }
+
+    return capsule_new(handle, FILE_CAPSULE, RELEASE_FN(File_Release));
+}
+
+PyObject* file_open_stream(PyObject* self, PyObject* args) {
+    PyObject* stream_capsule;
+    const char* name;
+    if (!PyArg_ParseTuple(args, "Os", &stream_capsule, &name)) {
+        return nullptr;
+    }
+
+    InputOutputStreamHandle* stream =
+        capsule_cast<InputOutputStreamHandle>(stream_capsule, "VanillaPDF.InputOutputStream");
+    if (stream == nullptr) {
         return nullptr;
     }
 
     FileHandle* handle = nullptr;
-    error_type err = without_gil([filename, &handle] {
-        return File_Create(filename, &handle);
+    error_type err = without_gil([stream, name, &handle] {
+        return File_OpenStream(stream, name, &handle);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
-        return raise_last_error(err, "File_Create");
+        return raise_last_error(err, "File_OpenStream");
+    }
+
+    return capsule_new(handle, FILE_CAPSULE, RELEASE_FN(File_Release));
+}
+
+PyObject* file_create_stream(PyObject* self, PyObject* args) {
+    PyObject* stream_capsule;
+    const char* name;
+    if (!PyArg_ParseTuple(args, "Os", &stream_capsule, &name)) {
+        return nullptr;
+    }
+
+    InputOutputStreamHandle* stream =
+        capsule_cast<InputOutputStreamHandle>(stream_capsule, "VanillaPDF.InputOutputStream");
+    if (stream == nullptr) {
+        return nullptr;
+    }
+
+    FileHandle* handle = nullptr;
+    error_type err = without_gil([stream, name, &handle] {
+        return File_CreateStream(stream, name, &handle);
+    });
+    if (err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(err, "File_CreateStream");
     }
 
     return capsule_new(handle, FILE_CAPSULE, RELEASE_FN(File_Release));

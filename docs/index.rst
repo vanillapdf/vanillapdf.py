@@ -9,7 +9,7 @@ documents.
 
    import vanillapdf
 
-   with vanillapdf.Document("input.pdf") as doc:
+   with vanillapdf.Document.open("input.pdf") as doc:
        info = doc.get_document_info()
        print(info.title.text)
 

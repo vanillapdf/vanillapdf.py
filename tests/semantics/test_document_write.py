@@ -26,5 +26,5 @@ def test_document_create_add_page_and_save(tmp_path):
     assert (tmp_path / "created.pdf").stat().st_size > 0
 
     # Reopen and confirm it is a valid document with pages.
-    with Document(target) as reopened:
+    with Document.open(target) as reopened:
         assert len(reopened.get_catalog().get_pages()) >= 1

@@ -13,6 +13,7 @@ python examples/traverse_objects.py assets/pdf-test.pdf 2 0  # resolve object 2 
 python examples/encrypt_document.py plain.pdf encrypted.pdf # AES-128 encrypt
 python examples/sign_document.py plain.pdf signed.pdf assets/test-signing-key.pfx test
 python examples/verify_signature.py signed.pdf                # verify signatures
+python examples/in_memory.py plain.pdf out.pdf      # bytes in, bytes out
 ```
 
 | Script | Layer | Shows |
@@ -24,3 +25,4 @@ python examples/verify_signature.py signed.pdf                # verify signature
 | `encrypt_document.py` | semantic | Encrypt a document with AES-128 + user/owner passwords |
 | `sign_document.py` | semantic | Sign a document with a PKCS#12 key (SHA-256) |
 | `verify_signature.py` | semantic | Traverse form signature fields and verify each signature |
+| `in_memory.py` | semantic | Open a document from bytes, change it, and return the saved bytes |

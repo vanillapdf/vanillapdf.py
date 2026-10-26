@@ -10,7 +10,7 @@ Open and read a document
 
    import vanillapdf
 
-   with vanillapdf.Document("input.pdf") as doc:
+   with vanillapdf.Document.open("input.pdf") as doc:
        # Document information (each entry may be None if absent).
        info = doc.get_document_info()
        if info is not None and info.title is not None:
@@ -22,6 +22,27 @@ Open and read a document
        for page in pages:
            box = page.media_box
            print(box.width, "x", box.height)
+
+Open and save in memory
+-----------------------
+
+Documents also open from ``bytes`` or a binary stream (an upload, ``io.BytesIO``,
+an ``open(..., "rb")`` file), and save back into memory or a stream:
+
+.. code-block:: python
+
+   import io
+
+   import vanillapdf
+
+   with vanillapdf.Document.open_bytes(data) as doc:
+       pdf = doc.save_bytes()
+
+   with open("input.pdf", "rb") as source, vanillapdf.Document.open_stream(source) as doc:
+       target = io.BytesIO()
+       doc.save_stream(target)
+
+The data is copied, so the source can be closed once the document is open.
 
 Create a document
 -----------------
@@ -51,7 +72,7 @@ To reach raw PDF objects by number, use the syntax layer via
 
    from vanillapdf import File, ObjectType
 
-   with File("input.pdf") as pdf:
+   with File.open("input.pdf") as pdf:
        pdf.initialize()  # parse xref tables first
        with pdf.get_indirect_object(2, 0) as obj:
            if obj.object_type == ObjectType.DICTIONARY:

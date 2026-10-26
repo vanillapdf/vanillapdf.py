@@ -3,6 +3,7 @@
 #include <Python.h>
 
 #include <vanillapdf/c_values.h>
+#include <vanillapdf/utils/c_io_strategy.h>
 #include <vanillapdf/syntax/c_file.h>
 #include <vanillapdf/semantics/c_document.h>
 #include <vanillapdf/semantics/c_catalog.h>
@@ -23,16 +24,18 @@ static PyObject* document_capsule_from_handle(DocumentHandle* handle) {
 
 PyObject* document_open(PyObject* self, PyObject* args) {
     const char* filename;
-    if (!PyArg_ParseTuple(args, "s", &filename)) {
+    int strategy;
+    if (!PyArg_ParseTuple(args, "si", &filename, &strategy)) {
         return nullptr;
     }
 
+    IOStrategyType strategy_value = static_cast<IOStrategyType>(strategy);
     DocumentHandle* handle = nullptr;
-    error_type err = without_gil([filename, &handle] {
-        return Document_Open(filename, &handle);
+    error_type err = without_gil([filename, strategy_value, &handle] {
+        return Document_OpenWithStrategy(filename, strategy_value, &handle);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
-        return raise_last_error(err, "Document_Open");
+        return raise_last_error(err, "Document_OpenWithStrategy");
     }
 
     return document_capsule_from_handle(handle);
@@ -40,14 +43,18 @@ PyObject* document_open(PyObject* self, PyObject* args) {
 
 PyObject* document_create(PyObject* self, PyObject* args) {
     const char* filename;
-    if (!PyArg_ParseTuple(args, "s", &filename)) {
+    int strategy;
+    if (!PyArg_ParseTuple(args, "si", &filename, &strategy)) {
         return nullptr;
     }
 
+    IOStrategyType strategy_value = static_cast<IOStrategyType>(strategy);
     DocumentHandle* handle = nullptr;
-    error_type err = Document_Create(filename, &handle);
+    error_type err = without_gil([filename, strategy_value, &handle] {
+        return Document_CreateWithStrategy(filename, strategy_value, &handle);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
-        return raise_last_error(err, "Document_Create");
+        return raise_last_error(err, "Document_CreateWithStrategy");
     }
 
     return document_capsule_from_handle(handle);
@@ -114,6 +121,60 @@ PyObject* document_save_incremental(PyObject* self, PyObject* args) {
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Document_SaveIncremental");
+    }
+
+    Py_RETURN_NONE;
+}
+
+PyObject* document_save_file(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    PyObject* file_capsule;
+    if (!PyArg_ParseTuple(args, "OO", &capsule, &file_capsule)) {
+        return nullptr;
+    }
+
+    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (handle == nullptr) {
+        return nullptr;
+    }
+
+    FileHandle* file = capsule_cast<FileHandle>(file_capsule, "VanillaPDF.File");
+    if (file == nullptr) {
+        return nullptr;
+    }
+
+    error_type err = without_gil([handle, file] {
+        return Document_SaveFile(handle, file);
+    });
+    if (err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(err, "Document_SaveFile");
+    }
+
+    Py_RETURN_NONE;
+}
+
+PyObject* document_save_incremental_file(PyObject* self, PyObject* args) {
+    PyObject* capsule;
+    PyObject* file_capsule;
+    if (!PyArg_ParseTuple(args, "OO", &capsule, &file_capsule)) {
+        return nullptr;
+    }
+
+    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (handle == nullptr) {
+        return nullptr;
+    }
+
+    FileHandle* file = capsule_cast<FileHandle>(file_capsule, "VanillaPDF.File");
+    if (file == nullptr) {
+        return nullptr;
+    }
+
+    error_type err = without_gil([handle, file] {
+        return Document_SaveIncrementalFile(handle, file);
+    });
+    if (err != VANILLAPDF_ERROR_SUCCESS) {
+        return raise_last_error(err, "Document_SaveIncrementalFile");
     }
 
     Py_RETURN_NONE;

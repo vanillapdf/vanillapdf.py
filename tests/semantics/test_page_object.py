@@ -3,7 +3,7 @@ from vanillapdf import DictionaryObject, Rectangle
 
 
 def test_media_box(test_pdf):
-    with vanillapdf.Document(test_pdf) as doc:
+    with vanillapdf.Document.open(test_pdf) as doc:
         page = doc.get_catalog().get_pages()[0]
         media_box = page.media_box
         assert isinstance(media_box, Rectangle)
@@ -15,7 +15,7 @@ def test_media_box(test_pdf):
 
 
 def test_base_object_is_dictionary(test_pdf):
-    with vanillapdf.Document(test_pdf) as doc:
+    with vanillapdf.Document.open(test_pdf) as doc:
         page = doc.get_catalog().get_pages()[0]
         base = page.base_object
         assert isinstance(base, DictionaryObject)

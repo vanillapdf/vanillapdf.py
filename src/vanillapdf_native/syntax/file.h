@@ -5,6 +5,8 @@
 
 PyObject* file_open(PyObject* self, PyObject* args);
 PyObject* file_create(PyObject* self, PyObject* args);
+PyObject* file_open_stream(PyObject* self, PyObject* args);
+PyObject* file_create_stream(PyObject* self, PyObject* args);
 PyObject* file_initialize(PyObject* self, PyObject* args);
 PyObject* file_get_version(PyObject* self, PyObject* args);
 PyObject* file_get_filename(PyObject* self, PyObject* args);

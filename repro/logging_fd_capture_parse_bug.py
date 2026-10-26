@@ -53,7 +53,7 @@ def make_pdf(path):
 
 def deep_parse(path):
     # Parse every object -> plenty of log output per iteration.
-    with File(path) as f:
+    with File.open(path) as f:
         f.initialize()
         for num in range(1, 6):
             try:

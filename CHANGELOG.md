@@ -41,8 +41,20 @@ reserves those for metadata corrections rather than bug fixes.
   PDFDocEncoding), the same decoding as .NET's `PdfTextStringUtils.Decode`.
 - `StringObject.text`: the string's value decoded with `TextStringEncoding.decode`.
 - Python 3.15 support.
+- In-memory open and save: `Document.open_bytes(data)` / `open_stream(stream)`
+  open a document from `bytes` or a readable binary stream, and `save_bytes()` /
+  `save_stream(stream)` (plus the `_incremental` variants) save into memory or a
+  writable binary stream. The data is copied, so the source can be closed right
+  after opening.
+- `IOStrategyType` and an optional `strategy` argument on `Document.open` /
+  `create` and `File.open` / `create`, choosing how a file on disk is read and
+  written (default `FILE_STREAM`; `MEMORY` loads it whole).
+- Paths accept `os.PathLike` (e.g. `pathlib.Path`) as well as `str`.
 
 ### Changed
+- **Breaking:** `Document` and `File` are created with class methods mirroring
+  the native API: `Document.open(path)` replaces `Document(path)`, and
+  `File.open(path)` replaces `File(path)`.
 - vcpkg baseline moved from `2025.12.12` to `2026.10.16`, updating the bundled
   C++ dependencies: OpenSSL 3.6.0 → 3.6.5, zlib 1.3.1 → 1.3.2, libjpeg-turbo
   3.1.2 → 3.2.0, spdlog 1.16.0 → 1.17.0, fmt 12.1.0 → 12.2.0. OpenSSL 3.6.4 and

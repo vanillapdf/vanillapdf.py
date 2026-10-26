@@ -33,7 +33,7 @@ deterministically; a ``__del__`` safety net releases anything you forget.
 
 .. code-block:: python
 
-   with vanillapdf.Document("input.pdf") as doc:
+   with vanillapdf.Document.open("input.pdf") as doc:
        ...  # handle released at the end of the block
 
 Accessing a closed object raises :class:`ValueError`.

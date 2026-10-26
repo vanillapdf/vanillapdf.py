@@ -18,7 +18,7 @@ from vanillapdf import (
 
 
 def verify(path: str, certs_dir: str = None) -> None:
-    with Document(path) as doc:
+    with Document.open(path) as doc:
         form = doc.get_catalog().get_acro_form()
         if form is None:
             print(f"{path}: no interactive form / signatures")
