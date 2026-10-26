@@ -18,7 +18,7 @@ KEY_PASSWORD = "test"
 def _sign(source: str, destination: str, signing_key: SigningKey) -> None:
     with (
         DocumentSignatureSettings.create() as settings,
-        Document(source) as doc,
+        Document.open(source) as doc,
         File.create(destination) as dest,  # release (on exit) flushes the output
     ):
         settings.digest = MessageDigestAlgorithm.SHA256
@@ -69,7 +69,7 @@ def test_sign_document(plain_pdf, signing_key_path, tmp_path):
     assert os.path.getsize(signed) > os.path.getsize(plain_pdf)
 
     # The signed document reopens and is structurally valid.
-    with Document(signed) as doc:
+    with Document.open(signed) as doc:
         assert len(doc.get_catalog().get_pages()) >= 1
 
 

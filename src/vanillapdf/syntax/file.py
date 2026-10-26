@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import os
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
 from .. import _vanillapdf
 from ..handle import Handle
 from ..utils.buffer import Buffer
+from ..utils.io_strategy import IOStrategyType
 from .objects import Object
 
 if TYPE_CHECKING:
     from .._vanillapdf import FileHandle
+    from ..utils.input_output_stream import InputOutputStream
 
 
 class PDFVersion(IntEnum):
@@ -30,25 +33,44 @@ class File(Handle["FileHandle"]):
     """Low-level PDF file access.
 
     Provides access to PDF structure including version and encryption status.
-    Must call initialize() after opening to read xref tables.
+    Open one with :meth:`open` (then call :meth:`initialize` to read the xref
+    tables) or create one with :meth:`create`.
     """
 
     _release = staticmethod(_vanillapdf.file_release)
 
-    def __init__(self, filename: str) -> None:
-        self._handle = _vanillapdf.file_open(filename)
+    def __init__(self, handle: FileHandle) -> None:
+        self._handle = handle
 
     @classmethod
     def _from_handle(cls, handle: FileHandle) -> File:
-        file = cls.__new__(cls)
-        file._handle = handle
-        return file
+        return cls(handle)
 
-    @staticmethod
-    def create(filename: str) -> File:
+    @classmethod
+    def open(cls, path: str | os.PathLike[str],
+             strategy: IOStrategyType = IOStrategyType.FILE_STREAM) -> File:
+        """Open the file at `path` for reading. Call :meth:`initialize` next."""
+        handle = _vanillapdf.file_open(os.fspath(path), int(strategy))
+        return cls._from_handle(handle)
+
+    @classmethod
+    def create(cls, path: str | os.PathLike[str],
+               strategy: IOStrategyType = IOStrategyType.FILE_STREAM) -> File:
         """Create a new file for writing (e.g. a signing destination)."""
-        handle = _vanillapdf.file_create(filename)
-        return File._from_handle(handle)
+        handle = _vanillapdf.file_create(os.fspath(path), int(strategy))
+        return cls._from_handle(handle)
+
+    @classmethod
+    def open_stream(cls, stream: InputOutputStream, name: str) -> File:
+        """Open a file for reading from `stream`. Call :meth:`initialize` next."""
+        handle = _vanillapdf.file_open_stream(cls._handle_of(stream), name)
+        return cls._from_handle(handle)
+
+    @classmethod
+    def create_stream(cls, stream: InputOutputStream, name: str) -> File:
+        """Create a file for writing into `stream`."""
+        handle = _vanillapdf.file_create_stream(cls._handle_of(stream), name)
+        return cls._from_handle(handle)
 
     def initialize(self) -> None:
         """Initialize the file by reading xref tables."""

@@ -15,7 +15,7 @@ FIELDS = ("title", "author", "subject", "keywords", "creator", "producer")
 
 
 def read_metadata(path: str) -> None:
-    with Document(path) as doc:
+    with Document.open(path) as doc:
         info = doc.get_document_info()
         if info is None:
             print(f"{path}: no document information dictionary")

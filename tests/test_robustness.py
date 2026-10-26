@@ -17,7 +17,7 @@ def _write(tmp_path, name: str, data: bytes) -> str:
 
 def _force_parse(path: str) -> None:
     """Open a document and touch its structure so lazy parsing actually runs."""
-    with Document(path) as doc:
+    with Document.open(path) as doc:
         len(doc.get_catalog().get_pages())
 
 
@@ -63,7 +63,7 @@ def test_corrupted_tail_raises(tmp_path, test_pdf):
 def test_wrong_password_raises(tmp_path, test_pdf):
     """The bundled PDF is encrypted (empty user password); a wrong password must
     fail cleanly rather than crash."""
-    with File(test_pdf) as handle:
+    with File.open(test_pdf) as handle:
         handle.initialize()
         if not handle.is_encrypted:
             pytest.skip("test asset is not encrypted")

@@ -15,3 +15,10 @@ PDFVersion
 .. autoclass:: vanillapdf.PDFVersion
    :members:
    :undoc-members:
+
+IOStrategyType
+--------------
+
+.. autoclass:: vanillapdf.IOStrategyType
+   :members:
+   :undoc-members:

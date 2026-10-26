@@ -5,7 +5,7 @@ from vanillapdf import PageObject
 
 
 def test_iteration_and_bounds(test_pdf):
-    with vanillapdf.Document(test_pdf) as doc:
+    with vanillapdf.Document.open(test_pdf) as doc:
         pages = doc.get_catalog().get_pages()
         collected = list(pages)
         assert len(collected) == len(pages) == 1

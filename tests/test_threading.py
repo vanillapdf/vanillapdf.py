@@ -31,7 +31,7 @@ def test_concurrent_reads_from_shared_file(test_pdf):
     results (shared native handle access, mirroring the upstream threaded test)."""
     failures = []
 
-    with vanillapdf.File(test_pdf) as shared:
+    with vanillapdf.File.open(test_pdf) as shared:
         shared.initialize()
 
         def worker(barrier):
@@ -54,7 +54,7 @@ def test_concurrent_reads_from_shared_document(test_pdf):
     tree) concurrently must read consistent page data."""
     failures = []
 
-    with vanillapdf.Document(test_pdf) as doc:
+    with vanillapdf.Document.open(test_pdf) as doc:
         pages = doc.get_catalog().get_pages()
 
         def worker(barrier):
@@ -89,7 +89,7 @@ def test_parallel_create_save_reopen(tmp_path):
                     page.media_box = rect
                     doc.get_catalog().get_pages().append(page)
                     doc.save(path)
-                with Document(path) as reopened:
+                with Document.open(path) as reopened:
                     assert len(reopened.get_catalog().get_pages()) >= 1
         except Exception as exc:  # noqa: BLE001
             failures.append(repr(exc))

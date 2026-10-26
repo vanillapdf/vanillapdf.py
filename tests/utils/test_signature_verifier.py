@@ -22,7 +22,7 @@ def signed_pdf(plain_pdf, signing_key_path, tmp_path):
         PKCS12Key.create_from_file(signing_key_path, KEY_PASSWORD) as key,
         key.to_signing_key() as signing_key,
         DocumentSignatureSettings.create() as settings,
-        Document(plain_pdf) as doc,
+        Document.open(plain_pdf) as doc,
         File.create(signed) as dest,
     ):
         settings.digest = MessageDigestAlgorithm.SHA256
@@ -44,12 +44,12 @@ def _first_signature(doc):
 
 
 def test_unsigned_document_has_no_acro_form(plain_pdf):
-    with Document(plain_pdf) as doc:
+    with Document.open(plain_pdf) as doc:
         assert doc.get_catalog().get_acro_form() is None
 
 
 def test_signed_document_has_signature_field(signed_pdf):
-    with Document(signed_pdf) as doc:
+    with Document.open(signed_pdf) as doc:
         form = doc.get_catalog().get_acro_form()
         assert form is not None
         assert len(form.fields) >= 1
@@ -59,7 +59,7 @@ def test_signed_document_has_signature_field(signed_pdf):
 def test_verify_signature(signed_pdf):
     """A freshly signed, unmodified document verifies as cryptographically valid
     and intact (certificate validation skipped: the test cert is self-signed)."""
-    with Document(signed_pdf) as doc:
+    with Document.open(signed_pdf) as doc:
         signature = _first_signature(doc)
         assert signature is not None
         with (

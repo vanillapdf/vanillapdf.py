@@ -15,7 +15,7 @@ from vanillapdf import File, ObjectType
 
 def traverse_objects(path: str, object_number: int, generation: int) -> None:
     # A File must be initialized (xref tables parsed) before objects resolve.
-    with File(path) as pdf:
+    with File.open(path) as pdf:
         pdf.initialize()
         print(f"{path}: PDF {pdf.get_version_string()}, "
               f"encrypted={pdf.is_encrypted}")

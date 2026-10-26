@@ -82,6 +82,8 @@ Python3_add_library(_vanillapdf MODULE ${VANILLAPDF_PY_SABI_ARGS}
     # utils
     src/vanillapdf_native/utils/buffer.cpp
     src/vanillapdf_native/utils/buffer.h
+    src/vanillapdf_native/utils/input_output_stream.cpp
+    src/vanillapdf_native/utils/input_output_stream.h
     src/vanillapdf_native/utils/errors.cpp
     src/vanillapdf_native/utils/errors.h
     src/vanillapdf_native/utils/library_info.cpp

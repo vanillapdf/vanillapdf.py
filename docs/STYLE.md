@@ -109,7 +109,7 @@ VanillaPDF **C API** only.
       PKCS12Key.create_from_file(path, pw) as key,
       key.to_signing_key() as signing_key,
       DocumentSignatureSettings.create() as settings,
-      Document(source) as doc,
+      Document.open(source) as doc,
       File.create(destination) as dest,
   ):
       settings.set_signing_key(signing_key)

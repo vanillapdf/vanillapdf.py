@@ -47,7 +47,7 @@ def test_wrong_capsule_type_raises_type_error():
 def test_child_object_outlives_parent(test_pdf):
     """An indirect object holds its own reference, so it stays usable after the
     File it came from is closed."""
-    with vanillapdf.File(test_pdf) as f:
+    with vanillapdf.File.open(test_pdf) as f:
         f.initialize()
         obj = f.get_indirect_object(2, 0)
     # The File is closed here; the object must still be usable.

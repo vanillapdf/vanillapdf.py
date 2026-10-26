@@ -39,6 +39,8 @@ from .syntax.objects import (
 )
 from .utils.buffer import Buffer
 from .utils.errors import Errors, PdfError
+from .utils.input_output_stream import InputOutputStream
+from .utils.io_strategy import IOStrategyType
 from .utils.library_info import LibraryInfo
 from .utils.license_info import LicenseInfo
 from .utils.logging import Logging, LoggingSeverity
@@ -64,8 +66,10 @@ except PackageNotFoundError:
 __all__ = [
     "Document",
     "Buffer",
+    "InputOutputStream",
     "File",
     "PDFVersion",
+    "IOStrategyType",
     "LibraryInfo",
     "Logging",
     "LoggingSeverity",

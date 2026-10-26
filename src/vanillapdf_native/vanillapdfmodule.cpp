@@ -5,6 +5,7 @@
 #include "common.h"
 #include "semantics/document.h"
 #include "utils/buffer.h"
+#include "utils/input_output_stream.h"
 #include "syntax/file.h"
 #include "utils/library_info.h"
 #include "utils/logging.h"
@@ -44,6 +45,8 @@ static PyMethodDef VanillapdfMethods[] = {
     {"document_open_file", document_open_file, METH_VARARGS, "Open a Document from a File"},
     {"document_save", document_save, METH_VARARGS, "Save a Document"},
     {"document_save_incremental", document_save_incremental, METH_VARARGS, "Save a Document incrementally"},
+    {"document_save_file", document_save_file, METH_VARARGS, "Save a Document into a File"},
+    {"document_save_incremental_file", document_save_incremental_file, METH_VARARGS, "Save a Document incrementally into a File"},
     {"document_get_catalog", document_get_catalog, METH_VARARGS, "Get the Document catalog"},
     {"document_get_document_info", document_get_document_info, METH_VARARGS, "Get the Document info"},
     {"document_append_document", document_append_document, METH_VARARGS, "Append another Document"},
@@ -57,9 +60,18 @@ static PyMethodDef VanillapdfMethods[] = {
     {"buffer_set_data", buffer_set_data, METH_VARARGS, "Set Buffer contents"},
     {"buffer_get_data", buffer_get_data, METH_VARARGS, "Get Buffer contents"},
     {"buffer_release", buffer_release, METH_VARARGS, "Release a Buffer"},
+    /* InputOutputStream methods */
+    {"input_output_stream_create_from_memory", input_output_stream_create_from_memory, METH_NOARGS, "Create an in-memory InputOutputStream"},
+    {"input_output_stream_read_buffer", input_output_stream_read_buffer, METH_VARARGS, "Read a Buffer from an InputOutputStream"},
+    {"input_output_stream_get_output_position", input_output_stream_get_output_position, METH_VARARGS, "Get the output position of an InputOutputStream"},
+    {"input_output_stream_write_buffer", input_output_stream_write_buffer, METH_VARARGS, "Write a Buffer to an InputOutputStream"},
+    {"input_output_stream_flush", input_output_stream_flush, METH_VARARGS, "Flush an InputOutputStream"},
+    {"input_output_stream_release", input_output_stream_release, METH_VARARGS, "Release an InputOutputStream"},
     /* File methods */
     {"file_open", file_open, METH_VARARGS, "Open a PDF file"},
     {"file_create", file_create, METH_VARARGS, "Create a new PDF file for writing"},
+    {"file_open_stream", file_open_stream, METH_VARARGS, "Open a PDF file from an InputOutputStream"},
+    {"file_create_stream", file_create_stream, METH_VARARGS, "Create a PDF file for writing into an InputOutputStream"},
     {"file_initialize", file_initialize, METH_VARARGS, "Initialize file (read xref tables)"},
     {"file_get_version", file_get_version, METH_VARARGS, "Get PDF version"},
     {"file_get_filename", file_get_filename, METH_VARARGS, "Get filename"},

@@ -44,7 +44,7 @@ def plain_pdf(tmp_path):
         doc.get_catalog().get_pages().append(page)
         doc.save(path)
 
-    with File(path) as f:
+    with File.open(path) as f:
         f.initialize()
         assert f.is_encrypted is False  # sanity: the source really is plaintext
     return path

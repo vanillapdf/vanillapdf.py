@@ -20,7 +20,7 @@ def encrypt(source: str, destination: str, user_pw: str, owner_pw: str) -> None:
     # double-encrypt (remove_encryption first if needed).
     with (
         DocumentEncryptionSettings.create() as settings,
-        Document(source) as doc,
+        Document.open(source) as doc,
     ):
         settings.algorithm = EncryptionAlgorithm.AES
         settings.key_length = 128

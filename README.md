@@ -22,7 +22,7 @@ Requires Python 3.11 or later. Pre-built wheels are available for Windows, Linux
 import vanillapdf
 
 # Open a document, read its title, and save a copy
-with vanillapdf.Document("input.pdf") as doc:
+with vanillapdf.Document.open("input.pdf") as doc:
     info = doc.get_document_info()
     if info is not None and info.title is not None:
         print("Title:", info.title.text)
