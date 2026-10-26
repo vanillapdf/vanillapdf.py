@@ -12,14 +12,18 @@
 
 PyObject* array_object_create(PyObject* self, PyObject* args) {
     ArrayObjectHandle* array = nullptr;
-    error_type create_err = ArrayObject_Create(&array);
+    error_type create_err = without_gil([&array] {
+        return ArrayObject_Create(&array);
+    });
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "ArrayObject_Create");
     }
-    SCOPE_GUARD([array] { ArrayObject_Release(array); });
+    SCOPE_GUARD([array] { release_without_gil(ArrayObject_Release, array); });
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = ArrayObject_ToObject(array, &object);
+    error_type to_object_err = without_gil([array, &object] {
+        return ArrayObject_ToObject(array, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "ArrayObject_ToObject");
     }
@@ -38,10 +42,12 @@ PyObject* array_object_get_size(PyObject* self, PyObject* args) {
     if (array == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([array] { ArrayObject_Release(array); });
+    SCOPE_GUARD([array] { release_without_gil(ArrayObject_Release, array); });
 
     size_type size = 0;
-    error_type err = ArrayObject_GetSize(array, &size);
+    error_type err = without_gil([array, &size] {
+        return ArrayObject_GetSize(array, &size);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "ArrayObject_GetSize");
     }
@@ -66,10 +72,12 @@ PyObject* array_object_get_value(PyObject* self, PyObject* args) {
     if (array == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([array] { ArrayObject_Release(array); });
+    SCOPE_GUARD([array] { release_without_gil(ArrayObject_Release, array); });
 
     ObjectHandle* object = nullptr;
-    error_type err = ArrayObject_GetValue(array, at, &object);
+    error_type err = without_gil([array, at, &object] {
+        return ArrayObject_GetValue(array, at, &object);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "ArrayObject_GetValue");
     }
@@ -100,9 +108,11 @@ PyObject* array_object_set_value(PyObject* self, PyObject* args) {
     if (array == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([array] { ArrayObject_Release(array); });
+    SCOPE_GUARD([array] { release_without_gil(ArrayObject_Release, array); });
 
-    error_type err = ArrayObject_SetValue(array, at, value);
+    error_type err = without_gil([array, at, value] {
+        return ArrayObject_SetValue(array, at, value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "ArrayObject_SetValue");
     }
@@ -127,9 +137,11 @@ PyObject* array_object_append(PyObject* self, PyObject* args) {
     if (array == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([array] { ArrayObject_Release(array); });
+    SCOPE_GUARD([array] { release_without_gil(ArrayObject_Release, array); });
 
-    error_type err = ArrayObject_Append(array, value);
+    error_type err = without_gil([array, value] {
+        return ArrayObject_Append(array, value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "ArrayObject_Append");
     }
@@ -160,9 +172,11 @@ PyObject* array_object_insert(PyObject* self, PyObject* args) {
     if (array == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([array] { ArrayObject_Release(array); });
+    SCOPE_GUARD([array] { release_without_gil(ArrayObject_Release, array); });
 
-    error_type err = ArrayObject_Insert(array, at, value);
+    error_type err = without_gil([array, at, value] {
+        return ArrayObject_Insert(array, at, value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "ArrayObject_Insert");
     }
@@ -187,9 +201,11 @@ PyObject* array_object_remove(PyObject* self, PyObject* args) {
     if (array == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([array] { ArrayObject_Release(array); });
+    SCOPE_GUARD([array] { release_without_gil(ArrayObject_Release, array); });
 
-    error_type err = ArrayObject_Remove(array, at);
+    error_type err = without_gil([array, at] {
+        return ArrayObject_Remove(array, at);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "ArrayObject_Remove");
     }
@@ -208,9 +224,11 @@ PyObject* array_object_clear(PyObject* self, PyObject* args) {
     if (array == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([array] { ArrayObject_Release(array); });
+    SCOPE_GUARD([array] { release_without_gil(ArrayObject_Release, array); });
 
-    error_type err = ArrayObject_Clear(array);
+    error_type err = without_gil([array] {
+        return ArrayObject_Clear(array);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "ArrayObject_Clear");
     }

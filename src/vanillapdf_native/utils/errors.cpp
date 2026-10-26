@@ -10,7 +10,9 @@
 
 PyObject* errors_get_last_error(PyObject* self, PyObject* args) {
     error_type code = VANILLAPDF_ERROR_SUCCESS;
-    error_type err = Errors_GetLastError(&code);
+    error_type err = without_gil([&code] {
+        return Errors_GetLastError(&code);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Errors_GetLastError");
     }
@@ -33,7 +35,9 @@ PyObject* errors_get_printable_error_text(PyObject* self, PyObject* args) {
     }
 
     size_type size = 0;
-    error_type length_err = Errors_GetPrintableErrorTextLength(value, &size);
+    error_type length_err = without_gil([value, &size] {
+        return Errors_GetPrintableErrorTextLength(value, &size);
+    });
     if (length_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(length_err, "Errors_GetPrintableErrorTextLength");
     }
@@ -48,7 +52,9 @@ PyObject* errors_get_printable_error_text(PyObject* self, PyObject* args) {
     }
     SCOPE_GUARD([data] { PyMem_Free(data); });
 
-    error_type text_err = Errors_GetPrintableErrorText(value, data, size);
+    error_type text_err = without_gil([value, data, size] {
+        return Errors_GetPrintableErrorText(value, data, size);
+    });
     if (text_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(text_err, "Errors_GetPrintableErrorText");
     }
@@ -59,7 +65,9 @@ PyObject* errors_get_printable_error_text(PyObject* self, PyObject* args) {
 
 PyObject* errors_get_last_error_message(PyObject* self, PyObject* args) {
     size_type size = 0;
-    error_type length_err = Errors_GetLastErrorMessageLength(&size);
+    error_type length_err = without_gil([&size] {
+        return Errors_GetLastErrorMessageLength(&size);
+    });
     if (length_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(length_err, "Errors_GetLastErrorMessageLength");
     }
@@ -75,7 +83,9 @@ PyObject* errors_get_last_error_message(PyObject* self, PyObject* args) {
     }
     SCOPE_GUARD([data] { PyMem_Free(data); });
 
-    error_type message_err = Errors_GetLastErrorMessage(data, size);
+    error_type message_err = without_gil([data, size] {
+        return Errors_GetLastErrorMessage(data, size);
+    });
     if (message_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(message_err, "Errors_GetLastErrorMessage");
     }

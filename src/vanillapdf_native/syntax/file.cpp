@@ -135,7 +135,9 @@ PyObject* file_get_version(PyObject* self, PyObject* args) {
     }
 
     PDFVersion version;
-    error_type err = File_GetVersion(handle, &version);
+    error_type err = without_gil([handle, &version] {
+        return File_GetVersion(handle, &version);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "File_GetVersion");
     }
@@ -155,7 +157,9 @@ PyObject* file_get_filename(PyObject* self, PyObject* args) {
     }
 
     BufferHandle* buffer = nullptr;
-    error_type err = File_GetFilename(handle, &buffer);
+    error_type err = without_gil([handle, &buffer] {
+        return File_GetFilename(handle, &buffer);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "File_GetFilename");
     }
@@ -175,7 +179,9 @@ PyObject* file_is_encrypted(PyObject* self, PyObject* args) {
     }
 
     boolean_type is_encrypted = VANILLAPDF_RV_FALSE;
-    error_type err = File_IsEncrypted(handle, &is_encrypted);
+    error_type err = without_gil([handle, &is_encrypted] {
+        return File_IsEncrypted(handle, &is_encrypted);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "File_IsEncrypted");
     }

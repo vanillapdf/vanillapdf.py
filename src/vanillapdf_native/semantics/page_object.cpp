@@ -32,7 +32,9 @@ PyObject* page_object_create_from_document(PyObject* self, PyObject* args) {
     }
 
     PageObjectHandle* page = nullptr;
-    error_type err = PageObject_CreateFromDocument(document, &page);
+    error_type err = without_gil([document, &page] {
+        return PageObject_CreateFromDocument(document, &page);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "PageObject_CreateFromDocument");
     }
@@ -52,7 +54,9 @@ PyObject* page_object_get_media_box(PyObject* self, PyObject* args) {
     }
 
     RectangleHandle* media_box = nullptr;
-    error_type err = PageObject_GetMediaBox(page, &media_box);
+    error_type err = without_gil([page, &media_box] {
+        return PageObject_GetMediaBox(page, &media_box);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "PageObject_GetMediaBox");
     }
@@ -77,7 +81,9 @@ PyObject* page_object_set_media_box(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = PageObject_SetMediaBox(page, media_box);
+    error_type err = without_gil([page, media_box] {
+        return PageObject_SetMediaBox(page, media_box);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "PageObject_SetMediaBox");
     }
@@ -97,14 +103,18 @@ PyObject* page_object_get_base_object(PyObject* self, PyObject* args) {
     }
 
     DictionaryObjectHandle* base = nullptr;
-    error_type base_err = PageObject_GetBaseObject(page, &base);
+    error_type base_err = without_gil([page, &base] {
+        return PageObject_GetBaseObject(page, &base);
+    });
     if (base_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(base_err, "PageObject_GetBaseObject");
     }
-    SCOPE_GUARD([base] { DictionaryObject_Release(base); });
+    SCOPE_GUARD([base] { release_without_gil(DictionaryObject_Release, base); });
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = DictionaryObject_ToObject(base, &object);
+    error_type to_object_err = without_gil([base, &object] {
+        return DictionaryObject_ToObject(base, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "DictionaryObject_ToObject");
     }

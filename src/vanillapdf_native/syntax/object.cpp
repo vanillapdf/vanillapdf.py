@@ -27,7 +27,9 @@ PyObject* object_get_object_type(PyObject* self, PyObject* args) {
     }
 
     ObjectType type = ObjectType_Undefined;
-    error_type err = Object_GetObjectType(object, &type);
+    error_type err = without_gil([object, &type] {
+        return Object_GetObjectType(object, &type);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Object_GetObjectType");
     }
@@ -43,7 +45,9 @@ PyObject* object_type_name(PyObject* self, PyObject* args) {
 
     ObjectType type = static_cast<ObjectType>(type_value);
     string_type name = nullptr;
-    error_type err = Object_TypeName(type, &name);
+    error_type err = without_gil([type, &name] {
+        return Object_TypeName(type, &name);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Object_TypeName");
     }
@@ -63,7 +67,9 @@ PyObject* object_get_offset(PyObject* self, PyObject* args) {
     }
 
     offset_type offset = 0;
-    error_type err = Object_GetOffset(object, &offset);
+    error_type err = without_gil([object, &offset] {
+        return Object_GetOffset(object, &offset);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Object_GetOffset");
     }

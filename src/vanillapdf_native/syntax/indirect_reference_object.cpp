@@ -12,14 +12,18 @@
 
 PyObject* indirect_reference_object_create(PyObject* self, PyObject* args) {
     IndirectReferenceObjectHandle* reference = nullptr;
-    error_type create_err = IndirectReferenceObject_Create(&reference);
+    error_type create_err = without_gil([&reference] {
+        return IndirectReferenceObject_Create(&reference);
+    });
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "IndirectReferenceObject_Create");
     }
-    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { release_without_gil(IndirectReferenceObject_Release, reference); });
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = IndirectReferenceObject_ToObject(reference, &object);
+    error_type to_object_err = without_gil([reference, &object] {
+        return IndirectReferenceObject_ToObject(reference, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "IndirectReferenceObject_ToObject");
     }
@@ -42,10 +46,12 @@ PyObject* indirect_reference_object_get_referenced_object_number(PyObject* self,
     if (reference == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { release_without_gil(IndirectReferenceObject_Release, reference); });
 
     biguint_type number = 0;
-    error_type err = IndirectReferenceObject_GetReferencedObjectNumber(reference, &number);
+    error_type err = without_gil([reference, &number] {
+        return IndirectReferenceObject_GetReferencedObjectNumber(reference, &number);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "IndirectReferenceObject_GetReferencedObjectNumber");
     }
@@ -63,10 +69,12 @@ PyObject* indirect_reference_object_get_referenced_generation_number(PyObject* s
     if (reference == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { release_without_gil(IndirectReferenceObject_Release, reference); });
 
     ushort_type generation = 0;
-    error_type err = IndirectReferenceObject_GetReferencedGenerationNumber(reference, &generation);
+    error_type err = without_gil([reference, &generation] {
+        return IndirectReferenceObject_GetReferencedGenerationNumber(reference, &generation);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "IndirectReferenceObject_GetReferencedGenerationNumber");
     }
@@ -84,10 +92,12 @@ PyObject* indirect_reference_object_get_referenced_object(PyObject* self, PyObje
     if (reference == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { release_without_gil(IndirectReferenceObject_Release, reference); });
 
     ObjectHandle* object = nullptr;
-    error_type err = IndirectReferenceObject_GetReferencedObject(reference, &object);
+    error_type err = without_gil([reference, &object] {
+        return IndirectReferenceObject_GetReferencedObject(reference, &object);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "IndirectReferenceObject_GetReferencedObject");
     }
@@ -113,9 +123,11 @@ PyObject* indirect_reference_object_set_object_number(PyObject* self, PyObject* 
     if (reference == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { release_without_gil(IndirectReferenceObject_Release, reference); });
 
-    error_type err = IndirectReferenceObject_SetObjectNumber(reference, number);
+    error_type err = without_gil([reference, number] {
+        return IndirectReferenceObject_SetObjectNumber(reference, number);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "IndirectReferenceObject_SetObjectNumber");
     }
@@ -139,9 +151,11 @@ PyObject* indirect_reference_object_set_generation_number(PyObject* self, PyObje
     if (reference == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { release_without_gil(IndirectReferenceObject_Release, reference); });
 
-    error_type err = IndirectReferenceObject_SetGenerationNumber(reference, generation);
+    error_type err = without_gil([reference, generation] {
+        return IndirectReferenceObject_SetGenerationNumber(reference, generation);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "IndirectReferenceObject_SetGenerationNumber");
     }
@@ -165,9 +179,11 @@ PyObject* indirect_reference_object_set_referenced_object(PyObject* self, PyObje
     if (reference == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([reference] { IndirectReferenceObject_Release(reference); });
+    SCOPE_GUARD([reference] { release_without_gil(IndirectReferenceObject_Release, reference); });
 
-    error_type err = IndirectReferenceObject_SetReferencedObject(reference, value);
+    error_type err = without_gil([reference, value] {
+        return IndirectReferenceObject_SetReferencedObject(reference, value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "IndirectReferenceObject_SetReferencedObject");
     }

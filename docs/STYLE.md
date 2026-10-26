@@ -36,8 +36,20 @@ VanillaPDF **C API** only.
   earlier result. Name them for the call (`create_err`, `to_object_err`, …).
 - Check immediately and, on failure, `return raise_last_error(err, "C_Api_Name");`
   — never a generic `PyErr_SetString(PyExc_RuntimeError, "Failed to …")`.
-- `raise_last_error` runs inline right after the failing call (same thread, GIL
-  held) so the library's thread-local error state is intact.
+- `raise_last_error` runs inline right after the failing call (same thread)
+  so the library's thread-local error state is intact.
+
+### The GIL
+- **Every** call into the library runs with the GIL released: wrap it in
+  `without_gil([captures] { return X_Y(...); })`, capturing the specific
+  handles and values (outputs by reference), never `[&]`. Any call may take
+  library locks, and with caller-supplied streams call back into Python, so a
+  call made while holding the GIL can dead-lock.
+- Release handles with `release_without_gil(X_Release, h)`, including in scope
+  guards: dropping the last reference destroys the object.
+- Nothing inside `without_gil` may touch the Python C-API or release the GIL
+  again. `python scripts/check_gil_release.py` enforces both directions (CI
+  runs it); calls through function pointers are covered too.
 - Map missing optional entries to Python `None` via `is_missing_error(err)`.
 
 ### Handles and memory
@@ -46,7 +58,7 @@ VanillaPDF **C API** only.
   `capsule_cast<T>(capsule, "VanillaPDF.Type")`, `capsule_release(...)`.
 - Allocate with `py_malloc<T>()`, not a cast around `PyMem_Malloc`.
 - Free/release on error paths with a scope guard. Use `SCOPE_GUARD([h]{
-  X_Release(h); })` for the common fire-and-forget case; use a named
+  release_without_gil(X_Release, h); })` for the common fire-and-forget case; use a named
   `auto g = make_scope_guard([h]{ … })` only when you need `g.dismiss()`
   (ownership transfers out, e.g. to a capsule or the caller). **Capture the
   specific variables explicitly (`[h]`, `[data]`), never `[&]`.**

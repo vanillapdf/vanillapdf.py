@@ -15,14 +15,18 @@ static const char* const ITERATOR_CAPSULE = "VanillaPDF.DictionaryObjectIterator
 
 PyObject* dictionary_object_create(PyObject* self, PyObject* args) {
     DictionaryObjectHandle* dictionary = nullptr;
-    error_type create_err = DictionaryObject_Create(&dictionary);
+    error_type create_err = without_gil([&dictionary] {
+        return DictionaryObject_Create(&dictionary);
+    });
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "DictionaryObject_Create");
     }
-    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([dictionary] { release_without_gil(DictionaryObject_Release, dictionary); });
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = DictionaryObject_ToObject(dictionary, &object);
+    error_type to_object_err = without_gil([dictionary, &object] {
+        return DictionaryObject_ToObject(dictionary, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "DictionaryObject_ToObject");
     }
@@ -41,10 +45,12 @@ PyObject* dictionary_object_get_size(PyObject* self, PyObject* args) {
     if (dictionary == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([dictionary] { release_without_gil(DictionaryObject_Release, dictionary); });
 
     size_type size = 0;
-    error_type err = DictionaryObject_GetSize(dictionary, &size);
+    error_type err = without_gil([dictionary, &size] {
+        return DictionaryObject_GetSize(dictionary, &size);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DictionaryObject_GetSize");
     }
@@ -68,7 +74,9 @@ static int extract_dictionary_and_key(PyObject* dict_capsule,
     NameObjectHandle* key = object_cast<NameObjectHandle>(
         key_capsule, NameObject_FromObject, "NameObject_FromObject");
     if (key == nullptr) {
-        DictionaryObject_Release(dictionary);
+        without_gil([dictionary] {
+            return DictionaryObject_Release(dictionary);
+        });
         return -1;
     }
 
@@ -89,11 +97,13 @@ PyObject* dictionary_object_find(PyObject* self, PyObject* args) {
     if (extract_dictionary_and_key(capsule, key_capsule, &dictionary, &key) < 0) {
         return nullptr;
     }
-    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
-    SCOPE_GUARD([key] { NameObject_Release(key); });
+    SCOPE_GUARD([dictionary] { release_without_gil(DictionaryObject_Release, dictionary); });
+    SCOPE_GUARD([key] { release_without_gil(NameObject_Release, key); });
 
     ObjectHandle* object = nullptr;
-    error_type err = DictionaryObject_Find(dictionary, key, &object);
+    error_type err = without_gil([dictionary, key, &object] {
+        return DictionaryObject_Find(dictionary, key, &object);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DictionaryObject_Find");
     }
@@ -113,12 +123,14 @@ PyObject* dictionary_object_try_find(PyObject* self, PyObject* args) {
     if (extract_dictionary_and_key(capsule, key_capsule, &dictionary, &key) < 0) {
         return nullptr;
     }
-    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
-    SCOPE_GUARD([key] { NameObject_Release(key); });
+    SCOPE_GUARD([dictionary] { release_without_gil(DictionaryObject_Release, dictionary); });
+    SCOPE_GUARD([key] { release_without_gil(NameObject_Release, key); });
 
     boolean_type found = VANILLAPDF_RV_FALSE;
     ObjectHandle* object = nullptr;
-    error_type err = DictionaryObject_TryFind(dictionary, key, &found, &object);
+    error_type err = without_gil([dictionary, key, &found, &object] {
+        return DictionaryObject_TryFind(dictionary, key, &found, &object);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DictionaryObject_TryFind");
     }
@@ -142,11 +154,13 @@ PyObject* dictionary_object_contains(PyObject* self, PyObject* args) {
     if (extract_dictionary_and_key(capsule, key_capsule, &dictionary, &key) < 0) {
         return nullptr;
     }
-    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
-    SCOPE_GUARD([key] { NameObject_Release(key); });
+    SCOPE_GUARD([dictionary] { release_without_gil(DictionaryObject_Release, dictionary); });
+    SCOPE_GUARD([key] { release_without_gil(NameObject_Release, key); });
 
     boolean_type contains = VANILLAPDF_RV_FALSE;
-    error_type err = DictionaryObject_Contains(dictionary, key, &contains);
+    error_type err = without_gil([dictionary, key, &contains] {
+        return DictionaryObject_Contains(dictionary, key, &contains);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DictionaryObject_Contains");
     }
@@ -169,11 +183,13 @@ PyObject* dictionary_object_remove(PyObject* self, PyObject* args) {
     if (extract_dictionary_and_key(capsule, key_capsule, &dictionary, &key) < 0) {
         return nullptr;
     }
-    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
-    SCOPE_GUARD([key] { NameObject_Release(key); });
+    SCOPE_GUARD([dictionary] { release_without_gil(DictionaryObject_Release, dictionary); });
+    SCOPE_GUARD([key] { release_without_gil(NameObject_Release, key); });
 
     boolean_type removed = VANILLAPDF_RV_FALSE;
-    error_type err = DictionaryObject_Remove(dictionary, key, &removed);
+    error_type err = without_gil([dictionary, key, &removed] {
+        return DictionaryObject_Remove(dictionary, key, &removed);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DictionaryObject_Remove");
     }
@@ -203,11 +219,13 @@ PyObject* dictionary_object_insert(PyObject* self, PyObject* args) {
     if (extract_dictionary_and_key(capsule, key_capsule, &dictionary, &key) < 0) {
         return nullptr;
     }
-    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
-    SCOPE_GUARD([key] { NameObject_Release(key); });
+    SCOPE_GUARD([dictionary] { release_without_gil(DictionaryObject_Release, dictionary); });
+    SCOPE_GUARD([key] { release_without_gil(NameObject_Release, key); });
 
-    error_type err = DictionaryObject_Insert(
-        dictionary, key, value, overwrite ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE);
+    boolean_type native_overwrite = overwrite ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE;
+    error_type err = without_gil([dictionary, key, value, native_overwrite] {
+        return DictionaryObject_Insert(dictionary, key, value, native_overwrite);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DictionaryObject_Insert");
     }
@@ -226,9 +244,11 @@ PyObject* dictionary_object_clear(PyObject* self, PyObject* args) {
     if (dictionary == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([dictionary] { release_without_gil(DictionaryObject_Release, dictionary); });
 
-    error_type err = DictionaryObject_Clear(dictionary);
+    error_type err = without_gil([dictionary] {
+        return DictionaryObject_Clear(dictionary);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DictionaryObject_Clear");
     }
@@ -247,10 +267,12 @@ PyObject* dictionary_object_get_iterator(PyObject* self, PyObject* args) {
     if (dictionary == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([dictionary] { DictionaryObject_Release(dictionary); });
+    SCOPE_GUARD([dictionary] { release_without_gil(DictionaryObject_Release, dictionary); });
 
     DictionaryObjectIteratorHandle* iterator = nullptr;
-    error_type err = DictionaryObject_GetIterator(dictionary, &iterator);
+    error_type err = without_gil([dictionary, &iterator] {
+        return DictionaryObject_GetIterator(dictionary, &iterator);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DictionaryObject_GetIterator");
     }
@@ -273,14 +295,18 @@ PyObject* dictionary_iterator_get_key(PyObject* self, PyObject* args) {
     }
 
     NameObjectHandle* key = nullptr;
-    error_type key_err = DictionaryObjectIterator_GetKey(iterator, &key);
+    error_type key_err = without_gil([iterator, &key] {
+        return DictionaryObjectIterator_GetKey(iterator, &key);
+    });
     if (key_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(key_err, "DictionaryObjectIterator_GetKey");
     }
-    SCOPE_GUARD([key] { NameObject_Release(key); });
+    SCOPE_GUARD([key] { release_without_gil(NameObject_Release, key); });
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = NameObject_ToObject(key, &object);
+    error_type to_object_err = without_gil([key, &object] {
+        return NameObject_ToObject(key, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "NameObject_ToObject");
     }
@@ -301,7 +327,9 @@ PyObject* dictionary_iterator_get_value(PyObject* self, PyObject* args) {
     }
 
     ObjectHandle* object = nullptr;
-    error_type err = DictionaryObjectIterator_GetValue(iterator, &object);
+    error_type err = without_gil([iterator, &object] {
+        return DictionaryObjectIterator_GetValue(iterator, &object);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DictionaryObjectIterator_GetValue");
     }
@@ -322,7 +350,9 @@ PyObject* dictionary_iterator_is_valid(PyObject* self, PyObject* args) {
     }
 
     boolean_type valid = VANILLAPDF_RV_FALSE;
-    error_type err = DictionaryObjectIterator_IsValid(iterator, &valid);
+    error_type err = without_gil([iterator, &valid] {
+        return DictionaryObjectIterator_IsValid(iterator, &valid);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DictionaryObjectIterator_IsValid");
     }
@@ -345,7 +375,9 @@ PyObject* dictionary_iterator_next(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = DictionaryObjectIterator_Next(iterator);
+    error_type err = without_gil([iterator] {
+        return DictionaryObjectIterator_Next(iterator);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DictionaryObjectIterator_Next");
     }

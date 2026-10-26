@@ -137,8 +137,9 @@ non-deterministic test behaviour.
   locally it also passes when the GIL is held for the entire call (CPython
   forces a handoff at the first bytecode boundary after the call, worth hundreds
   of thousands of iterations to the other thread). GIL release itself is
-  unconditional (`GilRelease` in `common.h`); what can regress is a blocking
-  call site forgetting `without_gil`, which review catches.
+  unconditional (`GilRelease` in `common.h`); what can regress is a call site
+  forgetting `without_gil`, which `scripts/check_gil_release.py` catches
+  statically (every native call must release the GIL; CI runs it in `lint.yml`).
 
 Native logging must never reach stdout (root-caused native bug, fixed at the
 binding boundary). The native library defaults to an **stdout log sink at INFO**.

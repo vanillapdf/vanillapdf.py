@@ -19,14 +19,18 @@ PyObject* name_object_create_from_decoded_string(PyObject* self, PyObject* args)
     }
 
     NameObjectHandle* name = nullptr;
-    error_type create_err = NameObject_CreateFromDecodedString(value, &name);
+    error_type create_err = without_gil([value, &name] {
+        return NameObject_CreateFromDecodedString(value, &name);
+    });
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "NameObject_CreateFromDecodedString");
     }
-    SCOPE_GUARD([name] { NameObject_Release(name); });
+    SCOPE_GUARD([name] { release_without_gil(NameObject_Release, name); });
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = NameObject_ToObject(name, &object);
+    error_type to_object_err = without_gil([name, &object] {
+        return NameObject_ToObject(name, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "NameObject_ToObject");
     }
@@ -45,10 +49,12 @@ PyObject* name_object_get_value(PyObject* self, PyObject* args) {
     if (name == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([name] { NameObject_Release(name); });
+    SCOPE_GUARD([name] { release_without_gil(NameObject_Release, name); });
 
     BufferHandle* buffer = nullptr;
-    error_type err = NameObject_GetValue(name, &buffer);
+    error_type err = without_gil([name, &buffer] {
+        return NameObject_GetValue(name, &buffer);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "NameObject_GetValue");
     }

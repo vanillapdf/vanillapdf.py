@@ -34,17 +34,21 @@ static PyObject* get_string_property(
     }
 
     StringObjectHandle* string = nullptr;
-    error_type err = getter(info, &string);
+    error_type err = without_gil([getter, info, &string] {
+        return getter(info, &string);
+    });
     if (is_missing_error(err)) {
         Py_RETURN_NONE;
     }
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, operation);
     }
-    SCOPE_GUARD([string] { StringObject_Release(string); });
+    SCOPE_GUARD([string] { release_without_gil(StringObject_Release, string); });
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = StringObject_ToObject(string, &object);
+    error_type to_object_err = without_gil([string, &object] {
+        return StringObject_ToObject(string, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "StringObject_ToObject");
     }

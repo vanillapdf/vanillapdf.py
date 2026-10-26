@@ -52,6 +52,11 @@ reserves those for metadata corrections rather than bug fixes.
 - Paths accept `os.PathLike` (e.g. `pathlib.Path`) as well as `str`.
 
 ### Changed
+- Every call into the native library now releases the GIL, including handle
+  releases (`close()`, garbage collection), not only the blocking ones. Other
+  Python threads keep running during any native work, and native code can later
+  call back into Python (caller-supplied streams) without dead-locking.
+  `scripts/check_gil_release.py` enforces this in CI.
 - **Breaking:** `Document` and `File` are created with class methods mirroring
   the native API: `Document.open(path)` replaces `Document(path)`, and
   `File.open(path)` replaces `File(path)`.

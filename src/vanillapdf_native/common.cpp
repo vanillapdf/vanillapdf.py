@@ -24,7 +24,8 @@ static void capsule_destructor(PyObject* capsule) {
     HandleBox* box = static_cast<HandleBox*>(PyCapsule_GetPointer(capsule, name));
     if (box != nullptr) {
         if (box->handle != nullptr && box->release != nullptr) {
-            box->release(box->handle);
+            /* The last reference may destroy the object (flush, take locks). */
+            release_without_gil(box->release, box->handle);
         }
         PyMem_Free(box);
     }
@@ -42,7 +43,7 @@ PyObject* capsule_new(void* handle, const char* name, release_fn release) {
 
     auto handle_guard = make_scope_guard([handle, release] {
         if (release != nullptr) {
-            release(handle);
+            release_without_gil(release, handle);
         }
     });
 
@@ -104,7 +105,7 @@ PyObject* capsule_release(PyObject* capsule, const char* name) {
     /* Idempotent: releasing an already-released box is a no-op success. */
     if (box->handle != nullptr) {
         if (box->release != nullptr) {
-            box->release(box->handle);
+            release_without_gil(box->release, box->handle);
         }
         box->handle = nullptr;
     }
@@ -123,7 +124,9 @@ int is_missing_error(error_type err) {
  * NUL-terminated string, or nullptr (no exception set) on failure. */
 static char* fetch_printable_error_text(error_type value) {
     size_type size = 0;
-    error_type length_err = Errors_GetPrintableErrorTextLength(value, &size);
+    error_type length_err = without_gil([value, &size] {
+        return Errors_GetPrintableErrorTextLength(value, &size);
+    });
     if (length_err != VANILLAPDF_ERROR_SUCCESS || size == 0) {
         return nullptr;
     }
@@ -135,7 +138,9 @@ static char* fetch_printable_error_text(error_type value) {
     auto data_guard = make_scope_guard([data] { PyMem_Free(data); });
 
     /* Length already includes the trailing NUL character. */
-    error_type text_err = Errors_GetPrintableErrorText(value, data, size);
+    error_type text_err = without_gil([value, data, size] {
+        return Errors_GetPrintableErrorText(value, data, size);
+    });
     if (text_err != VANILLAPDF_ERROR_SUCCESS) {
         return nullptr;
     }
@@ -148,7 +153,9 @@ static char* fetch_printable_error_text(error_type value) {
  * PyMem_Malloc'd NUL-terminated string, or nullptr on failure/empty. */
 static char* fetch_last_error_message(void) {
     size_type size = 0;
-    error_type length_err = Errors_GetLastErrorMessageLength(&size);
+    error_type length_err = without_gil([&size] {
+        return Errors_GetLastErrorMessageLength(&size);
+    });
     if (length_err != VANILLAPDF_ERROR_SUCCESS || size <= 1) {
         /* size <= 1 means only the trailing NUL: no message. */
         return nullptr;
@@ -160,7 +167,9 @@ static char* fetch_last_error_message(void) {
     }
     auto data_guard = make_scope_guard([data] { PyMem_Free(data); });
 
-    error_type message_err = Errors_GetLastErrorMessage(data, size);
+    error_type message_err = without_gil([data, size] {
+        return Errors_GetLastErrorMessage(data, size);
+    });
     if (message_err != VANILLAPDF_ERROR_SUCCESS) {
         return nullptr;
     }

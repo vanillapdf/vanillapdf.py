@@ -10,7 +10,9 @@
 
 PyObject* logging_get_severity(PyObject* self, PyObject* args) {
     LoggingSeverity severity;
-    error_type err = Logging_GetSeverity(&severity);
+    error_type err = without_gil([&severity] {
+        return Logging_GetSeverity(&severity);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Logging_GetSeverity");
     }
@@ -24,7 +26,9 @@ PyObject* logging_set_severity(PyObject* self, PyObject* args) {
     }
 
     LoggingSeverity level = static_cast<LoggingSeverity>(severity);
-    error_type err = Logging_SetSeverity(level);
+    error_type err = without_gil([level] {
+        return Logging_SetSeverity(level);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Logging_SetSeverity");
     }
@@ -38,7 +42,9 @@ PyObject* logging_set_pattern(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = Logging_SetPattern(pattern);
+    error_type err = without_gil([pattern] {
+        return Logging_SetPattern(pattern);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Logging_SetPattern");
     }
@@ -47,7 +53,9 @@ PyObject* logging_set_pattern(PyObject* self, PyObject* args) {
 }
 
 PyObject* logging_shutdown(PyObject* self, PyObject* args) {
-    error_type err = Logging_Shutdown();
+    error_type err = without_gil([] {
+        return Logging_Shutdown();
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Logging_Shutdown");
     }
@@ -63,7 +71,9 @@ PyObject* logging_set_rotating_file(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = Logging_SetRotatingFileLogger(filename, max_file_size, max_files);
+    error_type err = without_gil([filename, max_file_size, max_files] {
+        return Logging_SetRotatingFileLogger(filename, max_file_size, max_files);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Logging_SetRotatingFileLogger");
     }
@@ -95,7 +105,9 @@ static void CALLING_CONVENTION native_log_flush(void* /* user_data */) {
 }
 
 int install_native_logging(void) {
-    error_type err = Logging_SetCallbackLogger(native_log_sink, native_log_flush, nullptr);
+    error_type err = without_gil([] {
+        return Logging_SetCallbackLogger(native_log_sink, native_log_flush, nullptr);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return -1;
     }

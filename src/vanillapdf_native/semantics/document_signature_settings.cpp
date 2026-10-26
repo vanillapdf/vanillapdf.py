@@ -18,7 +18,9 @@ static PyObject* settings_capsule_from_handle(DocumentSignatureSettingsHandle* h
 
 PyObject* document_signature_settings_create(PyObject* self, PyObject* args) {
     DocumentSignatureSettingsHandle* settings = nullptr;
-    error_type err = DocumentSignatureSettings_Create(&settings);
+    error_type err = without_gil([&settings] {
+        return DocumentSignatureSettings_Create(&settings);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DocumentSignatureSettings_Create");
     }
@@ -39,7 +41,9 @@ PyObject* document_signature_settings_get_digest(PyObject* self, PyObject* args)
     }
 
     MessageDigestAlgorithmType digest = MessageDigestAlgorithmType_Undefined;
-    error_type err = DocumentSignatureSettings_GetDigest(settings, &digest);
+    error_type err = without_gil([settings, &digest] {
+        return DocumentSignatureSettings_GetDigest(settings, &digest);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DocumentSignatureSettings_GetDigest");
     }
@@ -61,7 +65,9 @@ PyObject* document_signature_settings_set_digest(PyObject* self, PyObject* args)
     }
 
     MessageDigestAlgorithmType value = static_cast<MessageDigestAlgorithmType>(digest);
-    error_type err = DocumentSignatureSettings_SetDigest(settings, value);
+    error_type err = without_gil([settings, value] {
+        return DocumentSignatureSettings_SetDigest(settings, value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DocumentSignatureSettings_SetDigest");
     }
@@ -88,7 +94,9 @@ PyObject* document_signature_settings_set_signing_key(PyObject* self, PyObject* 
         return nullptr;
     }
 
-    error_type err = DocumentSignatureSettings_SetSigningKey(settings, signing_key);
+    error_type err = without_gil([settings, signing_key] {
+        return DocumentSignatureSettings_SetSigningKey(settings, signing_key);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DocumentSignatureSettings_SetSigningKey");
     }

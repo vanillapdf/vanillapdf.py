@@ -127,8 +127,12 @@ private:
     PyThreadState* _state;
 };
 
-/* Run a blocking native call with the GIL released, returning its result (the
- * library's error_type). `call` must touch only the C++ library and locals --
+/* Run a native call with the GIL released, returning its result (the library's
+ * error_type). EVERY call into the library goes through here (enforced by
+ * scripts/check_gil_release.py): any call may take library locks, and with
+ * caller-supplied streams may call back into Python, so a call made while
+ * holding the GIL can dead-lock against a thread that holds such a lock and is
+ * waiting for the GIL. `call` must touch only the C++ library and locals --
  * no Python C-API, no capsule access, no object allocation. The GIL is held
  * again by the time this returns, so the caller can inspect the result and
  * raise. Capture the specific handles/values explicitly, never [&]:
@@ -141,6 +145,16 @@ template <typename Fn>
 auto without_gil(Fn&& call) -> decltype(call()) {
     GilRelease release;
     return call();
+}
+
+/* Release a native handle with the GIL released: a release that drops the last
+ * reference destroys the object, which may flush and take library locks, so it
+ * is a blocking native call like any other. Typically used in a scope guard:
+ *
+ *   SCOPE_GUARD([dictionary] { release_without_gil(DictionaryObject_Release, dictionary); }); */
+template <typename H>
+void release_without_gil(error_type (CALLING_CONVENTION *release)(H*), H* handle) {
+    without_gil([release, handle] { return release(handle); });
 }
 
 /* Allocate raw, uninitialized memory for `count` objects of type T via

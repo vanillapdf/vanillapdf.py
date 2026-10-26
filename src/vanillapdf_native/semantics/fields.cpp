@@ -39,7 +39,9 @@ PyObject* field_collection_get_size(PyObject* self, PyObject* args) {
     }
 
     size_type size = 0;
-    error_type err = FieldCollection_GetSize(fields, &size);
+    error_type err = without_gil([fields, &size] {
+        return FieldCollection_GetSize(fields, &size);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "FieldCollection_GetSize");
     }
@@ -66,7 +68,9 @@ PyObject* field_collection_at(PyObject* self, PyObject* args) {
     }
 
     FieldHandle* field = nullptr;
-    error_type err = FieldCollection_At(fields, native_index, &field);
+    error_type err = without_gil([fields, native_index, &field] {
+        return FieldCollection_At(fields, native_index, &field);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "FieldCollection_At");
     }
@@ -95,7 +99,9 @@ PyObject* field_get_type(PyObject* self, PyObject* args) {
     }
 
     FieldType type = FieldType_Undefined;
-    error_type err = Field_GetType(field, &type);
+    error_type err = without_gil([field, &type] {
+        return Field_GetType(field, &type);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "Field_GetType");
     }
@@ -124,7 +130,9 @@ PyObject* signature_field_from_field(PyObject* self, PyObject* args) {
     }
 
     SignatureFieldHandle* signature_field = nullptr;
-    error_type err = SignatureField_FromField(field, &signature_field);
+    error_type err = without_gil([field, &signature_field] {
+        return SignatureField_FromField(field, &signature_field);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "SignatureField_FromField");
     }
@@ -145,7 +153,9 @@ PyObject* signature_field_get_value(PyObject* self, PyObject* args) {
     }
 
     DigitalSignatureHandle* signature = nullptr;
-    error_type err = SignatureField_GetValue(signature_field, &signature);
+    error_type err = without_gil([signature_field, &signature] {
+        return SignatureField_GetValue(signature_field, &signature);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "SignatureField_GetValue");
     }

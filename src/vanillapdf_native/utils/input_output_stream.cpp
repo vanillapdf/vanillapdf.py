@@ -14,7 +14,9 @@ static const char* const INPUT_OUTPUT_STREAM_CAPSULE = "VanillaPDF.InputOutputSt
 
 PyObject* input_output_stream_create_from_memory(PyObject* self, PyObject* args) {
     InputOutputStreamHandle* handle = nullptr;
-    error_type err = InputOutputStream_CreateFromMemory(&handle);
+    error_type err = without_gil([&handle] {
+        return InputOutputStream_CreateFromMemory(&handle);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "InputOutputStream_CreateFromMemory");
     }
@@ -64,7 +66,9 @@ PyObject* input_output_stream_get_input_position(PyObject* self, PyObject* args)
     }
 
     offset_type value = 0;
-    error_type err = InputOutputStream_GetInputPosition(handle, &value);
+    error_type err = without_gil([handle, &value] {
+        return InputOutputStream_GetInputPosition(handle, &value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "InputOutputStream_GetInputPosition");
     }
@@ -113,7 +117,9 @@ PyObject* input_output_stream_get_output_position(PyObject* self, PyObject* args
     }
 
     offset_type value = 0;
-    error_type err = InputOutputStream_GetOutputPosition(handle, &value);
+    error_type err = without_gil([handle, &value] {
+        return InputOutputStream_GetOutputPosition(handle, &value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "InputOutputStream_GetOutputPosition");
     }

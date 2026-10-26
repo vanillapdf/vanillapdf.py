@@ -55,3 +55,21 @@ jobs:
 
       - name: Pyright check
         run: pyright
+
+  native-gil:
+    name: Native GIL release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.15"
+
+      # Static scan of the extension sources -- no native build required. Every
+      # call into the library must run with the GIL released, and nothing
+      # inside a released region may touch the Python C-API.
+      - name: Check GIL release
+        run: python scripts/check_gil_release.py

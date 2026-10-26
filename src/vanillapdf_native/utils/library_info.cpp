@@ -10,7 +10,9 @@
 
 PyObject* library_info_get_version_major(PyObject* self, PyObject* args) {
     integer_type value = 0;
-    error_type err = LibraryInfo_GetVersionMajor(&value);
+    error_type err = without_gil([&value] {
+        return LibraryInfo_GetVersionMajor(&value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetVersionMajor");
     }
@@ -19,7 +21,9 @@ PyObject* library_info_get_version_major(PyObject* self, PyObject* args) {
 
 PyObject* library_info_get_version_minor(PyObject* self, PyObject* args) {
     integer_type value = 0;
-    error_type err = LibraryInfo_GetVersionMinor(&value);
+    error_type err = without_gil([&value] {
+        return LibraryInfo_GetVersionMinor(&value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetVersionMinor");
     }
@@ -28,7 +32,9 @@ PyObject* library_info_get_version_minor(PyObject* self, PyObject* args) {
 
 PyObject* library_info_get_version_patch(PyObject* self, PyObject* args) {
     integer_type value = 0;
-    error_type err = LibraryInfo_GetVersionPatch(&value);
+    error_type err = without_gil([&value] {
+        return LibraryInfo_GetVersionPatch(&value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetVersionPatch");
     }
@@ -37,7 +43,9 @@ PyObject* library_info_get_version_patch(PyObject* self, PyObject* args) {
 
 PyObject* library_info_get_version_build(PyObject* self, PyObject* args) {
     integer_type value = 0;
-    error_type err = LibraryInfo_GetVersionBuild(&value);
+    error_type err = without_gil([&value] {
+        return LibraryInfo_GetVersionBuild(&value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetVersionBuild");
     }
@@ -46,7 +54,9 @@ PyObject* library_info_get_version_build(PyObject* self, PyObject* args) {
 
 PyObject* library_info_get_author(PyObject* self, PyObject* args) {
     string_type author = nullptr;
-    error_type err = LibraryInfo_GetAuthor(&author);
+    error_type err = without_gil([&author] {
+        return LibraryInfo_GetAuthor(&author);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetAuthor");
     }
@@ -55,7 +65,9 @@ PyObject* library_info_get_author(PyObject* self, PyObject* args) {
 
 PyObject* library_info_get_build_day(PyObject* self, PyObject* args) {
     integer_type value = 0;
-    error_type err = LibraryInfo_GetBuildDay(&value);
+    error_type err = without_gil([&value] {
+        return LibraryInfo_GetBuildDay(&value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetBuildDay");
     }
@@ -64,7 +76,9 @@ PyObject* library_info_get_build_day(PyObject* self, PyObject* args) {
 
 PyObject* library_info_get_build_month(PyObject* self, PyObject* args) {
     integer_type value = 0;
-    error_type err = LibraryInfo_GetBuildMonth(&value);
+    error_type err = without_gil([&value] {
+        return LibraryInfo_GetBuildMonth(&value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetBuildMonth");
     }
@@ -73,7 +87,9 @@ PyObject* library_info_get_build_month(PyObject* self, PyObject* args) {
 
 PyObject* library_info_get_build_year(PyObject* self, PyObject* args) {
     integer_type value = 0;
-    error_type err = LibraryInfo_GetBuildYear(&value);
+    error_type err = without_gil([&value] {
+        return LibraryInfo_GetBuildYear(&value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "LibraryInfo_GetBuildYear");
     }

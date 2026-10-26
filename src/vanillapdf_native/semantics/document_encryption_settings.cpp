@@ -17,7 +17,9 @@ static PyObject* settings_capsule_from_handle(DocumentEncryptionSettingsHandle* 
 
 PyObject* document_encryption_settings_create(PyObject* self, PyObject* args) {
     DocumentEncryptionSettingsHandle* settings = nullptr;
-    error_type err = DocumentEncryptionSettings_Create(&settings);
+    error_type err = without_gil([&settings] {
+        return DocumentEncryptionSettings_Create(&settings);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DocumentEncryptionSettings_Create");
     }
@@ -38,7 +40,9 @@ PyObject* document_encryption_settings_get_algorithm(PyObject* self, PyObject* a
     }
 
     EncryptionAlgorithmType algorithm = EncryptionAlgorithmType_Undefined;
-    error_type err = DocumentEncryptionSettings_GetAlgorithm(settings, &algorithm);
+    error_type err = without_gil([settings, &algorithm] {
+        return DocumentEncryptionSettings_GetAlgorithm(settings, &algorithm);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DocumentEncryptionSettings_GetAlgorithm");
     }
@@ -60,7 +64,9 @@ PyObject* document_encryption_settings_set_algorithm(PyObject* self, PyObject* a
     }
 
     EncryptionAlgorithmType value = static_cast<EncryptionAlgorithmType>(algorithm);
-    error_type err = DocumentEncryptionSettings_SetAlgorithm(settings, value);
+    error_type err = without_gil([settings, value] {
+        return DocumentEncryptionSettings_SetAlgorithm(settings, value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DocumentEncryptionSettings_SetAlgorithm");
     }
@@ -81,7 +87,9 @@ PyObject* document_encryption_settings_get_key_length(PyObject* self, PyObject* 
     }
 
     integer_type key_length = 0;
-    error_type err = DocumentEncryptionSettings_GetKeyLength(settings, &key_length);
+    error_type err = without_gil([settings, &key_length] {
+        return DocumentEncryptionSettings_GetKeyLength(settings, &key_length);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DocumentEncryptionSettings_GetKeyLength");
     }
@@ -102,7 +110,9 @@ PyObject* document_encryption_settings_set_key_length(PyObject* self, PyObject* 
         return nullptr;
     }
 
-    error_type err = DocumentEncryptionSettings_SetKeyLength(settings, key_length);
+    error_type err = without_gil([settings, key_length] {
+        return DocumentEncryptionSettings_SetKeyLength(settings, key_length);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DocumentEncryptionSettings_SetKeyLength");
     }
@@ -123,7 +133,9 @@ PyObject* document_encryption_settings_get_user_access_permissions(PyObject* sel
     }
 
     UserAccessPermissionFlags permissions = UserAccessPermissionFlag_None;
-    error_type err = DocumentEncryptionSettings_GetUserAccessPermissions(settings, &permissions);
+    error_type err = without_gil([settings, &permissions] {
+        return DocumentEncryptionSettings_GetUserAccessPermissions(settings, &permissions);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DocumentEncryptionSettings_GetUserAccessPermissions");
     }
@@ -145,7 +157,9 @@ PyObject* document_encryption_settings_set_user_access_permissions(PyObject* sel
     }
 
     UserAccessPermissionFlags value = static_cast<UserAccessPermissionFlags>(permissions);
-    error_type err = DocumentEncryptionSettings_SetUserAccessPermissions(settings, value);
+    error_type err = without_gil([settings, value] {
+        return DocumentEncryptionSettings_SetUserAccessPermissions(settings, value);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "DocumentEncryptionSettings_SetUserAccessPermissions");
     }
@@ -175,7 +189,11 @@ static PyObject* set_password(
         return nullptr;
     }
 
-    error_type err = setter(settings, buffer);
+    error_type err = without_gil([setter, settings, buffer] {
+
+        return setter(settings, buffer);
+
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, operation);
     }

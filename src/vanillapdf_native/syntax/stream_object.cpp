@@ -15,14 +15,18 @@
 
 PyObject* stream_object_create(PyObject* self, PyObject* args) {
     StreamObjectHandle* stream = nullptr;
-    error_type create_err = StreamObject_Create(&stream);
+    error_type create_err = without_gil([&stream] {
+        return StreamObject_Create(&stream);
+    });
     if (create_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(create_err, "StreamObject_Create");
     }
-    SCOPE_GUARD([stream] { StreamObject_Release(stream); });
+    SCOPE_GUARD([stream] { release_without_gil(StreamObject_Release, stream); });
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = StreamObject_ToObject(stream, &object);
+    error_type to_object_err = without_gil([stream, &object] {
+        return StreamObject_ToObject(stream, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "StreamObject_ToObject");
     }
@@ -41,17 +45,21 @@ PyObject* stream_object_get_header(PyObject* self, PyObject* args) {
     if (stream == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([stream] { StreamObject_Release(stream); });
+    SCOPE_GUARD([stream] { release_without_gil(StreamObject_Release, stream); });
 
     DictionaryObjectHandle* header = nullptr;
-    error_type header_err = StreamObject_GetHeader(stream, &header);
+    error_type header_err = without_gil([stream, &header] {
+        return StreamObject_GetHeader(stream, &header);
+    });
     if (header_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(header_err, "StreamObject_GetHeader");
     }
-    SCOPE_GUARD([header] { DictionaryObject_Release(header); });
+    SCOPE_GUARD([header] { release_without_gil(DictionaryObject_Release, header); });
 
     ObjectHandle* object = nullptr;
-    error_type to_object_err = DictionaryObject_ToObject(header, &object);
+    error_type to_object_err = without_gil([header, &object] {
+        return DictionaryObject_ToObject(header, &object);
+    });
     if (to_object_err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(to_object_err, "DictionaryObject_ToObject");
     }
@@ -71,16 +79,18 @@ PyObject* stream_object_set_header(PyObject* self, PyObject* args) {
     if (header == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([header] { DictionaryObject_Release(header); });
+    SCOPE_GUARD([header] { release_without_gil(DictionaryObject_Release, header); });
 
     StreamObjectHandle* stream = object_cast<StreamObjectHandle>(
         capsule, StreamObject_FromObject, "StreamObject_FromObject");
     if (stream == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([stream] { StreamObject_Release(stream); });
+    SCOPE_GUARD([stream] { release_without_gil(StreamObject_Release, stream); });
 
-    error_type err = StreamObject_SetHeader(stream, header);
+    error_type err = without_gil([stream, header] {
+        return StreamObject_SetHeader(stream, header);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "StreamObject_SetHeader");
     }
@@ -99,7 +109,7 @@ PyObject* stream_object_get_body(PyObject* self, PyObject* args) {
     if (stream == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([stream] { StreamObject_Release(stream); });
+    SCOPE_GUARD([stream] { release_without_gil(StreamObject_Release, stream); });
 
     BufferHandle* buffer = nullptr;
     error_type err = without_gil([stream, &buffer] {
@@ -123,7 +133,7 @@ PyObject* stream_object_get_body_raw(PyObject* self, PyObject* args) {
     if (stream == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([stream] { StreamObject_Release(stream); });
+    SCOPE_GUARD([stream] { release_without_gil(StreamObject_Release, stream); });
 
     BufferHandle* buffer = nullptr;
     error_type err = without_gil([stream, &buffer] {
@@ -153,9 +163,11 @@ PyObject* stream_object_set_body(PyObject* self, PyObject* args) {
     if (stream == nullptr) {
         return nullptr;
     }
-    SCOPE_GUARD([stream] { StreamObject_Release(stream); });
+    SCOPE_GUARD([stream] { release_without_gil(StreamObject_Release, stream); });
 
-    error_type err = StreamObject_SetBody(stream, buffer);
+    error_type err = without_gil([stream, buffer] {
+        return StreamObject_SetBody(stream, buffer);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "StreamObject_SetBody");
     }

@@ -28,7 +28,9 @@ PyObject* interactive_form_get_fields(PyObject* self, PyObject* args) {
     }
 
     FieldCollectionHandle* fields = nullptr;
-    error_type err = InteractiveForm_GetFields(form, &fields);
+    error_type err = without_gil([form, &fields] {
+        return InteractiveForm_GetFields(form, &fields);
+    });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
         return raise_last_error(err, "InteractiveForm_GetFields");
     }
