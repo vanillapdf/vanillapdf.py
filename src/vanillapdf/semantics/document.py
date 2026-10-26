@@ -18,8 +18,12 @@ if TYPE_CHECKING:
     from .._vanillapdf import DocumentHandle
     from .document_signature_settings import DocumentSignatureSettings
 
-# Name the library gives a file backed by memory instead of a path.
+# Display name for files backed by memory: File_OpenStream / File_CreateStream
+# require one. It only appears in File.get_filename(), logs and error messages.
 _MEMORY_FILE_NAME = "<memory>"
+
+# Bytes read per call when copying a memory stream out.
+_READ_CHUNK_SIZE = 64 * 1024
 
 
 class Document(Handle["DocumentHandle"]):
@@ -89,11 +93,11 @@ class Document(Handle["DocumentHandle"]):
 
     def save_stream(self, stream: BinaryIO) -> None:
         """Write the saved document to a writable binary stream."""
-        stream.write(self.to_bytes())
+        stream.write(self.save_bytes())
 
     def save_incremental_stream(self, stream: BinaryIO) -> None:
         """Write the incrementally saved document to a writable binary stream."""
-        stream.write(self.to_bytes_incremental())
+        stream.write(self.save_incremental_bytes())
 
     def save_file(self, file: File) -> None:
         """Save the document into `file` (see :meth:`File.create_stream`)."""
@@ -105,11 +109,11 @@ class Document(Handle["DocumentHandle"]):
         handle = self._require_handle()
         _vanillapdf.document_save_incremental_file(handle, self._handle_of(file))
 
-    def to_bytes(self) -> bytes:
+    def save_bytes(self) -> bytes:
         """Return the saved document as bytes."""
         return self._save_to_memory(self.save_file)
 
-    def to_bytes_incremental(self) -> bytes:
+    def save_incremental_bytes(self) -> bytes:
         """Return the incrementally saved document as bytes."""
         return self._save_to_memory(self.save_incremental_file)
 
@@ -118,9 +122,7 @@ class Document(Handle["DocumentHandle"]):
         with InputOutputStream.create_from_memory() as stream:
             with File.create_stream(stream, _MEMORY_FILE_NAME) as file:
                 save(file)
-            # Saving writes sequentially, so the output position is the size.
-            with stream.read_buffer(stream.output_position) as buffer:
-                return buffer.data
+            return _read_all(stream)
 
     def get_catalog(self) -> Catalog:
         handle = self._require_handle()
@@ -160,3 +162,20 @@ class Document(Handle["DocumentHandle"]):
         handle = self._require_handle()
         _vanillapdf.document_sign(
             handle, self._handle_of(destination), self._handle_of(settings))
+
+
+def _read_all(stream: InputOutputStream) -> bytes:
+    """Read `stream` from the start until a read returns no data.
+
+    Neither position tells the size: writers may read back what they wrote,
+    moving the input position, and signing seeks back to patch the signature,
+    leaving the output position short of the end.
+    """
+    stream.input_position = 0
+    chunks: list[bytes] = []
+    while True:
+        with stream.read_buffer(_READ_CHUNK_SIZE) as buffer:
+            chunk = buffer.data
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)

@@ -37,6 +37,17 @@ class InputOutputStream(Handle["InputOutputStreamHandle"]):
         return Buffer._from_handle(_vanillapdf.input_output_stream_read_buffer(handle, length))
 
     @property
+    def input_position(self) -> int:
+        """The position the next read starts from."""
+        handle = self._require_handle()
+        return _vanillapdf.input_output_stream_get_input_position(handle)
+
+    @input_position.setter
+    def input_position(self, value: int) -> None:
+        handle = self._require_handle()
+        _vanillapdf.input_output_stream_set_input_position(handle, value)
+
+    @property
     def output_position(self) -> int:
         """The position the next write goes to."""
         handle = self._require_handle()

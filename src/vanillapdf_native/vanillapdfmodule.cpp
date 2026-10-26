@@ -63,6 +63,8 @@ static PyMethodDef VanillapdfMethods[] = {
     /* InputOutputStream methods */
     {"input_output_stream_create_from_memory", input_output_stream_create_from_memory, METH_NOARGS, "Create an in-memory InputOutputStream"},
     {"input_output_stream_read_buffer", input_output_stream_read_buffer, METH_VARARGS, "Read a Buffer from an InputOutputStream"},
+    {"input_output_stream_get_input_position", input_output_stream_get_input_position, METH_VARARGS, "Get the input position of an InputOutputStream"},
+    {"input_output_stream_set_input_position", input_output_stream_set_input_position, METH_VARARGS, "Set the input position of an InputOutputStream"},
     {"input_output_stream_get_output_position", input_output_stream_get_output_position, METH_VARARGS, "Get the output position of an InputOutputStream"},
     {"input_output_stream_write_buffer", input_output_stream_write_buffer, METH_VARARGS, "Write a Buffer to an InputOutputStream"},
     {"input_output_stream_flush", input_output_stream_flush, METH_VARARGS, "Flush an InputOutputStream"},

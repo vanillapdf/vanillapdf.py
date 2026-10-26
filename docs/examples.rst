@@ -65,3 +65,14 @@ Catalog → AcroForm → fields → signature field → digital signature.
 
 .. literalinclude:: ../examples/verify_signature.py
    :language: python
+
+Process a document in memory
+----------------------------
+
+Open a document from ``bytes``, change it, and return the saved ``bytes``, with
+no temporary file: the shape of a web handler or pipeline step.
+:meth:`~vanillapdf.Document.open_stream` and
+:meth:`~vanillapdf.Document.save_stream` do the same for binary streams.
+
+.. literalinclude:: ../examples/in_memory.py
+   :language: python

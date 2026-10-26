@@ -36,7 +36,7 @@ an ``open(..., "rb")`` file), and save back into memory or a stream:
    import vanillapdf
 
    with vanillapdf.Document.open_bytes(data) as doc:
-       pdf = doc.to_bytes()
+       pdf = doc.save_bytes()
 
    with open("input.pdf", "rb") as source, vanillapdf.Document.open_stream(source) as doc:
        target = io.BytesIO()

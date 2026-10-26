@@ -109,6 +109,31 @@ def test_parallel_create_save_reopen(tmp_path):
     assert failures == []
 
 
+def test_parallel_in_memory_round_trips(plain_pdf):
+    """Many threads each open their OWN document from bytes, save it back to
+    bytes, and reopen the result, exercising the memory-stream paths."""
+    with open(plain_pdf, "rb") as f:
+        data = f.read()
+    with Document.open_bytes(data) as doc:
+        expected = len(doc.get_catalog().get_pages())
+    failures = []
+
+    def worker(barrier):
+        barrier.wait()
+        try:
+            for _ in range(20):
+                with Document.open_bytes(data) as doc:
+                    saved = doc.save_bytes()
+                with Document.open_bytes(saved) as reopened:
+                    assert len(reopened.get_catalog().get_pages()) == expected
+        except Exception as exc:  # noqa: BLE001
+            failures.append(repr(exc))
+
+    _run(worker)
+
+    assert failures == []
+
+
 def test_error_state_is_thread_local():
     """A thread hitting an error must not disturb another thread's successful
     operations - the library keeps its last-error state thread-locally, and

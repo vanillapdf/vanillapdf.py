@@ -31,13 +31,13 @@ def page_count(doc):
     return len(doc.get_catalog().get_pages())
 
 
-def test_open_bytes_and_to_bytes_round_trip(plain_pdf):
+def test_open_bytes_and_save_bytes_round_trip(plain_pdf):
     with vanillapdf.Document.open(plain_pdf) as doc:
         expected = page_count(doc)
 
     with vanillapdf.Document.open_bytes(Path(plain_pdf).read_bytes()) as doc:
         assert page_count(doc) == expected
-        data = doc.to_bytes()
+        data = doc.save_bytes()
 
     assert data.startswith(b"%PDF-")
     with vanillapdf.Document.open_bytes(data) as reopened:
@@ -61,14 +61,14 @@ def test_open_stream_and_save_stream_round_trip(plain_pdf):
         assert page_count(reopened) == expected
 
 
-@pytest.mark.parametrize("save", ["to_bytes_incremental", "save_incremental_stream"])
+@pytest.mark.parametrize("save", ["save_incremental_bytes", "save_incremental_stream"])
 def test_incremental_save_appends_to_original_data(plain_pdf, save):
     original = Path(plain_pdf).read_bytes()
     with vanillapdf.Document.open_bytes(original) as doc:
         expected = page_count(doc) + 1
         doc.get_catalog().get_pages().append(vanillapdf.PageObject.create_from_document(doc))
-        if save == "to_bytes_incremental":
-            data = doc.to_bytes_incremental()
+        if save == "save_incremental_bytes":
+            data = doc.save_incremental_bytes()
         else:
             target = io.BytesIO()
             doc.save_incremental_stream(target)

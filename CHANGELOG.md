@@ -42,7 +42,7 @@ reserves those for metadata corrections rather than bug fixes.
 - `StringObject.text`: the string's value decoded with `TextStringEncoding.decode`.
 - Python 3.15 support.
 - In-memory open and save: `Document.open_bytes(data)` / `open_stream(stream)`
-  open a document from `bytes` or a readable binary stream, and `to_bytes()` /
+  open a document from `bytes` or a readable binary stream, and `save_bytes()` /
   `save_stream(stream)` (plus the `_incremental` variants) save into memory or a
   writable binary stream. The data is copied, so the source can be closed right
   after opening.
