@@ -52,6 +52,11 @@ reserves those for metadata corrections rather than bug fixes.
 - Paths accept `os.PathLike` (e.g. `pathlib.Path`) as well as `str`.
 
 ### Changed
+- Closing an object while another thread is still inside a call on it no
+  longer frees the native object under that call. Each call holds a
+  reference to the handle while it runs (as .NET's `SafeHandle` does);
+  `close()` takes effect at once for new calls, and the native release
+  happens when the last running call returns.
 - Every call into the native library now releases the GIL, including handle
   releases (`close()`, garbage collection), not only the blocking ones. Other
   Python threads keep running during any native work, and native code can later

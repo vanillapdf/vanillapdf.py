@@ -34,14 +34,14 @@ PyObject* document_signature_settings_get_digest(PyObject* self, PyObject* args)
         return nullptr;
     }
 
-    DocumentSignatureSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentSignatureSettingsHandle>(capsule, SETTINGS_CAPSULE);
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
     MessageDigestAlgorithmType digest = MessageDigestAlgorithmType_Undefined;
-    error_type err = without_gil([settings, &digest] {
+    error_type err = without_gil([settings = settings.get(), &digest] {
         return DocumentSignatureSettings_GetDigest(settings, &digest);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -58,14 +58,14 @@ PyObject* document_signature_settings_set_digest(PyObject* self, PyObject* args)
         return nullptr;
     }
 
-    DocumentSignatureSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentSignatureSettingsHandle>(capsule, SETTINGS_CAPSULE);
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
     MessageDigestAlgorithmType value = static_cast<MessageDigestAlgorithmType>(digest);
-    error_type err = without_gil([settings, value] {
+    error_type err = without_gil([settings = settings.get(), value] {
         return DocumentSignatureSettings_SetDigest(settings, value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -82,19 +82,19 @@ PyObject* document_signature_settings_set_signing_key(PyObject* self, PyObject* 
         return nullptr;
     }
 
-    DocumentSignatureSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentSignatureSettingsHandle>(capsule, SETTINGS_CAPSULE);
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
-    SigningKeyHandle* signing_key =
+    auto signing_key =
         capsule_cast<SigningKeyHandle>(signing_key_capsule, "VanillaPDF.SigningKey");
-    if (signing_key == nullptr) {
+    if (!signing_key) {
         return nullptr;
     }
 
-    error_type err = without_gil([settings, signing_key] {
+    error_type err = without_gil([settings = settings.get(), signing_key = signing_key.get()] {
         return DocumentSignatureSettings_SetSigningKey(settings, signing_key);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

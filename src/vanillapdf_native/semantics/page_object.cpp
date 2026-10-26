@@ -26,13 +26,13 @@ PyObject* page_object_create_from_document(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DocumentHandle* document = capsule_cast<DocumentHandle>(document_capsule, "VanillaPDF.Document");
-    if (document == nullptr) {
+    auto document = capsule_cast<DocumentHandle>(document_capsule, "VanillaPDF.Document");
+    if (!document) {
         return nullptr;
     }
 
     PageObjectHandle* page = nullptr;
-    error_type err = without_gil([document, &page] {
+    error_type err = without_gil([document = document.get(), &page] {
         return PageObject_CreateFromDocument(document, &page);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -48,13 +48,13 @@ PyObject* page_object_get_media_box(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    PageObjectHandle* page = capsule_cast<PageObjectHandle>(capsule, PAGE_OBJECT_CAPSULE);
-    if (page == nullptr) {
+    auto page = capsule_cast<PageObjectHandle>(capsule, PAGE_OBJECT_CAPSULE);
+    if (!page) {
         return nullptr;
     }
 
     RectangleHandle* media_box = nullptr;
-    error_type err = without_gil([page, &media_box] {
+    error_type err = without_gil([page = page.get(), &media_box] {
         return PageObject_GetMediaBox(page, &media_box);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -71,17 +71,17 @@ PyObject* page_object_set_media_box(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    RectangleHandle* media_box = capsule_cast<RectangleHandle>(rectangle_capsule, "VanillaPDF.Rectangle");
-    if (media_box == nullptr) {
+    auto media_box = capsule_cast<RectangleHandle>(rectangle_capsule, "VanillaPDF.Rectangle");
+    if (!media_box) {
         return nullptr;
     }
 
-    PageObjectHandle* page = capsule_cast<PageObjectHandle>(capsule, PAGE_OBJECT_CAPSULE);
-    if (page == nullptr) {
+    auto page = capsule_cast<PageObjectHandle>(capsule, PAGE_OBJECT_CAPSULE);
+    if (!page) {
         return nullptr;
     }
 
-    error_type err = without_gil([page, media_box] {
+    error_type err = without_gil([page = page.get(), media_box = media_box.get()] {
         return PageObject_SetMediaBox(page, media_box);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -97,13 +97,13 @@ PyObject* page_object_get_base_object(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    PageObjectHandle* page = capsule_cast<PageObjectHandle>(capsule, PAGE_OBJECT_CAPSULE);
-    if (page == nullptr) {
+    auto page = capsule_cast<PageObjectHandle>(capsule, PAGE_OBJECT_CAPSULE);
+    if (!page) {
         return nullptr;
     }
 
     DictionaryObjectHandle* base = nullptr;
-    error_type base_err = without_gil([page, &base] {
+    error_type base_err = without_gil([page = page.get(), &base] {
         return PageObject_GetBaseObject(page, &base);
     });
     if (base_err != VANILLAPDF_ERROR_SUCCESS) {

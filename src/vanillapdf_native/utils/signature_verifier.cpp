@@ -43,18 +43,18 @@ static PyObject* add_certificate(
         return nullptr;
     }
 
-    TrustedCertificateStoreHandle* store =
+    auto store =
         capsule_cast<TrustedCertificateStoreHandle>(capsule, TRUST_STORE_CAPSULE);
-    if (store == nullptr) {
+    if (!store) {
         return nullptr;
     }
 
-    BufferHandle* buffer = capsule_cast<BufferHandle>(buffer_capsule, "VanillaPDF.Buffer");
-    if (buffer == nullptr) {
+    auto buffer = capsule_cast<BufferHandle>(buffer_capsule, "VanillaPDF.Buffer");
+    if (!buffer) {
         return nullptr;
     }
 
-    error_type err = without_gil([adder, store, buffer] {
+    error_type err = without_gil([adder, store = store.get(), buffer = buffer.get()] {
         return adder(store, buffer);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -81,13 +81,13 @@ PyObject* trusted_certificate_store_load_from_directory(PyObject* self, PyObject
         return nullptr;
     }
 
-    TrustedCertificateStoreHandle* store =
+    auto store =
         capsule_cast<TrustedCertificateStoreHandle>(capsule, TRUST_STORE_CAPSULE);
-    if (store == nullptr) {
+    if (!store) {
         return nullptr;
     }
 
-    error_type err = without_gil([store, directory] {
+    error_type err = without_gil([store = store.get(), directory] {
         return TrustedCertificateStore_LoadFromDirectory(store, directory);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -103,13 +103,13 @@ PyObject* trusted_certificate_store_load_system_defaults(PyObject* self, PyObjec
         return nullptr;
     }
 
-    TrustedCertificateStoreHandle* store =
+    auto store =
         capsule_cast<TrustedCertificateStoreHandle>(capsule, TRUST_STORE_CAPSULE);
-    if (store == nullptr) {
+    if (!store) {
         return nullptr;
     }
 
-    error_type err = without_gil([store] {
+    error_type err = without_gil([store = store.get()] {
         return TrustedCertificateStore_LoadSystemDefaults(store);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -153,14 +153,14 @@ static PyObject* set_flag(
         return nullptr;
     }
 
-    SignatureVerificationSettingsHandle* settings =
+    auto settings =
         capsule_cast<SignatureVerificationSettingsHandle>(capsule, SETTINGS_CAPSULE);
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
     boolean_type value = flag ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE;
-    error_type err = without_gil([setter, settings, value] {
+    error_type err = without_gil([setter, settings = settings.get(), value] {
         return setter(settings, value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -196,16 +196,14 @@ PyObject* signature_verification_settings_release(PyObject* self, PyObject* args
 
 /* ----- Verify + SignatureVerificationResult ----- */
 
-/* Cast a capsule argument that may be Python None (-> nullptr). Returns false
- * and leaves a set exception only when a non-None value fails the cast. */
+/* Borrow a capsule argument that may be Python None: an empty holder for None.
+ * An empty holder for a non-None value means the cast failed (exception set). */
 template <typename H>
-static bool optional_handle(PyObject* obj, const char* name, H** out) {
+static HandleRef<H> optional_handle(PyObject* obj, const char* name) {
     if (obj == Py_None) {
-        *out = nullptr;
-        return true;
+        return HandleRef<H>();
     }
-    *out = capsule_cast<H>(obj, name);
-    return *out != nullptr;
+    return capsule_cast<H>(obj, name);
 }
 
 PyObject* digital_signature_verify(PyObject* self, PyObject* args) {
@@ -218,30 +216,34 @@ PyObject* digital_signature_verify(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DigitalSignatureHandle* signature =
+    auto signature =
         capsule_cast<DigitalSignatureHandle>(signature_capsule, "VanillaPDF.DigitalSignature");
-    if (signature == nullptr) {
+    if (!signature) {
         return nullptr;
     }
 
-    DocumentHandle* document =
+    auto document =
         capsule_cast<DocumentHandle>(document_capsule, "VanillaPDF.Document");
-    if (document == nullptr) {
+    if (!document) {
         return nullptr;
     }
 
-    TrustedCertificateStoreHandle* trust_store = nullptr;
-    if (!optional_handle(trust_store_obj, TRUST_STORE_CAPSULE, &trust_store)) {
+    auto trust_store =
+        optional_handle<TrustedCertificateStoreHandle>(trust_store_obj, TRUST_STORE_CAPSULE);
+    if (!trust_store && trust_store_obj != Py_None) {
         return nullptr;
     }
 
-    SignatureVerificationSettingsHandle* settings = nullptr;
-    if (!optional_handle(settings_obj, SETTINGS_CAPSULE, &settings)) {
+    auto settings =
+        optional_handle<SignatureVerificationSettingsHandle>(settings_obj, SETTINGS_CAPSULE);
+    if (!settings && settings_obj != Py_None) {
         return nullptr;
     }
 
     SignatureVerificationResultHandle* result = nullptr;
-    error_type err = without_gil([signature, document, trust_store, settings, &result] {
+    error_type err = without_gil([signature = signature.get(), document = document.get(),
+                                  trust_store = trust_store.get(), settings = settings.get(),
+                                  &result] {
         return DigitalSignatureExtensions_Verify(
             signature, document, trust_store, settings, &result);
     });
@@ -258,14 +260,14 @@ PyObject* signature_verification_result_get_status(PyObject* self, PyObject* arg
         return nullptr;
     }
 
-    SignatureVerificationResultHandle* result =
+    auto result =
         capsule_cast<SignatureVerificationResultHandle>(capsule, RESULT_CAPSULE);
-    if (result == nullptr) {
+    if (!result) {
         return nullptr;
     }
 
     SignatureVerificationStatusType status = SignatureStatus_Undefined;
-    error_type err = without_gil([result, &status] {
+    error_type err = without_gil([result = result.get(), &status] {
         return SignatureVerificationResult_GetStatus(result, &status);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -285,14 +287,14 @@ static PyObject* result_boolean(
         return nullptr;
     }
 
-    SignatureVerificationResultHandle* result =
+    auto result =
         capsule_cast<SignatureVerificationResultHandle>(capsule, RESULT_CAPSULE);
-    if (result == nullptr) {
+    if (!result) {
         return nullptr;
     }
 
     boolean_type value = VANILLAPDF_RV_FALSE;
-    error_type err = without_gil([getter, result, &value] {
+    error_type err = without_gil([getter, result = result.get(), &value] {
         return getter(result, &value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -331,14 +333,14 @@ static PyObject* result_buffer(
         return nullptr;
     }
 
-    SignatureVerificationResultHandle* result =
+    auto result =
         capsule_cast<SignatureVerificationResultHandle>(capsule, RESULT_CAPSULE);
-    if (result == nullptr) {
+    if (!result) {
         return nullptr;
     }
 
     BufferHandle* buffer = nullptr;
-    error_type err = without_gil([getter, result, &buffer] {
+    error_type err = without_gil([getter, result = result.get(), &buffer] {
         return getter(result, &buffer);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

@@ -71,8 +71,9 @@ The `_vanillapdf` module bridges Python to the C++ library. Sources are **C++**
 type in subdirectories:
 
 - `vanillapdfmodule.cpp` - Module definition + method table
-- `common.cpp/.h` - Shared infrastructure: capsule helpers (`capsule_new/get/
-  release`, `capsule_cast<T>`), `raise_last_error` + the `PdfError` exception,
+- `common.cpp/.h` - Shared infrastructure: capsule helpers (`capsule_new`,
+  `capsule_release`, `capsule_cast<T>` returning a `HandleRef<T>` that holds a
+  reference for the call), `raise_last_error` + the `PdfError` exception,
   `ScopeGuard`, `py_malloc<T>`, `narrow_unsigned<T>`
 - `utils/` - buffer, errors, logging, library_info, license_info, misc_utils
 - `syntax/` - object (+ `object_cast<T>` helper), file, and one file per object

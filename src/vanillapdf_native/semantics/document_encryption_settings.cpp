@@ -33,14 +33,14 @@ PyObject* document_encryption_settings_get_algorithm(PyObject* self, PyObject* a
         return nullptr;
     }
 
-    DocumentEncryptionSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentEncryptionSettingsHandle>(capsule, SETTINGS_CAPSULE);
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
     EncryptionAlgorithmType algorithm = EncryptionAlgorithmType_Undefined;
-    error_type err = without_gil([settings, &algorithm] {
+    error_type err = without_gil([settings = settings.get(), &algorithm] {
         return DocumentEncryptionSettings_GetAlgorithm(settings, &algorithm);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -57,14 +57,14 @@ PyObject* document_encryption_settings_set_algorithm(PyObject* self, PyObject* a
         return nullptr;
     }
 
-    DocumentEncryptionSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentEncryptionSettingsHandle>(capsule, SETTINGS_CAPSULE);
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
     EncryptionAlgorithmType value = static_cast<EncryptionAlgorithmType>(algorithm);
-    error_type err = without_gil([settings, value] {
+    error_type err = without_gil([settings = settings.get(), value] {
         return DocumentEncryptionSettings_SetAlgorithm(settings, value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -80,14 +80,14 @@ PyObject* document_encryption_settings_get_key_length(PyObject* self, PyObject* 
         return nullptr;
     }
 
-    DocumentEncryptionSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentEncryptionSettingsHandle>(capsule, SETTINGS_CAPSULE);
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
     integer_type key_length = 0;
-    error_type err = without_gil([settings, &key_length] {
+    error_type err = without_gil([settings = settings.get(), &key_length] {
         return DocumentEncryptionSettings_GetKeyLength(settings, &key_length);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -104,13 +104,13 @@ PyObject* document_encryption_settings_set_key_length(PyObject* self, PyObject* 
         return nullptr;
     }
 
-    DocumentEncryptionSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentEncryptionSettingsHandle>(capsule, SETTINGS_CAPSULE);
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
-    error_type err = without_gil([settings, key_length] {
+    error_type err = without_gil([settings = settings.get(), key_length] {
         return DocumentEncryptionSettings_SetKeyLength(settings, key_length);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -126,14 +126,14 @@ PyObject* document_encryption_settings_get_user_access_permissions(PyObject* sel
         return nullptr;
     }
 
-    DocumentEncryptionSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentEncryptionSettingsHandle>(capsule, SETTINGS_CAPSULE);
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
     UserAccessPermissionFlags permissions = UserAccessPermissionFlag_None;
-    error_type err = without_gil([settings, &permissions] {
+    error_type err = without_gil([settings = settings.get(), &permissions] {
         return DocumentEncryptionSettings_GetUserAccessPermissions(settings, &permissions);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -150,14 +150,14 @@ PyObject* document_encryption_settings_set_user_access_permissions(PyObject* sel
         return nullptr;
     }
 
-    DocumentEncryptionSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentEncryptionSettingsHandle>(capsule, SETTINGS_CAPSULE);
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
     UserAccessPermissionFlags value = static_cast<UserAccessPermissionFlags>(permissions);
-    error_type err = without_gil([settings, value] {
+    error_type err = without_gil([settings = settings.get(), value] {
         return DocumentEncryptionSettings_SetUserAccessPermissions(settings, value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -178,18 +178,18 @@ static PyObject* set_password(
         return nullptr;
     }
 
-    DocumentEncryptionSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentEncryptionSettingsHandle>(capsule, SETTINGS_CAPSULE);
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
-    BufferHandle* buffer = capsule_cast<BufferHandle>(buffer_capsule, "VanillaPDF.Buffer");
-    if (buffer == nullptr) {
+    auto buffer = capsule_cast<BufferHandle>(buffer_capsule, "VanillaPDF.Buffer");
+    if (!buffer) {
         return nullptr;
     }
 
-    error_type err = without_gil([setter, settings, buffer] {
+    error_type err = without_gil([setter, settings = settings.get(), buffer = buffer.get()] {
 
         return setter(settings, buffer);
 
