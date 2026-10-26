@@ -52,8 +52,8 @@ reserves those for metadata corrections rather than bug fixes.
 - Paths accept `os.PathLike` (e.g. `pathlib.Path`) as well as `str`.
 
 ### Changed
-- **Breaking:** documents and files are opened with class methods mirroring the
-  native API: `Document.open(path)` replaces `Document(path)`, and
+- **Breaking:** `Document` and `File` are created with class methods mirroring
+  the native API: `Document.open(path)` replaces `Document(path)`, and
   `File.open(path)` replaces `File(path)`.
 - vcpkg baseline moved from `2025.12.12` to `2026.10.16`, updating the bundled
   C++ dependencies: OpenSSL 3.6.0 → 3.6.5, zlib 1.3.1 → 1.3.2, libjpeg-turbo
