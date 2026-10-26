@@ -32,14 +32,14 @@ PyObject* field_collection_get_size(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FieldCollectionHandle* fields =
+    auto fields =
         capsule_cast<FieldCollectionHandle>(capsule, FIELD_COLLECTION_CAPSULE);
-    if (fields == nullptr) {
+    if (!fields) {
         return nullptr;
     }
 
     size_type size = 0;
-    error_type err = without_gil([fields, &size] {
+    error_type err = without_gil([fields = fields.get(), &size] {
         return FieldCollection_GetSize(fields, &size);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -61,14 +61,14 @@ PyObject* field_collection_at(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FieldCollectionHandle* fields =
+    auto fields =
         capsule_cast<FieldCollectionHandle>(capsule, FIELD_COLLECTION_CAPSULE);
-    if (fields == nullptr) {
+    if (!fields) {
         return nullptr;
     }
 
     FieldHandle* field = nullptr;
-    error_type err = without_gil([fields, native_index, &field] {
+    error_type err = without_gil([fields = fields.get(), native_index, &field] {
         return FieldCollection_At(fields, native_index, &field);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -93,13 +93,13 @@ PyObject* field_get_type(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FieldHandle* field = capsule_cast<FieldHandle>(capsule, FIELD_CAPSULE);
-    if (field == nullptr) {
+    auto field = capsule_cast<FieldHandle>(capsule, FIELD_CAPSULE);
+    if (!field) {
         return nullptr;
     }
 
     FieldType type = FieldType_Undefined;
-    error_type err = without_gil([field, &type] {
+    error_type err = without_gil([field = field.get(), &type] {
         return Field_GetType(field, &type);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -124,13 +124,13 @@ PyObject* signature_field_from_field(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FieldHandle* field = capsule_cast<FieldHandle>(capsule, FIELD_CAPSULE);
-    if (field == nullptr) {
+    auto field = capsule_cast<FieldHandle>(capsule, FIELD_CAPSULE);
+    if (!field) {
         return nullptr;
     }
 
     SignatureFieldHandle* signature_field = nullptr;
-    error_type err = without_gil([field, &signature_field] {
+    error_type err = without_gil([field = field.get(), &signature_field] {
         return SignatureField_FromField(field, &signature_field);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -146,14 +146,14 @@ PyObject* signature_field_get_value(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    SignatureFieldHandle* signature_field =
+    auto signature_field =
         capsule_cast<SignatureFieldHandle>(capsule, SIGNATURE_FIELD_CAPSULE);
-    if (signature_field == nullptr) {
+    if (!signature_field) {
         return nullptr;
     }
 
     DigitalSignatureHandle* signature = nullptr;
-    error_type err = without_gil([signature_field, &signature] {
+    error_type err = without_gil([signature_field = signature_field.get(), &signature] {
         return SignatureField_GetValue(signature_field, &signature);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

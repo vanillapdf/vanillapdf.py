@@ -23,13 +23,13 @@ PyObject* catalog_get_pages(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    CatalogHandle* catalog = capsule_cast<CatalogHandle>(capsule, CATALOG_CAPSULE);
-    if (catalog == nullptr) {
+    auto catalog = capsule_cast<CatalogHandle>(capsule, CATALOG_CAPSULE);
+    if (!catalog) {
         return nullptr;
     }
 
     PageTreeHandle* pages = nullptr;
-    error_type err = without_gil([catalog, &pages] {
+    error_type err = without_gil([catalog = catalog.get(), &pages] {
         return Catalog_GetPages(catalog, &pages);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -45,13 +45,13 @@ PyObject* catalog_get_acro_form(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    CatalogHandle* catalog = capsule_cast<CatalogHandle>(capsule, CATALOG_CAPSULE);
-    if (catalog == nullptr) {
+    auto catalog = capsule_cast<CatalogHandle>(capsule, CATALOG_CAPSULE);
+    if (!catalog) {
         return nullptr;
     }
 
     InteractiveFormHandle* form = nullptr;
-    error_type err = without_gil([catalog, &form] {
+    error_type err = without_gil([catalog = catalog.get(), &form] {
         return Catalog_GetAcroForm(catalog, &form);
     });
     if (is_missing_error(err)) {

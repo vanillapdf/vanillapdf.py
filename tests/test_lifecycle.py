@@ -53,3 +53,21 @@ def test_child_object_outlives_parent(test_pdf):
     # The File is closed here; the object must still be usable.
     with obj:
         assert obj.object_type == ObjectType.DICTIONARY
+
+
+def test_released_capsule_rejects_calls():
+    """A call on a released capsule raises instead of using the freed handle."""
+    capsule = _vanillapdf.buffer_create_from_data(b"x")
+    _vanillapdf.buffer_release(capsule)
+    with pytest.raises(ValueError, match="released"):
+        _vanillapdf.buffer_get_data(capsule)
+
+
+def test_capsule_release_is_idempotent_and_survives_collection():
+    """Releasing twice, then dropping the capsule, releases the handle once."""
+    capsule = _vanillapdf.buffer_create_from_data(b"x")
+    assert _vanillapdf.buffer_get_data(capsule) == b"x"  # takes and drops a call reference
+    _vanillapdf.buffer_release(capsule)
+    _vanillapdf.buffer_release(capsule)
+    del capsule
+    gc.collect()

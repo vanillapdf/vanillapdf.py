@@ -28,13 +28,13 @@ static PyObject* get_string_property(
         return nullptr;
     }
 
-    DocumentInfoHandle* info = capsule_cast<DocumentInfoHandle>(capsule, DOCUMENT_INFO_CAPSULE);
-    if (info == nullptr) {
+    auto info = capsule_cast<DocumentInfoHandle>(capsule, DOCUMENT_INFO_CAPSULE);
+    if (!info) {
         return nullptr;
     }
 
     StringObjectHandle* string = nullptr;
-    error_type err = without_gil([getter, info, &string] {
+    error_type err = without_gil([getter, info = info.get(), &string] {
         return getter(info, &string);
     });
     if (is_missing_error(err)) {

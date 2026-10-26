@@ -66,13 +66,13 @@ PyObject* document_open_file(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FileHandle* file = capsule_cast<FileHandle>(file_capsule, "VanillaPDF.File");
-    if (file == nullptr) {
+    auto file = capsule_cast<FileHandle>(file_capsule, "VanillaPDF.File");
+    if (!file) {
         return nullptr;
     }
 
     DocumentHandle* handle = nullptr;
-    error_type err = without_gil([file, &handle] {
+    error_type err = without_gil([file = file.get(), &handle] {
         return Document_OpenFile(file, &handle);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -89,12 +89,12 @@ PyObject* document_save(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle, filename] {
+    error_type err = without_gil([handle = handle.get(), filename] {
         return Document_Save(handle, filename);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -111,12 +111,12 @@ PyObject* document_save_incremental(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle, filename] {
+    error_type err = without_gil([handle = handle.get(), filename] {
         return Document_SaveIncremental(handle, filename);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -133,17 +133,17 @@ PyObject* document_save_file(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
-    FileHandle* file = capsule_cast<FileHandle>(file_capsule, "VanillaPDF.File");
-    if (file == nullptr) {
+    auto file = capsule_cast<FileHandle>(file_capsule, "VanillaPDF.File");
+    if (!file) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle, file] {
+    error_type err = without_gil([handle = handle.get(), file = file.get()] {
         return Document_SaveFile(handle, file);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -160,17 +160,17 @@ PyObject* document_save_incremental_file(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
-    FileHandle* file = capsule_cast<FileHandle>(file_capsule, "VanillaPDF.File");
-    if (file == nullptr) {
+    auto file = capsule_cast<FileHandle>(file_capsule, "VanillaPDF.File");
+    if (!file) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle, file] {
+    error_type err = without_gil([handle = handle.get(), file = file.get()] {
         return Document_SaveIncrementalFile(handle, file);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -186,13 +186,13 @@ PyObject* document_get_catalog(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
     CatalogHandle* catalog = nullptr;
-    error_type err = without_gil([handle, &catalog] {
+    error_type err = without_gil([handle = handle.get(), &catalog] {
         return Document_GetCatalog(handle, &catalog);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -208,13 +208,13 @@ PyObject* document_get_document_info(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
     DocumentInfoHandle* info = nullptr;
-    error_type err = without_gil([handle, &info] {
+    error_type err = without_gil([handle = handle.get(), &info] {
         return Document_GetDocumentInfo(handle, &info);
     });
     if (is_missing_error(err)) {
@@ -234,17 +234,17 @@ PyObject* document_append_document(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DocumentHandle* source = capsule_cast<DocumentHandle>(source_capsule, DOCUMENT_CAPSULE);
-    if (source == nullptr) {
+    auto source = capsule_cast<DocumentHandle>(source_capsule, DOCUMENT_CAPSULE);
+    if (!source) {
         return nullptr;
     }
 
-    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle, source] {
+    error_type err = without_gil([handle = handle.get(), source = source.get()] {
         return Document_AppendDocument(handle, source);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -261,19 +261,19 @@ PyObject* document_add_encryption(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DocumentEncryptionSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentEncryptionSettingsHandle>(
             settings_capsule, "VanillaPDF.DocumentEncryptionSettings");
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
-    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle, settings] {
+    error_type err = without_gil([handle = handle.get(), settings = settings.get()] {
         return Document_AddEncryption(handle, settings);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -289,12 +289,12 @@ PyObject* document_remove_encryption(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle] {
+    error_type err = without_gil([handle = handle.get()] {
         return Document_RemoveEncryption(handle);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -312,25 +312,25 @@ PyObject* document_sign(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FileHandle* destination =
+    auto destination =
         capsule_cast<FileHandle>(destination_capsule, "VanillaPDF.File");
-    if (destination == nullptr) {
+    if (!destination) {
         return nullptr;
     }
 
-    DocumentSignatureSettingsHandle* settings =
+    auto settings =
         capsule_cast<DocumentSignatureSettingsHandle>(
             settings_capsule, "VanillaPDF.DocumentSignatureSettings");
-    if (settings == nullptr) {
+    if (!settings) {
         return nullptr;
     }
 
-    DocumentHandle* handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle, destination, settings] {
+    error_type err = without_gil([handle = handle.get(), destination = destination.get(), settings = settings.get()] {
         return Document_Sign(handle, destination, settings);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

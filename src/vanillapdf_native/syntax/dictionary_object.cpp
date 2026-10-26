@@ -209,8 +209,8 @@ PyObject* dictionary_object_insert(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    ObjectHandle* value = capsule_cast<ObjectHandle>(value_capsule, OBJECT_CAPSULE);
-    if (value == nullptr) {
+    auto value = capsule_cast<ObjectHandle>(value_capsule, OBJECT_CAPSULE);
+    if (!value) {
         return nullptr;
     }
 
@@ -223,7 +223,7 @@ PyObject* dictionary_object_insert(PyObject* self, PyObject* args) {
     SCOPE_GUARD([key] { release_without_gil(NameObject_Release, key); });
 
     boolean_type native_overwrite = overwrite ? VANILLAPDF_RV_TRUE : VANILLAPDF_RV_FALSE;
-    error_type err = without_gil([dictionary, key, value, native_overwrite] {
+    error_type err = without_gil([dictionary, key, value = value.get(), native_overwrite] {
         return DictionaryObject_Insert(dictionary, key, value, native_overwrite);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -288,14 +288,14 @@ PyObject* dictionary_iterator_get_key(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DictionaryObjectIteratorHandle* iterator =
+    auto iterator =
         capsule_cast<DictionaryObjectIteratorHandle>(capsule, ITERATOR_CAPSULE);
-    if (iterator == nullptr) {
+    if (!iterator) {
         return nullptr;
     }
 
     NameObjectHandle* key = nullptr;
-    error_type key_err = without_gil([iterator, &key] {
+    error_type key_err = without_gil([iterator = iterator.get(), &key] {
         return DictionaryObjectIterator_GetKey(iterator, &key);
     });
     if (key_err != VANILLAPDF_ERROR_SUCCESS) {
@@ -320,14 +320,14 @@ PyObject* dictionary_iterator_get_value(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DictionaryObjectIteratorHandle* iterator =
+    auto iterator =
         capsule_cast<DictionaryObjectIteratorHandle>(capsule, ITERATOR_CAPSULE);
-    if (iterator == nullptr) {
+    if (!iterator) {
         return nullptr;
     }
 
     ObjectHandle* object = nullptr;
-    error_type err = without_gil([iterator, &object] {
+    error_type err = without_gil([iterator = iterator.get(), &object] {
         return DictionaryObjectIterator_GetValue(iterator, &object);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -343,14 +343,14 @@ PyObject* dictionary_iterator_is_valid(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DictionaryObjectIteratorHandle* iterator =
+    auto iterator =
         capsule_cast<DictionaryObjectIteratorHandle>(capsule, ITERATOR_CAPSULE);
-    if (iterator == nullptr) {
+    if (!iterator) {
         return nullptr;
     }
 
     boolean_type valid = VANILLAPDF_RV_FALSE;
-    error_type err = without_gil([iterator, &valid] {
+    error_type err = without_gil([iterator = iterator.get(), &valid] {
         return DictionaryObjectIterator_IsValid(iterator, &valid);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -369,13 +369,13 @@ PyObject* dictionary_iterator_next(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    DictionaryObjectIteratorHandle* iterator =
+    auto iterator =
         capsule_cast<DictionaryObjectIteratorHandle>(capsule, ITERATOR_CAPSULE);
-    if (iterator == nullptr) {
+    if (!iterator) {
         return nullptr;
     }
 
-    error_type err = without_gil([iterator] {
+    error_type err = without_gil([iterator = iterator.get()] {
         return DictionaryObjectIterator_Next(iterator);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
