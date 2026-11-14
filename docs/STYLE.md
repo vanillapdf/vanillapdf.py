@@ -27,8 +27,8 @@ VanillaPDF **C API** only.
 - Same-width conversions (e.g. `long long` → `bigint_type`) need no cast — pass
   the value directly and let the implicit conversion happen.
 - Don't write redundant casts. `string_type` is `const char*`, so don't cast a
-  `const char*` to it. For `void*` returns, prefer `capsule_cast<T>` /
-  `py_malloc<T>`; a bare `static_cast` on its own line is fine where those don't apply.
+  `const char*` to it. For `void*` returns, prefer `py_malloc<T>`; a bare
+  `static_cast` on its own line is fine where that doesn't apply.
 
 ### Error handling
 - Every function returns `error_type`. Give **each call its own `error_type`
@@ -56,6 +56,13 @@ VanillaPDF **C API** only.
 - Wrap native handles with the `common.h` helpers — no hand-rolled box structs:
   `capsule_new(handle, "VanillaPDF.Type", RELEASE_FN(Type_Release))`,
   `capsule_cast<T>(capsule, "VanillaPDF.Type")`, `capsule_release(...)`.
+- `capsule_cast<T>` returns a `HandleRef<T>`: it holds a reference on the
+  capsule's box for as long as it lives (like the .NET marshaller's
+  `SafeHandle.DangerousAddRef`), so a `close()` on another thread defers the
+  native release instead of freeing the object under the call. Keep it a local
+  (`auto x = capsule_cast<T>(...); if (!x) return nullptr;`) and capture
+  `x = x.get()` in `without_gil` lambdas; it is move-only, so a stray copy or
+  `T*` assignment does not compile.
 - Allocate with `py_malloc<T>()`, not a cast around `PyMem_Malloc`.
 - Free/release on error paths with a scope guard. Use `SCOPE_GUARD([h]{
   release_without_gil(X_Release, h); })` for the common fire-and-forget case; use a named

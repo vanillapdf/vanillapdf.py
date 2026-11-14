@@ -2,6 +2,10 @@
 
 #include <Python.h>
 
+#include <atomic>
+#include <cstdint>
+#include <new>
+
 #include <vanillapdf/c_values.h>
 #include <vanillapdf/utils/c_errors.h>
 
@@ -14,8 +18,62 @@ PyObject* PdfError = nullptr;
 
 /* ---- capsule helpers ---------------------------------------------------- */
 
-/* Shared destructor for every capsule created by capsule_new. Releases the
- * underlying handle (if not already released) and frees the box. */
+/* Heap-allocated box that every capsule points to. It owns one native reference
+ * to `handle` and counts the binding calls using it, like a .NET SafeHandle:
+ *
+ *   state = (references << 1) | CLOSED
+ *
+ * The capsule holds one reference from creation until close() (or the capsule
+ * destructor) sets CLOSED and drops it; each call holds one more while it runs
+ * (HandleRef in common.h).
+ * Whoever drops the last reference performs the native release, exactly once,
+ * and no reference can be taken once CLOSED is set. All transitions are atomic,
+ * so this holds without the GIL too (free-threaded builds). */
+struct HandleBox {
+    void* handle;
+    release_fn release;
+    std::atomic<uint64_t> state;
+};
+
+static const uint64_t CLOSED = 1;
+static const uint64_t ONE_REF = 2;
+
+/* Take a reference for a call. False if the box has been closed. */
+static bool box_acquire(HandleBox* box) {
+    uint64_t state = box->state.load();
+    do {
+        if (state & CLOSED) {
+            return false;
+        }
+    } while (!box->state.compare_exchange_weak(state, state + ONE_REF));
+    return true;
+}
+
+/* Drop a reference; the last one (only reachable once CLOSED is set, since the
+ * capsule's own reference is dropped only by closing) releases the handle. */
+static void box_release_ref(HandleBox* box) {
+    if (box->state.fetch_sub(ONE_REF) == (CLOSED | ONE_REF)) {
+        if (box->release != nullptr) {
+            release_without_gil(box->release, box->handle);
+        }
+    }
+}
+
+/* Set CLOSED and drop the capsule's own reference. Idempotent: only the call
+ * that sets CLOSED drops it. */
+static void box_close(HandleBox* box) {
+    uint64_t state = box->state.load();
+    do {
+        if (state & CLOSED) {
+            return;
+        }
+    } while (!box->state.compare_exchange_weak(state, state | CLOSED));
+    box_release_ref(box);
+}
+
+/* Shared destructor for every capsule created by capsule_new. No call can be
+ * using the box (a running call's arguments keep the capsule alive), so closing
+ * releases the handle here unless close() already did. */
 static void capsule_destructor(PyObject* capsule) {
     /* The capsule name was set by capsule_new; PyCapsule_GetPointer needs it,
      * but the destructor does not know it here. We stored the box as the
@@ -23,11 +81,8 @@ static void capsule_destructor(PyObject* capsule) {
     const char* name = PyCapsule_GetName(capsule);
     HandleBox* box = static_cast<HandleBox*>(PyCapsule_GetPointer(capsule, name));
     if (box != nullptr) {
-        if (box->handle != nullptr && box->release != nullptr) {
-            /* The last reference may destroy the object (flush, take locks). */
-            release_without_gil(box->release, box->handle);
-        }
-        PyMem_Free(box);
+        box_close(box);
+        delete box;
     }
 }
 
@@ -47,14 +102,12 @@ PyObject* capsule_new(void* handle, const char* name, release_fn release) {
         }
     });
 
-    HandleBox* box = py_malloc<HandleBox>();
+    /* new, not py_malloc: the atomic state must be constructed. */
+    HandleBox* box = new (std::nothrow) HandleBox{handle, release, {ONE_REF}};
     if (box == nullptr) {
         return PyErr_NoMemory();
     }
-    auto box_guard = make_scope_guard([box] { PyMem_Free(box); });
-
-    box->handle = handle;
-    box->release = release;
+    auto box_guard = make_scope_guard([box] { delete box; });
 
     /* PyCapsule_New stores 'name' by pointer (not copied), so callers must
      * pass a string literal with static lifetime. */
@@ -82,18 +135,23 @@ static HandleBox* get_valid_box(PyObject* capsule, const char* name) {
     return static_cast<HandleBox*>(PyCapsule_GetPointer(capsule, name));
 }
 
-void* capsule_get(PyObject* capsule, const char* name) {
-    HandleBox* box = get_valid_box(capsule, name);
-    if (box == nullptr) {
+void* handle_box_acquire(PyObject* capsule, const char* name, HandleBox** box) {
+    HandleBox* candidate = get_valid_box(capsule, name);
+    if (candidate == nullptr) {
         return nullptr;
     }
 
-    if (box->handle == nullptr) {
+    if (!box_acquire(candidate)) {
         PyErr_Format(PyExc_ValueError, "%s has been released", name);
         return nullptr;
     }
 
-    return box->handle;
+    *box = candidate;
+    return candidate->handle;
+}
+
+void handle_box_release(HandleBox* box) {
+    box_release_ref(box);
 }
 
 PyObject* capsule_release(PyObject* capsule, const char* name) {
@@ -102,14 +160,7 @@ PyObject* capsule_release(PyObject* capsule, const char* name) {
         return nullptr;
     }
 
-    /* Idempotent: releasing an already-released box is a no-op success. */
-    if (box->handle != nullptr) {
-        if (box->release != nullptr) {
-            release_without_gil(box->release, box->handle);
-        }
-        box->handle = nullptr;
-    }
-
+    box_close(box);
     Py_RETURN_NONE;
 }
 

@@ -69,8 +69,8 @@ PyObject* string_object_set_value(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    BufferHandle* buffer = capsule_cast<BufferHandle>(buffer_capsule, "VanillaPDF.Buffer");
-    if (buffer == nullptr) {
+    auto buffer = capsule_cast<BufferHandle>(buffer_capsule, "VanillaPDF.Buffer");
+    if (!buffer) {
         return nullptr;
     }
 
@@ -81,7 +81,7 @@ PyObject* string_object_set_value(PyObject* self, PyObject* args) {
     }
     SCOPE_GUARD([string] { release_without_gil(StringObject_Release, string); });
 
-    error_type err = without_gil([string, buffer] {
+    error_type err = without_gil([string, buffer = buffer.get()] {
         return StringObject_SetValue(string, buffer);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

@@ -22,13 +22,13 @@ PyObject* page_tree_get_page_count(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    PageTreeHandle* page_tree = capsule_cast<PageTreeHandle>(capsule, PAGE_TREE_CAPSULE);
-    if (page_tree == nullptr) {
+    auto page_tree = capsule_cast<PageTreeHandle>(capsule, PAGE_TREE_CAPSULE);
+    if (!page_tree) {
         return nullptr;
     }
 
     size_type count = 0;
-    error_type err = without_gil([page_tree, &count] {
+    error_type err = without_gil([page_tree = page_tree.get(), &count] {
         return PageTree_GetPageCount(page_tree, &count);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -50,13 +50,13 @@ PyObject* page_tree_get_page(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    PageTreeHandle* page_tree = capsule_cast<PageTreeHandle>(capsule, PAGE_TREE_CAPSULE);
-    if (page_tree == nullptr) {
+    auto page_tree = capsule_cast<PageTreeHandle>(capsule, PAGE_TREE_CAPSULE);
+    if (!page_tree) {
         return nullptr;
     }
 
     PageObjectHandle* page = nullptr;
-    error_type err = without_gil([page_tree, at, &page] {
+    error_type err = without_gil([page_tree = page_tree.get(), at, &page] {
         return PageTree_GetPage(page_tree, at, &page);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -79,17 +79,17 @@ PyObject* page_tree_insert_page(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    PageObjectHandle* page = capsule_cast<PageObjectHandle>(page_capsule, "VanillaPDF.PageObject");
-    if (page == nullptr) {
+    auto page = capsule_cast<PageObjectHandle>(page_capsule, "VanillaPDF.PageObject");
+    if (!page) {
         return nullptr;
     }
 
-    PageTreeHandle* page_tree = capsule_cast<PageTreeHandle>(capsule, PAGE_TREE_CAPSULE);
-    if (page_tree == nullptr) {
+    auto page_tree = capsule_cast<PageTreeHandle>(capsule, PAGE_TREE_CAPSULE);
+    if (!page_tree) {
         return nullptr;
     }
 
-    error_type err = without_gil([page_tree, at, page] {
+    error_type err = without_gil([page_tree = page_tree.get(), at, page = page.get()] {
         return PageTree_InsertPage(page_tree, at, page);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -106,17 +106,17 @@ PyObject* page_tree_append_page(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    PageObjectHandle* page = capsule_cast<PageObjectHandle>(page_capsule, "VanillaPDF.PageObject");
-    if (page == nullptr) {
+    auto page = capsule_cast<PageObjectHandle>(page_capsule, "VanillaPDF.PageObject");
+    if (!page) {
         return nullptr;
     }
 
-    PageTreeHandle* page_tree = capsule_cast<PageTreeHandle>(capsule, PAGE_TREE_CAPSULE);
-    if (page_tree == nullptr) {
+    auto page_tree = capsule_cast<PageTreeHandle>(capsule, PAGE_TREE_CAPSULE);
+    if (!page_tree) {
         return nullptr;
     }
 
-    error_type err = without_gil([page_tree, page] {
+    error_type err = without_gil([page_tree = page_tree.get(), page = page.get()] {
         return PageTree_AppendPage(page_tree, page);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -138,12 +138,12 @@ PyObject* page_tree_remove_page(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    PageTreeHandle* page_tree = capsule_cast<PageTreeHandle>(capsule, PAGE_TREE_CAPSULE);
-    if (page_tree == nullptr) {
+    auto page_tree = capsule_cast<PageTreeHandle>(capsule, PAGE_TREE_CAPSULE);
+    if (!page_tree) {
         return nullptr;
     }
 
-    error_type err = without_gil([page_tree, at] {
+    error_type err = without_gil([page_tree = page_tree.get(), at] {
         return PageTree_RemovePage(page_tree, at);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

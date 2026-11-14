@@ -21,13 +21,13 @@ PyObject* object_get_object_type(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    ObjectHandle* object = capsule_cast<ObjectHandle>(capsule, OBJECT_CAPSULE);
-    if (object == nullptr) {
+    auto object = capsule_cast<ObjectHandle>(capsule, OBJECT_CAPSULE);
+    if (!object) {
         return nullptr;
     }
 
     ObjectType type = ObjectType_Undefined;
-    error_type err = without_gil([object, &type] {
+    error_type err = without_gil([object = object.get(), &type] {
         return Object_GetObjectType(object, &type);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -61,13 +61,13 @@ PyObject* object_get_offset(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    ObjectHandle* object = capsule_cast<ObjectHandle>(capsule, OBJECT_CAPSULE);
-    if (object == nullptr) {
+    auto object = capsule_cast<ObjectHandle>(capsule, OBJECT_CAPSULE);
+    if (!object) {
         return nullptr;
     }
 
     offset_type offset = 0;
-    error_type err = without_gil([object, &offset] {
+    error_type err = without_gil([object = object.get(), &offset] {
         return Object_GetOffset(object, &offset);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -83,13 +83,13 @@ PyObject* object_to_string(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    ObjectHandle* object = capsule_cast<ObjectHandle>(capsule, OBJECT_CAPSULE);
-    if (object == nullptr) {
+    auto object = capsule_cast<ObjectHandle>(capsule, OBJECT_CAPSULE);
+    if (!object) {
         return nullptr;
     }
 
     BufferHandle* buffer = nullptr;
-    error_type err = without_gil([object, &buffer] {
+    error_type err = without_gil([object = object.get(), &buffer] {
         return Object_ToString(object, &buffer);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -105,13 +105,13 @@ PyObject* object_to_pdf(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    ObjectHandle* object = capsule_cast<ObjectHandle>(capsule, OBJECT_CAPSULE);
-    if (object == nullptr) {
+    auto object = capsule_cast<ObjectHandle>(capsule, OBJECT_CAPSULE);
+    if (!object) {
         return nullptr;
     }
 
     BufferHandle* buffer = nullptr;
-    error_type err = without_gil([object, &buffer] {
+    error_type err = without_gil([object = object.get(), &buffer] {
         return Object_ToPdf(object, &buffer);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

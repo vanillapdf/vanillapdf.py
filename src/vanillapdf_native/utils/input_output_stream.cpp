@@ -31,9 +31,9 @@ PyObject* input_output_stream_read_buffer(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    InputOutputStreamHandle* handle =
+    auto handle =
         capsule_cast<InputOutputStreamHandle>(capsule, INPUT_OUTPUT_STREAM_CAPSULE);
-    if (handle == nullptr) {
+    if (!handle) {
         return nullptr;
     }
 
@@ -43,7 +43,7 @@ PyObject* input_output_stream_read_buffer(PyObject* self, PyObject* args) {
     }
 
     BufferHandle* buffer = nullptr;
-    error_type err = without_gil([handle, read_length, &buffer] {
+    error_type err = without_gil([handle = handle.get(), read_length, &buffer] {
         return InputOutputStream_ReadBuffer(handle, read_length, &buffer);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -59,14 +59,14 @@ PyObject* input_output_stream_get_input_position(PyObject* self, PyObject* args)
         return nullptr;
     }
 
-    InputOutputStreamHandle* handle =
+    auto handle =
         capsule_cast<InputOutputStreamHandle>(capsule, INPUT_OUTPUT_STREAM_CAPSULE);
-    if (handle == nullptr) {
+    if (!handle) {
         return nullptr;
     }
 
     offset_type value = 0;
-    error_type err = without_gil([handle, &value] {
+    error_type err = without_gil([handle = handle.get(), &value] {
         return InputOutputStream_GetInputPosition(handle, &value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -83,9 +83,9 @@ PyObject* input_output_stream_set_input_position(PyObject* self, PyObject* args)
         return nullptr;
     }
 
-    InputOutputStreamHandle* handle =
+    auto handle =
         capsule_cast<InputOutputStreamHandle>(capsule, INPUT_OUTPUT_STREAM_CAPSULE);
-    if (handle == nullptr) {
+    if (!handle) {
         return nullptr;
     }
 
@@ -94,7 +94,7 @@ PyObject* input_output_stream_set_input_position(PyObject* self, PyObject* args)
         return nullptr;
     }
 
-    error_type err = without_gil([handle, value] {
+    error_type err = without_gil([handle = handle.get(), value] {
         return InputOutputStream_SetInputPosition(handle, value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -110,14 +110,14 @@ PyObject* input_output_stream_get_output_position(PyObject* self, PyObject* args
         return nullptr;
     }
 
-    InputOutputStreamHandle* handle =
+    auto handle =
         capsule_cast<InputOutputStreamHandle>(capsule, INPUT_OUTPUT_STREAM_CAPSULE);
-    if (handle == nullptr) {
+    if (!handle) {
         return nullptr;
     }
 
     offset_type value = 0;
-    error_type err = without_gil([handle, &value] {
+    error_type err = without_gil([handle = handle.get(), &value] {
         return InputOutputStream_GetOutputPosition(handle, &value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -134,18 +134,18 @@ PyObject* input_output_stream_write_buffer(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    InputOutputStreamHandle* handle =
+    auto handle =
         capsule_cast<InputOutputStreamHandle>(capsule, INPUT_OUTPUT_STREAM_CAPSULE);
-    if (handle == nullptr) {
+    if (!handle) {
         return nullptr;
     }
 
-    BufferHandle* buffer = capsule_cast<BufferHandle>(buffer_capsule, "VanillaPDF.Buffer");
-    if (buffer == nullptr) {
+    auto buffer = capsule_cast<BufferHandle>(buffer_capsule, "VanillaPDF.Buffer");
+    if (!buffer) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle, buffer] {
+    error_type err = without_gil([handle = handle.get(), buffer = buffer.get()] {
         return InputOutputStream_WriteBuffer(handle, buffer);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -161,13 +161,13 @@ PyObject* input_output_stream_flush(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    InputOutputStreamHandle* handle =
+    auto handle =
         capsule_cast<InputOutputStreamHandle>(capsule, INPUT_OUTPUT_STREAM_CAPSULE);
-    if (handle == nullptr) {
+    if (!handle) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle] {
+    error_type err = without_gil([handle = handle.get()] {
         return InputOutputStream_Flush(handle);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

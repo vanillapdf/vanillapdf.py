@@ -98,8 +98,8 @@ PyObject* array_object_set_value(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    ObjectHandle* value = capsule_cast<ObjectHandle>(value_capsule, OBJECT_CAPSULE);
-    if (value == nullptr) {
+    auto value = capsule_cast<ObjectHandle>(value_capsule, OBJECT_CAPSULE);
+    if (!value) {
         return nullptr;
     }
 
@@ -110,7 +110,7 @@ PyObject* array_object_set_value(PyObject* self, PyObject* args) {
     }
     SCOPE_GUARD([array] { release_without_gil(ArrayObject_Release, array); });
 
-    error_type err = without_gil([array, at, value] {
+    error_type err = without_gil([array, at, value = value.get()] {
         return ArrayObject_SetValue(array, at, value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -127,8 +127,8 @@ PyObject* array_object_append(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    ObjectHandle* value = capsule_cast<ObjectHandle>(value_capsule, OBJECT_CAPSULE);
-    if (value == nullptr) {
+    auto value = capsule_cast<ObjectHandle>(value_capsule, OBJECT_CAPSULE);
+    if (!value) {
         return nullptr;
     }
 
@@ -139,7 +139,7 @@ PyObject* array_object_append(PyObject* self, PyObject* args) {
     }
     SCOPE_GUARD([array] { release_without_gil(ArrayObject_Release, array); });
 
-    error_type err = without_gil([array, value] {
+    error_type err = without_gil([array, value = value.get()] {
         return ArrayObject_Append(array, value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -162,8 +162,8 @@ PyObject* array_object_insert(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    ObjectHandle* value = capsule_cast<ObjectHandle>(value_capsule, OBJECT_CAPSULE);
-    if (value == nullptr) {
+    auto value = capsule_cast<ObjectHandle>(value_capsule, OBJECT_CAPSULE);
+    if (!value) {
         return nullptr;
     }
 
@@ -174,7 +174,7 @@ PyObject* array_object_insert(PyObject* self, PyObject* args) {
     }
     SCOPE_GUARD([array] { release_without_gil(ArrayObject_Release, array); });
 
-    error_type err = without_gil([array, at, value] {
+    error_type err = without_gil([array, at, value = value.get()] {
         return ArrayObject_Insert(array, at, value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

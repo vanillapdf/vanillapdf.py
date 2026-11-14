@@ -49,13 +49,13 @@ template <typename H>
 H* object_cast(PyObject* capsule,
                error_type (CALLING_CONVENTION *from_object)(ObjectHandle*, H**),
                const char* operation) {
-    ObjectHandle* object = capsule_cast<ObjectHandle>(capsule, OBJECT_CAPSULE);
-    if (object == nullptr) {
+    auto object = capsule_cast<ObjectHandle>(capsule, OBJECT_CAPSULE);
+    if (!object) {
         return nullptr;
     }
 
     H* typed = nullptr;
-    error_type err = without_gil([from_object, object, &typed] {
+    error_type err = without_gil([from_object, object = object.get(), &typed] {
         return from_object(object, &typed);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

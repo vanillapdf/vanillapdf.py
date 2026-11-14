@@ -16,13 +16,6 @@ typedef error_type (CALLING_CONVENTION *release_fn)(void*);
 /* Cast helper for typed release functions (e.g. Buffer_Release) */
 #define RELEASE_FN(fn) ((release_fn)(fn))
 
-/* Heap-allocated box that every capsule points to.
- * handle == NULL means the underlying object has been released. */
-typedef struct {
-    void* handle;
-    release_fn release;
-} HandleBox;
-
 /* Exception type raised for VanillaPDF library errors.
  * Created in register_exceptions(), exposed as _vanillapdf.PdfError
  * and re-exported as vanillapdf.PdfError. Instances carry the numeric
@@ -42,13 +35,11 @@ PyObject* raise_last_error(error_type err, const char* operation);
  * an exception set. 'name' must be a string literal (stored, not copied). */
 PyObject* capsule_new(void* handle, const char* name, release_fn release);
 
-/* Extract the handle from a capsule created by capsule_new.
- * Returns NULL with an exception set if the capsule is invalid or
- * the handle has already been released. */
-void* capsule_get(PyObject* capsule, const char* name);
-
-/* Explicitly release the handle inside a capsule (idempotent).
- * Returns Py_None on success, NULL with an exception on invalid capsule. */
+/* Release the capsule's own reference to its handle (close(); idempotent).
+ * The native release runs now, or - if binding calls on other threads are
+ * still using the handle (see HandleRef) - when the last of them is done. New
+ * calls fail as released either way. Returns Py_None, or NULL with an
+ * exception set on an invalid capsule. */
 PyObject* capsule_release(PyObject* capsule, const char* name);
 
 /* Returns 1 if the error signals a missing optional entry */
@@ -160,23 +151,80 @@ void release_without_gil(error_type (CALLING_CONVENTION *release)(H*), H* handle
 /* Allocate raw, uninitialized memory for `count` objects of type T via
  * PyMem_Malloc, returning a typed pointer (nullptr on failure, no exception
  * set - callers raise PyErr_NoMemory). Does not construct T; intended for the
- * POD boxes and char buffers this extension manages.
+ * char buffers this extension manages.
  *
- *   HandleBox* box = py_malloc<HandleBox>();
  *   char* data = py_malloc<char>(size); */
 template <typename T>
 T* py_malloc(size_t count = 1) {
     return static_cast<T*>(PyMem_Malloc(count * sizeof(T)));
 }
 
-/* Typed convenience wrapper over capsule_get: extracts the handle and casts it
- * to T*. Returns nullptr with a Python exception set if the capsule is invalid
- * or the handle has already been released.
+/* The box every capsule points to (defined in common.cpp). */
+struct HandleBox;
+
+/* Take a reference on the capsule's box for a call and return its handle, or
+ * nullptr with an exception set (invalid capsule, or released). Use via
+ * capsule_cast. */
+void* handle_box_acquire(PyObject* capsule, const char* name, HandleBox** box);
+
+/* Drop a reference taken by handle_box_acquire; after close(), the last one
+ * performs the native release. Needs the GIL. */
+void handle_box_release(HandleBox* box);
+
+/* A handle borrowed from a capsule for one binding call. It holds a reference
+ * on the capsule's box, so a close() on another thread defers the native
+ * release until this holder is destroyed - like the .NET marshaller's
+ * SafeHandle.DangerousAddRef / DangerousRelease around a P/Invoke. Without it
+ * the call would borrow the capsule's only native reference, and that close()
+ * could free the object under the running call.
  *
- *   auto* buffer = capsule_cast<BufferHandle>(capsule, "VanillaPDF.Buffer"); */
+ *   auto document = capsule_cast<DocumentHandle>(capsule, DOCUMENT_CAPSULE);
+ *   if (!document) {
+ *       return nullptr;
+ *   }
+ *   error_type err = without_gil([document = document.get(), filename] {
+ *       return Document_Save(document, filename);
+ *   });
+ *
+ * Move-only (a copy would release twice). Keep it a local of the binding
+ * function: it is destroyed on return, with the GIL held. */
 template <typename T>
-T* capsule_cast(PyObject* capsule, const char* name) {
-    return static_cast<T*>(capsule_get(capsule, name));
+class HandleRef {
+public:
+    /* An empty holder (an optional argument that was None). */
+    HandleRef() = default;
+
+    HandleRef(PyObject* capsule, const char* name)
+        : _handle(static_cast<T*>(handle_box_acquire(capsule, name, &_box))) {}
+
+    ~HandleRef() {
+        if (_box != nullptr) {
+            handle_box_release(_box);
+        }
+    }
+
+    HandleRef(HandleRef&& other) noexcept : _box(other._box), _handle(other._handle) {
+        other._box = nullptr;
+        other._handle = nullptr;
+    }
+
+    HandleRef(const HandleRef&) = delete;
+    HandleRef& operator=(const HandleRef&) = delete;
+    HandleRef& operator=(HandleRef&&) = delete;
+
+    T* get() const { return _handle; }
+    explicit operator bool() const { return _handle != nullptr; }
+
+private:
+    HandleBox* _box = nullptr;  /* declared first: the constructor fills it in */
+    T* _handle = nullptr;
+};
+
+/* Borrow a capsule's handle for the current call (see HandleRef). Evaluates to
+ * false with a Python exception set if the capsule is invalid or released. */
+template <typename T>
+HandleRef<T> capsule_cast(PyObject* capsule, const char* name) {
+    return HandleRef<T>(capsule, name);
 }
 
 #endif /* __cplusplus */

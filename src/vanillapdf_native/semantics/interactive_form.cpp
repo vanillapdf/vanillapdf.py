@@ -21,14 +21,14 @@ PyObject* interactive_form_get_fields(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    InteractiveFormHandle* form =
+    auto form =
         capsule_cast<InteractiveFormHandle>(capsule, INTERACTIVE_FORM_CAPSULE);
-    if (form == nullptr) {
+    if (!form) {
         return nullptr;
     }
 
     FieldCollectionHandle* fields = nullptr;
-    error_type err = without_gil([form, &fields] {
+    error_type err = without_gil([form = form.get(), &fields] {
         return InteractiveForm_GetFields(form, &fields);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

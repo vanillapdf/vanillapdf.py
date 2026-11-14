@@ -170,8 +170,8 @@ PyObject* indirect_reference_object_set_referenced_object(PyObject* self, PyObje
         return nullptr;
     }
 
-    ObjectHandle* value = capsule_cast<ObjectHandle>(value_capsule, OBJECT_CAPSULE);
-    if (value == nullptr) {
+    auto value = capsule_cast<ObjectHandle>(value_capsule, OBJECT_CAPSULE);
+    if (!value) {
         return nullptr;
     }
 
@@ -181,7 +181,7 @@ PyObject* indirect_reference_object_set_referenced_object(PyObject* self, PyObje
     }
     SCOPE_GUARD([reference] { release_without_gil(IndirectReferenceObject_Release, reference); });
 
-    error_type err = without_gil([reference, value] {
+    error_type err = without_gil([reference, value = value.get()] {
         return IndirectReferenceObject_SetReferencedObject(reference, value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

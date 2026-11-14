@@ -57,8 +57,8 @@ PyObject* buffer_set_data(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    BufferHandle* handle = capsule_cast<BufferHandle>(capsule, BUFFER_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<BufferHandle>(capsule, BUFFER_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
@@ -67,7 +67,7 @@ PyObject* buffer_set_data(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle, data, data_size] {
+    error_type err = without_gil([handle = handle.get(), data, data_size] {
         return Buffer_SetData(handle, data, data_size);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -83,14 +83,14 @@ PyObject* buffer_get_data(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    BufferHandle* handle = capsule_cast<BufferHandle>(capsule, BUFFER_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<BufferHandle>(capsule, BUFFER_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
     string_type data = nullptr;
     size_type size = 0;
-    error_type err = without_gil([handle, &data, &size] {
+    error_type err = without_gil([handle = handle.get(), &data, &size] {
         return Buffer_GetData(handle, &data, &size);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

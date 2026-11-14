@@ -31,12 +31,12 @@ PyObject* license_info_set_license_buffer(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    BufferHandle* buffer = capsule_cast<BufferHandle>(capsule, "VanillaPDF.Buffer");
-    if (buffer == nullptr) {
+    auto buffer = capsule_cast<BufferHandle>(capsule, "VanillaPDF.Buffer");
+    if (!buffer) {
         return nullptr;
     }
 
-    error_type err = without_gil([buffer] {
+    error_type err = without_gil([buffer = buffer.get()] {
         return LicenseInfo_SetLicenseBuffer(buffer);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {

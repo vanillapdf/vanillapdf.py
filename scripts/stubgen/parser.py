@@ -81,13 +81,10 @@ def _direct_handle(body: str, var: str, capsule_types: dict[str, str]) -> Handle
     # Every syntax object shares one "Object" capsule (safe object_cast).
     if re.search(rf"object_cast<[^>]+>\(\s*{re.escape(var)}\b", body):
         return HandleArg("ObjectHandle")
-    # optional_handle(<var>, CAPSULE, &<out>): type is on the out declaration,
-    # and a null capsule is accepted.
-    om = re.search(rf"optional_handle\(\s*{re.escape(var)}\b[^;]*?&(\w+)\)", body)
+    # optional_handle<XHandle>(<var>, CAPSULE): a None capsule is accepted.
+    om = re.search(rf"optional_handle<\s*(\w+?)Handle\s*>\(\s*{re.escape(var)}\b", body)
     if om:
-        dm = re.search(rf"(\w+?)Handle\s*\*\s*{re.escape(om.group(1))}\b", body)
-        if dm:
-            return HandleArg(dm.group(1) + "Handle", optional=True)
+        return HandleArg(om.group(1) + "Handle", optional=True)
     # release/get functions identify the capsule only by its name constant
     # (e.g. capsule_release(capsule, BUFFER_CAPSULE)).
     cm = re.search(rf"capsule_(?:release|get)\(\s*{re.escape(var)}\s*,\s*([A-Z0-9_]+)\s*\)", body)

@@ -24,13 +24,13 @@ static PyObject* get_coordinate(
         return nullptr;
     }
 
-    RectangleHandle* rectangle = capsule_cast<RectangleHandle>(capsule, RECTANGLE_CAPSULE);
-    if (rectangle == nullptr) {
+    auto rectangle = capsule_cast<RectangleHandle>(capsule, RECTANGLE_CAPSULE);
+    if (!rectangle) {
         return nullptr;
     }
 
     bigint_type value = 0;
-    error_type err = without_gil([getter, rectangle, &value] {
+    error_type err = without_gil([getter, rectangle = rectangle.get(), &value] {
         return getter(rectangle, &value);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -50,12 +50,12 @@ static PyObject* set_coordinate(
         return nullptr;
     }
 
-    RectangleHandle* rectangle = capsule_cast<RectangleHandle>(capsule, RECTANGLE_CAPSULE);
-    if (rectangle == nullptr) {
+    auto rectangle = capsule_cast<RectangleHandle>(capsule, RECTANGLE_CAPSULE);
+    if (!rectangle) {
         return nullptr;
     }
 
-    error_type err = without_gil([setter, rectangle, value] {
+    error_type err = without_gil([setter, rectangle = rectangle.get(), value] {
 
         return setter(rectangle, value);
 

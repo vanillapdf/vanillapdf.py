@@ -61,14 +61,14 @@ PyObject* file_open_stream(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    InputOutputStreamHandle* stream =
+    auto stream =
         capsule_cast<InputOutputStreamHandle>(stream_capsule, "VanillaPDF.InputOutputStream");
-    if (stream == nullptr) {
+    if (!stream) {
         return nullptr;
     }
 
     FileHandle* handle = nullptr;
-    error_type err = without_gil([stream, name, &handle] {
+    error_type err = without_gil([stream = stream.get(), name, &handle] {
         return File_OpenStream(stream, name, &handle);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -85,14 +85,14 @@ PyObject* file_create_stream(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    InputOutputStreamHandle* stream =
+    auto stream =
         capsule_cast<InputOutputStreamHandle>(stream_capsule, "VanillaPDF.InputOutputStream");
-    if (stream == nullptr) {
+    if (!stream) {
         return nullptr;
     }
 
     FileHandle* handle = nullptr;
-    error_type err = without_gil([stream, name, &handle] {
+    error_type err = without_gil([stream = stream.get(), name, &handle] {
         return File_CreateStream(stream, name, &handle);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -108,12 +108,12 @@ PyObject* file_initialize(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FileHandle* handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle] {
+    error_type err = without_gil([handle = handle.get()] {
         return File_Initialize(handle);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -129,13 +129,13 @@ PyObject* file_get_version(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FileHandle* handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
     PDFVersion version;
-    error_type err = without_gil([handle, &version] {
+    error_type err = without_gil([handle = handle.get(), &version] {
         return File_GetVersion(handle, &version);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -151,13 +151,13 @@ PyObject* file_get_filename(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FileHandle* handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
     BufferHandle* buffer = nullptr;
-    error_type err = without_gil([handle, &buffer] {
+    error_type err = without_gil([handle = handle.get(), &buffer] {
         return File_GetFilename(handle, &buffer);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -173,13 +173,13 @@ PyObject* file_is_encrypted(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FileHandle* handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
     boolean_type is_encrypted = VANILLAPDF_RV_FALSE;
-    error_type err = without_gil([handle, &is_encrypted] {
+    error_type err = without_gil([handle = handle.get(), &is_encrypted] {
         return File_IsEncrypted(handle, &is_encrypted);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -199,12 +199,12 @@ PyObject* file_set_encryption_password(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FileHandle* handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
-    error_type err = without_gil([handle, password] {
+    error_type err = without_gil([handle = handle.get(), password] {
         return File_SetEncryptionPassword(handle, password);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
@@ -234,13 +234,13 @@ PyObject* file_get_indirect_object(PyObject* self, PyObject* args) {
         return nullptr;
     }
 
-    FileHandle* handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
-    if (handle == nullptr) {
+    auto handle = capsule_cast<FileHandle>(capsule, FILE_CAPSULE);
+    if (!handle) {
         return nullptr;
     }
 
     ObjectHandle* object = nullptr;
-    error_type err = without_gil([handle, object_number, generation, &object] {
+    error_type err = without_gil([handle = handle.get(), object_number, generation, &object] {
         return File_GetIndirectObject(handle, object_number, generation, &object);
     });
     if (err != VANILLAPDF_ERROR_SUCCESS) {
