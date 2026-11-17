@@ -112,6 +112,10 @@ reserves those for metadata corrections rather than bug fixes.
   `NameObject.value`, `StringObject.value`, `StreamObject.body` / `body_raw` and
   the `SignatureVerificationResult` text fields are now released immediately
   instead of waiting for garbage collection.
+- `Logging.shutdown()` no longer leaves the library without a logger: any later
+  native call that logged (for example opening a missing file) crashed the
+  interpreter. It now flushes and closes the current sink and goes back to the
+  default discarding one, so `set_rotating_file()` can be called again.
 
 ## [2.3.0-rc.2]
 

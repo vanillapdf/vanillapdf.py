@@ -58,5 +58,11 @@ class Logging:
 
     @staticmethod
     def shutdown() -> None:
-        """Gracefully shutdown the logging system."""
+        """Flush and release the current native log sink.
+
+        Closes the file opened by :meth:`set_rotating_file`, so it can be moved
+        or deleted, and returns to the default discarding sink: native logs are
+        silent again until the next :meth:`set_rotating_file`. The library stays
+        fully usable afterwards.
+        """
         _vanillapdf.logging_shutdown()
