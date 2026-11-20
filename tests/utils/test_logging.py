@@ -1,5 +1,4 @@
-import subprocess
-import sys
+import pytest
 
 import vanillapdf
 
@@ -40,25 +39,43 @@ def test_logging_set_pattern():
 
 
 def test_rotating_file_logger(tmp_path):
-    """Native logs opt into a rotating file sink and are written to disk. Run in
-    a subprocess so replacing the global sink doesn't leak into other tests."""
+    """Native logs opt into a rotating file sink and are written to disk."""
     log_path = tmp_path / "native.log"
-    out_pdf = tmp_path / "out.pdf"
-    code = "\n".join([
-        "from vanillapdf import Logging, LoggingSeverity, Document, PageObject, Rectangle",
-        f"Logging.set_rotating_file({str(log_path)!r}, 1048576, 2)",
-        "Logging.set_severity(LoggingSeverity.DEBUG)",
-        f"doc = Document.create({str(out_pdf)!r})",
-        "page = PageObject.create_from_document(doc)",
-        "rect = Rectangle.create()",
-        "rect.upper_right_x = 200",
-        "rect.upper_right_y = 300",
-        "page.media_box = rect",
-        "doc.get_catalog().get_pages().append(page)",
-        f"doc.save({str(out_pdf)!r})",
-        "doc.close()",
-        "Logging.shutdown()",
-    ])
-    subprocess.run([sys.executable, "-c", code], check=True, capture_output=True)
-    assert log_path.exists()
+    original = vanillapdf.Logging.get_severity()
+    vanillapdf.Logging.set_rotating_file(str(log_path), 1024 * 1024, 2)
+    try:
+        vanillapdf.Logging.set_severity(vanillapdf.LoggingSeverity.DEBUG)
+        with vanillapdf.Document.create(str(tmp_path / "out.pdf")) as doc:
+            doc.get_catalog().get_pages().append(
+                vanillapdf.PageObject.create_from_document(doc))
+            doc.save(str(tmp_path / "out.pdf"))
+    finally:
+        vanillapdf.Logging.set_severity(original)
+        vanillapdf.Logging.shutdown()  # closes the file, back to the default sink
     assert log_path.stat().st_size > 0
+
+
+def test_shutdown_keeps_library_usable(tmp_path):
+    """Shutdown used to drop the native default logger, so the next call that
+    logged (opening a missing file logs an error) crashed the interpreter."""
+    vanillapdf.Logging.shutdown()
+    with pytest.raises(vanillapdf.PdfError):
+        vanillapdf.Document.open(str(tmp_path / "missing.pdf"))
+
+
+def test_shutdown_releases_rotating_file(tmp_path):
+    """Shutdown closes the rotating log file; the sink can then be set again,
+    to a new path, and logs reach the new file."""
+    first = tmp_path / "first.log"
+    second = tmp_path / "second.log"
+    vanillapdf.Logging.set_rotating_file(str(first), 1024 * 1024, 2)
+    vanillapdf.Logging.shutdown()
+    first.unlink()  # fails on Windows while the file is still open
+
+    vanillapdf.Logging.set_rotating_file(str(second), 1024 * 1024, 2)
+    try:
+        with pytest.raises(vanillapdf.PdfError):
+            vanillapdf.Document.open(str(tmp_path / "missing.pdf"))  # logs an error
+    finally:
+        vanillapdf.Logging.shutdown()
+    assert second.stat().st_size > 0
