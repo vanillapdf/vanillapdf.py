@@ -22,12 +22,18 @@ reserves those for metadata corrections rather than bug fixes.
 ## [Unreleased]
 
 ### Native library
-- Wraps Vanilla.PDF `v2.3.0` (previously pinned to `v2.3.0-rc.2`) — the final
-  release, which adds AES-256 encryption creation and carries several encryption
-  correctness fixes (AES-128 no longer silently written as RC4, array-filter
-  streams no longer written in the clear) plus further thread-safety work
-  (`File::GetByteRange` seek+read locking, a liveness-aware document-registry
-  create guard, and a `Document` catalog lazy-initialization race).
+- Wraps Vanilla.PDF `v2.4.0-alpha.1` (previously pinned to `v2.3.0-rc.2`), the
+  first 2.4.0 pre-release. It hardens parsing of malformed files (decoded image
+  size capped at 1 GiB, PNG predictor geometry validated, cyclic object stream
+  initialization broken instead of recursing) and fixes two more thread-safety
+  issues (weak references reviving an object being destroyed, `PageTree`
+  mutators racing the page cache).
+- This includes the final `v2.3.0` release, which adds AES-256 encryption
+  creation and carries several encryption correctness fixes (AES-128 no longer
+  silently written as RC4, array-filter streams no longer written in the clear)
+  plus further thread-safety work (`File::GetByteRange` seek+read locking, a
+  liveness-aware document-registry create guard, and a `Document` catalog
+  lazy-initialization race).
 
 ### Added
 - `TextStringEncoding` / `TextStringEncodingType`, wrapping the native
